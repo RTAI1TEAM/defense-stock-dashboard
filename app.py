@@ -1,10 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+import os
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify
+import requests
+from routes.rank import rank_bp
 
-app = Flask(__name__);
+app = Flask(__name__)
 
-@app.get('/')
-def root():
-    return render_template("index.html")
+app.register_blueprint(rank_bp)
 
-if __name__ == '__main__':
+@app.route("/")
+def index():
+    return render_template("index.html" )
+
+if __name__ == "__main__":
     app.run(debug=True)
