@@ -20,7 +20,6 @@ def ranking():
     
     try:
         with conn.cursor() as cursor:
-            # total_quantity(보유 수량) 계산 로직 제거
             sql = """
                 SELECT 
                     u.nickname,
