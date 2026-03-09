@@ -1,4 +1,33 @@
 {% extends "navbar.html" %}
+
 {% block content %}
-rank.html로 랭킹 페이지 입니다.
+<h2>투자자 랭킹</h2>
+<p>전체 사용자의 실시간 자산 및 수익률 순위입니다.</p>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>순위</th>
+            <th>닉네임</th>
+            <th>총 자산(현금+주식)</th>
+            <th>수익률</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rank in rankings %}
+        <tr>
+            <td>{{ loop.index }}위</td>
+            <td>{{ rank.nickname }}</td>
+            <td>{{ "{:,.0f}".format(rank.total_asset) }}원</td>
+            <td>
+                {% if rank.profit_rate > 0 %}+{% endif %}{{ "%.2f"|format(rank.profit_rate) }}%
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">현재 등록된 랭킹 데이터가 없습니다.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}
