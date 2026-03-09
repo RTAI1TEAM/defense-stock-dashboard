@@ -84,7 +84,7 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
         high_price = row.get("hipr") or row.get("HIPR")
         low_price = row.get("lopr") or row.get("LOPR")
         close_price = row.get("clpr") or row.get("CLPR")
-        volume = row.get("accTrdvol") or row.get("ACC_TRDVOL")
+        volume = row.get("trqu") or row.get("TRQU")
 
         if not bas_dt:
             continue
@@ -103,7 +103,7 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
             "high": safe_int(high_price),
             "low": safe_int(low_price),
             "close": safe_int(close_price),
-            "volume": safe_int(volume),
+            "volume": safe_int(volume)
         })
 
     chart_data.sort(key=lambda x: x["date"])

@@ -1,10 +1,15 @@
 from flask import Blueprint, render_template
-from finance_data import get_defense_data  # 기존 수집 함수 호출
+from finance_data import get_defense_data
 
-# Blueprint 생성 (이름: stocks_bp)
 stocks_bp = Blueprint('stocks', __name__)
 
 @stocks_bp.route("/stocks")
 def stock_list():
-    stock_data = get_defense_data()
+
+    from app import get_conn
+
+    conn = get_conn()
+    stock_data = get_defense_data(conn)
+    conn.close()
+
     return render_template("stock_list.html", stocks=stock_data)
