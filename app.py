@@ -5,6 +5,8 @@ import pymysql
 from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stock_recommend import stock_recommend_bp
+# from routes.stocks import stocks_bp
+# from routes.portfolio import portfolio_bp
 load_dotenv()
 
 
@@ -14,6 +16,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
 
 def get_conn():
     return pymysql.connect(
@@ -27,20 +31,20 @@ def get_conn():
         autocommit=True,
     )
 
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
-
 app.register_blueprint(rank_bp)
-
 app.register_blueprint(news_bp)
 app.register_blueprint(stock_recommend_bp)
+# app.register_blueprint(stocks_bp)
+# app.register_blueprint(portfolio_bp)
+
+
 def get_main_etf():
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
             sql = """
             SELECT id, ticker, name_kr
-            FROM stocks
+            FROM etfs
             ORDER BY id
             LIMIT 1
             """
@@ -56,8 +60,8 @@ def get_etf_chart_data(etf_id):
         with conn.cursor() as cursor:
             sql = """
             SELECT price_date, close_price
-            FROM stock_price_history
-            WHERE stock_id = %s
+            FROM etf_price_history
+            WHERE etf_id = %s
             ORDER BY price_date
             """
             cursor.execute(sql, (etf_id,))
@@ -69,6 +73,10 @@ def get_etf_chart_data(etf_id):
             return labels, values
     finally:
         conn.close()
+
+@app.template_filter('comma')
+def comma_filter(value):
+    return format(int(value), ',')
 
 @app.route("/")
 def index():
