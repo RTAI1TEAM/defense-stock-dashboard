@@ -1,4 +1,26 @@
 {% extends "navbar.html" %}
+{% from "components/chart_macros.html" import line_chart %}
+
+{% block title %}메인 - AI Quant{% endblock %}
+
 {% block content %}
-index.html로 메인 페이지 입니다.
+<h1 style="margin-bottom:20px;">AI Quant 메인</h1>
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+    <div>
+        {{ line_chart(
+            "mainEtfChart",
+            etf.name_kr ~ " ETF 차트",
+            chart_labels,
+            chart_values,
+            "ETF 종가",
+            "360px"
+        ) }}
+    </div>
+
+    <div style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+        <h3 style="margin-top:0;">방산주 목록</h3>
+
+    </div>
+</div>
 {% endblock %}
