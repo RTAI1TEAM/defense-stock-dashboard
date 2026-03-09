@@ -1,41 +1,24 @@
 import os
 from flask import Flask, render_template, redirect, url_for, session, request
-from dotenv import load_dotenv
-import pymysql
+from database import get_conn
+from routes.app_login import auth_bp
 from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stock_recommend import stock_recommend_bp
-from routes.stocks import stocks_bp
+# from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
-load_dotenv()
-
-
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = int(os.getenv("DB_PORT"))
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
+from routes.stock_detail import stock_detail_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
 
-def get_conn():
-    return pymysql.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor,
-        autocommit=True,
-    )
-
+app.register_blueprint(auth_bp)
 app.register_blueprint(rank_bp)
 app.register_blueprint(news_bp)
 app.register_blueprint(stock_recommend_bp)
-app.register_blueprint(stocks_bp)
+# app.register_blueprint(stocks_bp)
 app.register_blueprint(portfolio_bp)
+app.register_blueprint(stock_detail_bp)
 
 def get_main_etf():
     conn = get_conn()
@@ -79,8 +62,8 @@ def comma_filter(value):
 
 @app.route("/")
 def index():
-    # if "nickname" not in session:
-    #     return redirect(url_for("auth_bp.login_page"))
+    if "nickname" not in session:
+        return redirect(url_for("auth_bp.login_page"))
     etf = get_main_etf()
     chart_labels, chart_values = get_etf_chart_data(etf["id"])
 
