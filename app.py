@@ -5,8 +5,8 @@ import pymysql
 from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stock_recommend import stock_recommend_bp
-# from routes.stocks import stocks_bp
-# from routes.portfolio import portfolio_bp
+from routes.stocks import stocks_bp
+from routes.portfolio import portfolio_bp
 load_dotenv()
 
 
@@ -34,9 +34,8 @@ def get_conn():
 app.register_blueprint(rank_bp)
 app.register_blueprint(news_bp)
 app.register_blueprint(stock_recommend_bp)
-# app.register_blueprint(stocks_bp)
-# app.register_blueprint(portfolio_bp)
-
+app.register_blueprint(stocks_bp)
+app.register_blueprint(portfolio_bp)
 
 def get_main_etf():
     conn = get_conn()
