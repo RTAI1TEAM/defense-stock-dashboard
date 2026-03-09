@@ -3,6 +3,7 @@ from flask import Flask, render_template, redirect, url_for, session, request
 from dotenv import load_dotenv
 import pymysql
 from routes.rank import rank_bp
+from routes.news import news_bp
 from routes.stock_recommend import stock_recommend_bp
 load_dotenv()
 
@@ -26,11 +27,12 @@ def get_conn():
         autocommit=True,
     )
 
-
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
 
 app.register_blueprint(rank_bp)
+
+app.register_blueprint(news_bp)
 app.register_blueprint(stock_recommend_bp)
 def get_main_etf():
     conn = get_conn()
