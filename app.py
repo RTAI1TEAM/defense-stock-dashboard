@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import pymysql
 from routes.rank import rank_bp
 from routes.stock_recommend import stock_recommend_bp
+from routes.stocks import stocks_bp
+from routes.portfolio import portfolio_bp
 load_dotenv()
 
 
@@ -32,6 +34,9 @@ app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
 
 app.register_blueprint(rank_bp)
 app.register_blueprint(stock_recommend_bp)
+app.register_blueprint(stocks_bp)
+app.register_blueprint(portfolio_bp)
+
 def get_main_etf():
     conn = get_conn()
     try:
@@ -67,6 +72,10 @@ def get_etf_chart_data(etf_id):
             return labels, values
     finally:
         conn.close()
+
+@app.template_filter('comma')
+def comma_filter(value):
+    return format(int(value), ',')
 
 @app.route("/")
 def index():
