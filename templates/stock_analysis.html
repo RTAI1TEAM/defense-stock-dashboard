@@ -1,0 +1,58 @@
+{% extends "navbar.html" %}
+{% block title %}AI 종목 분석{% endblock %}
+
+{% block content %}
+<div>
+    <hr>
+
+    <div id="analysis-section">
+        <h3>🤖 AI 스코어: {{ status }} ({{ score }}점)</h3>
+        <progress value="{{ score }}" max="100"></progress>
+        
+        <hr>
+
+        <div>
+            {% for news in news_list %}
+            <p>· {{ news.title }}</p>
+            {% endfor %}
+        </div>
+
+        <br>
+        <button type="button" onclick="goToInvest()">
+            🚀 모의투자 시작하기
+        </button>
+    </div>
+
+    <div id="invest-section" style="display: none;">
+        <h3>💰 투자 설정</h3>
+        <form action="{{ url_for('stock_recommend.execute_trade') }}" method="POST">
+            <input type="hidden" name="stock_id" value="{{ stock_id }}">
+            
+            <p>
+                <label>투자 주수</label><br>
+                <input type="number" name="quantity" min="1" required>
+            </p>
+
+            <p>
+                <label>AI 추천 전략</label><br>
+                <input type="text" name="strategy" value="{{ ai_strategy }}" readonly>
+            </p>
+
+            <button type="submit">✅ 모의투자 하기</button>
+            <button type="button" onclick="goBack()">취소</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function goToInvest() {
+        document.getElementById('analysis-section').style.display = 'none';
+        document.getElementById('invest-section').style.display = 'block';
+    }
+
+    function goBack() {
+        document.getElementById('invest-section').style.display = 'none';
+        document.getElementById('analysis-section').style.display = 'block';
+    }
+</script>
+{% endblock %}

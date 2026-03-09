@@ -1,0 +1,20 @@
+{% macro line_chart(chart_id, title, labels, values, dataset_label='종가', height='320px') %}
+<div class="chart-card" style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0;">{{ title }}</h3>
+    </div>
+
+    <div style="position:relative; width:100%; height:{{ height }};">
+        <canvas id="{{ chart_id }}"></canvas>
+    </div>
+</div>
+
+<script>
+    window.renderLineChart({
+        canvasId: "{{ chart_id }}",
+        labels: {{ labels | tojson }},
+        values: {{ values | tojson }},
+        datasetLabel: "{{ dataset_label }}"
+    });
+</script>
+{% endmacro %}
