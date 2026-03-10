@@ -1,7 +1,7 @@
 import math
 import os
 from flask import Blueprint, render_template, request, jsonify
-from db import get_conn
+from database import get_conn
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
