@@ -8,6 +8,7 @@ from routes.stock_recommend import stock_recommend_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
 from routes.stock_detail import stock_detail_bp
+from routes.profile import profile_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
@@ -19,6 +20,7 @@ app.register_blueprint(stock_recommend_bp)
 app.register_blueprint(stocks_bp)
 app.register_blueprint(portfolio_bp)
 app.register_blueprint(stock_detail_bp)
+app.register_blueprint(profile_bp)
 
 def get_main_etf():
     conn = get_conn()
@@ -62,8 +64,6 @@ def comma_filter(value):
 
 @app.route("/")
 def index():
-    if "nickname" not in session:
-        return redirect(url_for("auth_bp.login_page"))
     etf = get_main_etf()
     chart_labels, chart_values = get_etf_chart_data(etf["id"])
 
