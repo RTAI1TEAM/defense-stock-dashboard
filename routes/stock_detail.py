@@ -132,17 +132,30 @@ def get_stock_chart_data(stock_id):
     finally:
         conn.close()
 
+def get_stock_list():
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("select name_kr, ticker from stocks")
+            stock_list = cur.fetchall()
+            return stock_list
+    finally:
+        conn.close()
+
 @stock_detail_bp.route("/chart/<ticker>")
 def show_stock_chart(ticker):
     if "nickname" not in session:
         return redirect(url_for("auth_bp.login_page"))
     
     stock = get_stock(ticker)
+    stock_list = get_stock_list()
+    print(stock_list)
     chart_labels, chart_values = get_stock_chart_data(stock["id"])
     news_list, score, ai_news, status, color_class = get_live_analysis(stock["name_kr"])
 
     return render_template(
         "stock_detail.html",
+        stock_list=stock_list,
         stock=stock,
         chart_labels=chart_labels,
         chart_values=chart_values,

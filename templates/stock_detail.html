@@ -1,16 +1,29 @@
 {% extends "navbar.html" %}
 {% from "components/chart_macros.html" import line_chart %}
-
 {% block content %}
-<div class="container-fluid mt-4" style="padding: 0 40px;"> <div style="display:grid; grid-template-columns: 3.5fr 1fr; gap:30px; align-items: start;">
+<!-- <style>
+.stock-dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    min-width: 260px;
+    border-radius: 12px;
+}
+
+.stock-dropdown-menu .dropdown-item {
+    padding: 10px 14px;
+}
+
+.stock-dropdown-menu .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+</style> -->
+<div class="container-fluid mt-4" style="padding: 0 40px;"> 
+    <div style="display:grid; grid-template-columns: 3.5fr 1fr; gap:30px; align-items: start;">
         
         <div class="card shadow-sm border-0 p-4" style="border-radius: 15px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold m-0">
-                    {{ stock.name_kr }} 
-                    <span class="text-muted fw-normal" style="font-size: 1rem;">{{ stock.ticker }}</span>
-                </h3>
-                <span class="badge bg-light text-dark border">실시간 데이터 분석 중</span>
+                {% include "components/_dropdown.html"%}
+                <span class="badge bg-light text-dark border">전일 데이터 분석</span>
             </div>
             
             <div style="width: 100%;">
@@ -29,6 +42,7 @@
             
             <div id="ai-analysis-wrapper">
                 {% include "components/_ai_analysis_card.html" %}
+                {% include "components/invest_start_button.html" %}
             </div>
 
             <div id="invest-form-wrapper" class="mt-3">
@@ -42,8 +56,8 @@
 <script>
     // 섹션 전환 애니메이션을 위한 간단한 스크립트
     function goToInvest() {
-        const analysis = document.getElementById('analysis-section');
-        const invest = document.getElementById('invest-section');
+        const analysis = document.getElementById('ai-analysis-wrapper');
+        const invest = document.getElementById('invest-form-wrapper');
         if(analysis && invest) {
             analysis.style.display = 'none';
             invest.style.display = 'block';
@@ -51,8 +65,8 @@
     }
 
     function goBack() {
-        const analysis = document.getElementById('analysis-section');
-        const invest = document.getElementById('invest-section');
+        const analysis = document.getElementById('ai-analysis-wrapper');
+        const invest = document.getElementById('invest-form-wrapper');
         if(analysis && invest) {
             invest.style.display = 'none';
             analysis.style.display = 'block';
