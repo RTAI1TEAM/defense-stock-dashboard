@@ -10,16 +10,19 @@ def get_db_connection():
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASSWORD'),
         db=os.getenv('DB_NAME'),
-        charset=os.getenv('DB_CHARSET'),
+        charset=os.getenv('DB_CHARSET', 'utf8mb4'), # 기본값 설정
         cursorclass=pymysql.cursors.DictCursor
     )
 
 @rank_bp.route("/rank")
-def ranking():
+def rank():
     conn = get_db_connection()
+    rankings = []
+    average_profit_rate = 0 # 평균 수익률 초기화
     
     try:
         with conn.cursor() as cursor:
+            # 기존 랭킹 조회 SQL
             sql = """
                 SELECT 
                     u.nickname,
@@ -43,9 +46,16 @@ def ranking():
             cursor.execute(sql)
             rankings = cursor.fetchall()
             
-            for row in rankings:
-                row['total_asset'] = float(row['total_asset'])
-                row['profit_rate'] = float(row['profit_rate'])
+            # 데이터 가공 및 평균 수익률 계산
+            if rankings:
+                total_profit = 0
+                for row in rankings:
+                    row['total_asset'] = float(row['total_asset'])
+                    row['profit_rate'] = float(row['profit_rate'])
+                    total_profit += row['profit_rate']
+                
+                # 전체 사용자의 평균 수익률 산출
+                average_profit_rate = total_profit / len(rankings)
 
     except Exception as e:
         print(f"랭킹 조회 중 오류 발생: {e}")
@@ -53,4 +63,5 @@ def ranking():
     finally:
         conn.close()
 
-    return render_template('rank.html', rankings=rankings)
+    # average_profit_rate를 템플릿에 추가로 전달
+    return render_template('rank.html', rankings=rankings, average_profit_rate=average_profit_rate)

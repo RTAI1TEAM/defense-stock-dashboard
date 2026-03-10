@@ -1,33 +1,143 @@
 {% extends "navbar.html" %}
 
-{% block content %}
-<h2>투자자 랭킹</h2>
-<p>전체 사용자의 실시간 자산 및 수익률 순위입니다.</p>
+{% block title %}투자자 랭킹{% endblock %}
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>순위</th>
-            <th>닉네임</th>
-            <th>총 자산(현금+주식)</th>
-            <th>수익률</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for rank in rankings %}
-        <tr>
-            <td>{{ loop.index }}위</td>
-            <td>{{ rank.nickname }}</td>
-            <td>{{ "{:,.0f}".format(rank.total_asset) }}원</td>
-            <td>
-                {% if rank.profit_rate > 0 %}+{% endif %}{{ "%.2f"|format(rank.profit_rate) }}%
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="4">현재 등록된 랭킹 데이터가 없습니다.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% block content %}
+<div style="padding: 20px; font-family: 'Pretendard', sans-serif;">
+    <h2>투자자 랭킹</h2>
+    <p>실시간 자산 및 수익률 순위</p>
+    <hr>
+
+    <div style="display: flex; gap: 40px; align-items: flex-start;">
+        <div style="flex: 2;">
+            <table border="1" style="width: 100%; border-collapse: collapse; text-align: center; border: 1px solid #ddd;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">순위</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">닉네임</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">총 자산</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">수익률</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rank in rankings %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 12px;">{{ loop.index }}위</td>
+                        <td>{{ rank.nickname }}</td>
+                        <td>{{ "{:,.0f}".format(rank.total_asset) }}원</td>
+                        <td style="font-weight: bold; color: {% if rank.profit_rate > 0 %}#d9534f{% elif rank.profit_rate < 0 %}#0275d8{% else %}black{% endif %};">
+                            {% if rank.profit_rate > 0 %}+{% endif %}{{ "%.2f"|format(rank.profit_rate) }}%
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="gauge-container" style="flex: 1; min-width: 260px; background-color: #242933; color: white; padding: 50px 30px; border-radius: 15px; text-align: center;">
+            <div id="gauge_chart_div" style="display: flex; justify-content: center; height: 160px; overflow: hidden;"></div>
+            <div style="margin-top: 5px;">
+                <span style="font-size: 2rem; font-weight: bold; color: {% if average_profit_rate >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                    {{ "%.2f"|format(average_profit_rate) }}%
+                </span>
+                <p style="color: #a0a0a0; font-size: 1rem; margin-top: 8px; font-weight: 300;">평균 수익률</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['gauge']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        var avgRate = parseFloat("{{ average_profit_rate }}") || 0;
+        var minV = -50;
+        var maxV = 50;
+        
+        var baseGray = '#4a5568';     
+        var positiveGreen = '#10b981'; 
+        var negativeRed = '#ef4444';   
+        
+        // [수정] 피봇 색상을 수익률에 따라 변경하거나, 특정 색상으로 고정
+        var pivotColor = '#ffffff'; 
+
+        var data = google.visualization.arrayToDataTable([
+            ['Label', 'Value'],
+            ['', avgRate]
+        ]);
+
+        var options = {
+            width: 240, height: 240,
+            min: minV, max: maxV,
+            minorTicks: 0,
+            majorTicks: [],
+            animation: { duration: 1000, easing: 'out' }
+        };
+
+        // 0 기준 구간 설정 로직
+        if (avgRate >= 0) {
+            options.greenFrom = 0; options.greenTo = avgRate; options.greenColor = positiveGreen;
+            options.redFrom = avgRate; options.redTo = maxV; options.redColor = baseGray;
+            options.yellowFrom = minV; options.yellowTo = 0; options.yellowColor = baseGray;
+        } else {
+            options.redFrom = avgRate; options.redTo = 0; options.redColor = negativeRed;
+            options.greenFrom = 0; options.greenTo = maxV; options.greenColor = baseGray;
+            options.yellowFrom = minV; options.yellowTo = avgRate; options.yellowColor = baseGray;
+        }
+
+        var chart = new google.visualization.Gauge(document.getElementById('gauge_chart_div'));
+        
+        var observer = new MutationObserver(function() {
+            var svg = document.querySelector('#gauge_chart_div svg');
+            if(svg) {
+                // 1. 텍스트 숨기기
+                svg.querySelectorAll('text').forEach(t => t.style.display = 'none');
+                
+                // 2. 배경 원형 투명화
+                svg.querySelectorAll('circle').forEach(c => {
+                    // 커스텀 피봇(class="custom-pivot")은 건드리지 않음
+                    if (!c.classList.contains('custom-pivot')) {
+                        c.setAttribute('fill', '#242933');
+                        c.setAttribute('stroke', '#242933');
+                    }
+                });
+                
+                // 3. 포인터 바늘 스타일
+                var paths = svg.querySelectorAll('path');
+                paths.forEach(p => {
+                    var fill = p.getAttribute('fill').toLowerCase();
+                    if(fill !== positiveGreen.toLowerCase() && 
+                       fill !== negativeRed.toLowerCase() && 
+                       fill !== baseGray.toLowerCase()) {
+                        p.setAttribute('fill', '#ffffff');
+                        p.setAttribute('stroke', '#ffffff');
+                        p.style.filter = 'none';
+                    }
+                });
+
+                // 4. [해결] 피봇(가운데 동그라미)을 배경색과 다르게 강조
+                var existingPivot = svg.querySelector('.custom-pivot');
+                if(!existingPivot) {
+                    var pivot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    pivot.setAttribute('cx', '120'); 
+                    pivot.setAttribute('cy', '120'); 
+                    pivot.setAttribute('r', '6'); // 크기를 살짝 키움
+                    pivot.setAttribute('fill', pivotColor); // 포인트 색상 적용
+                    pivot.setAttribute('stroke', '#ffffff'); // 테두리를 흰색으로 주어 배경과 분리
+                    pivot.setAttribute('stroke-width', '2');
+                    pivot.setAttribute('class', 'custom-pivot');
+                    svg.appendChild(pivot);
+                } else {
+                    // 수익률 변화에 따라 색상 업데이트
+                    existingPivot.setAttribute('fill', pivotColor);
+                }
+            }
+        });
+
+        observer.observe(document.getElementById('gauge_chart_div'), {childList: true, subtree: true});
+        chart.draw(data, options);
+    }
+</script>
 {% endblock %}

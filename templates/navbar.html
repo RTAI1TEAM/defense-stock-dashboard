@@ -9,28 +9,28 @@
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand mx-4" href="#">🚀AI Quant</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <a class="navbar-brand mx-4" href="/">🚀AI Quant</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
   <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
     <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-      <li class="nav-item active">
-        <a class="nav-link" href="#">홈<span class="sr-only">(current)</span></a>
+      <li class="nav-item {% if request.path == '/' %}active{% endif %}">
+        <a class="nav-link" href="/">홈</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">차트</a>
+      <li class="nav-item {% if request.path.startswith('/chart') %}active{% endif %}">
+        <a class="nav-link" href="{{ url_for('stocks.stock_list') }}">차트</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">포트폴리오</a>
+      <li class="nav-item {% if request.path == '/portfolio' %}active{% endif %}">
+        <a class="nav-link" href="/portfolio">포트폴리오</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">뉴스</a>
+      <li class="nav-item {% if request.path == '/news' %}active{% endif %}">
+        <a class="nav-link" href="/news">뉴스</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">랭킹</a>
+      <li class="nav-item {% if request.path == '/rank' %}active{% endif %}">
+        <a class="nav-link" href="/rank">랭킹</a>
       </li>
 
     </ul>
@@ -39,6 +39,7 @@
       <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
     </form>
     <a href="#" class="mx-4">내 프로필</a>
+    <a href="{{url_for('auth_bp.logout')}}" class="mx-4">로그아웃</a>
   </div>
 </nav>
 

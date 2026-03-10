@@ -62,7 +62,6 @@ def get_news_from_db(keyword=None):
         conn.close()
 
 
-@news_bp.route("/")
 @news_bp.route("/news")
 def show_news():
     search_query = request.args.get("q", "").strip()

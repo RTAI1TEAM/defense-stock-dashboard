@@ -1,17 +1,12 @@
 import os
 import requests
-import pymysql
+from database import get_conn
 from dotenv import load_dotenv
 
 load_dotenv()
 
 SERVICE_KEY = os.getenv("SERVICE_KEY")
 
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
 
 # Flask 코드와 동일한 엔드포인트 형식
 BASE_URL = "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo"
@@ -32,19 +27,6 @@ def safe_int(value, default=0):
         return int(float(value))
     except ValueError:
         return default
-
-
-def get_connection():
-    return pymysql.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        port=DB_PORT,
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor,
-        autocommit=False
-    )
 
 
 def fetch_stock_prices(stock_code, num_of_rows=120):
@@ -84,7 +66,7 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
         high_price = row.get("hipr") or row.get("HIPR")
         low_price = row.get("lopr") or row.get("LOPR")
         close_price = row.get("clpr") or row.get("CLPR")
-        volume = row.get("accTrdvol") or row.get("ACC_TRDVOL")
+        volume = row.get("trqu") or row.get("TRQU")
 
         if not bas_dt:
             continue
@@ -103,7 +85,7 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
             "high": safe_int(high_price),
             "low": safe_int(low_price),
             "close": safe_int(close_price),
-            "volume": safe_int(volume),
+            "volume": safe_int(volume)
         })
 
     chart_data.sort(key=lambda x: x["date"])
@@ -239,7 +221,7 @@ def update_one_stock(conn, stock):
 def update_all_stocks():
     conn = None
     try:
-        conn = get_connection()
+        conn = get_conn()
 
         stocks = get_all_stocks(conn)
 
