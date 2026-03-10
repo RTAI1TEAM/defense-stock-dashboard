@@ -32,7 +32,7 @@
         <a href="{{ news.link }}" target="_blank" class="list-group-item list-group-item-action border-start-0 border-end-0 py-3">
             <div class="d-flex align-items-center">
                 <span class="me-2 text-primary">●</span>
-                <span class="news-summary">{{ news.description_clean }}</span>
+                <span class="news-summary">{{ news.ai_summary }}</span>
             </div>
         </a>
         {% else %}
@@ -40,9 +40,4 @@
         {% endfor %}
     </div>
 
-    <div class="d-grid gap-2 mt-5">
-        <button type="button" class="btn btn-primary btn-lg shadow-sm" onclick="goToInvest()">
-            🚀 이 종목 모의투자 시작하기
-        </button>
-    </div>
 </div>
