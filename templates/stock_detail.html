@@ -53,7 +53,7 @@
     </div>
 </div>
 
-<script>
+<!-- <script>
     // 섹션 전환 애니메이션을 위한 간단한 스크립트
     function goToInvest() {
         const analysis = document.getElementById('ai-analysis-wrapper');
@@ -72,5 +72,26 @@
             analysis.style.display = 'block';
         }
     }
+</script> -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const startBtn = document.getElementById('investStartBtn');
+        const analysis = document.getElementById('ai-analysis-wrapper');
+        const invest = document.getElementById('invest-form-wrapper');
+
+        if (startBtn && analysis && invest) {
+            startBtn.addEventListener('click', function () {
+                analysis.style.display = 'none';
+                invest.style.display = 'block';
+            });
+        }
+
+        window.goBack = function () {
+            if (analysis && invest) {
+                invest.style.display = 'none';
+                analysis.style.display = 'block';
+            }
+        };
+    });
 </script>
 {% endblock %}
