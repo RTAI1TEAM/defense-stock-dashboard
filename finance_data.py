@@ -10,7 +10,7 @@ def get_defense_data(conn):
             s.name_kr,
             d.current_price,
             d.change_rate,
-            d.volume
+            d.trading_value
         FROM stocks s
         JOIN stock_details d
         ON s.id = d.stock_id
@@ -23,9 +23,7 @@ def get_defense_data(conn):
         for row in rows:
 
             price = float(row["current_price"])
-            volume = int(row["volume"])
-
-            trading_value = price * volume
+            trading_value = int(row["trading_value"])
 
             results.append({
                 "ticker":row["ticker"],

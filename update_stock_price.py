@@ -67,6 +67,7 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
         low_price = row.get("lopr") or row.get("LOPR")
         close_price = row.get("clpr") or row.get("CLPR")
         volume = row.get("trqu") or row.get("TRQU")
+        trading_value = row.get("trPrc") or row.get("TRPRC")
 
         if not bas_dt:
             continue
@@ -85,7 +86,8 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
             "high": safe_int(high_price),
             "low": safe_int(low_price),
             "close": safe_int(close_price),
-            "volume": safe_int(volume)
+            "volume": safe_int(volume),
+            "trading_value": safe_int(trading_value)
         })
 
     chart_data.sort(key=lambda x: x["date"])
@@ -145,6 +147,7 @@ def upsert_stock_details(conn, stock_id, latest_row, prev_close=None):
     high_price = latest_row["high"]
     low_price = latest_row["low"]
     volume = latest_row["volume"]
+    trading_value = latest_row["trading_value"]
 
     change_amount = 0
     change_rate = 0.00
@@ -161,17 +164,19 @@ def upsert_stock_details(conn, stock_id, latest_row, prev_close=None):
         change_amount,
         change_rate,
         volume,
+        trading_value,
         high_price,
         low_price,
         open_price,
         updated_at
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
     ON DUPLICATE KEY UPDATE
         current_price = VALUES(current_price),
         change_amount = VALUES(change_amount),
         change_rate = VALUES(change_rate),
         volume = VALUES(volume),
+        trading_value = VALUES(trading_value),
         high_price = VALUES(high_price),
         low_price = VALUES(low_price),
         open_price = VALUES(open_price),
@@ -185,6 +190,7 @@ def upsert_stock_details(conn, stock_id, latest_row, prev_close=None):
             change_amount,
             change_rate,
             volume,
+            trading_value,
             high_price,
             low_price,
             open_price
