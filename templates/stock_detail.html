@@ -1,0 +1,17 @@
+{% extends "navbar.html" %}
+{% from "components/chart_macros.html" import line_chart %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+    <div>
+        {{ line_chart(
+            "mainStockChart",
+            stock.name_kr ~ " 주식 차트",
+            chart_labels,
+            chart_values,
+            "종가",
+            "360px"
+        ) }}
+    </div>
+</div>
+{% endblock %}

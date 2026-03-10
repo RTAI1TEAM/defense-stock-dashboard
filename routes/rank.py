@@ -1,22 +1,11 @@
-import os
-import pymysql
 from flask import Blueprint, render_template
+from database import get_conn
 
 rank_bp = Blueprint('rank', __name__)
 
-def get_db_connection():
-    return pymysql.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        db=os.getenv('DB_NAME'),
-        charset=os.getenv('DB_CHARSET'),
-        cursorclass=pymysql.cursors.DictCursor
-    )
-
 @rank_bp.route("/rank")
 def ranking():
-    conn = get_db_connection()
+    conn = get_conn()
     
     try:
         with conn.cursor() as cursor:

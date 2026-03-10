@@ -241,7 +241,6 @@ def get_combined_news(query=None):
         return []
 
 
-@news_bp.route("/")
 @news_bp.route("/news")
 def show_news():
     search_query = request.args.get("q")

@@ -2,26 +2,15 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for
 import pymysql
 from dotenv import load_dotenv
-
-load_dotenv()
+from database import get_conn
 
 # Blueprint 정의 (이름: stock_recommend)
 stock_recommend_bp = Blueprint('stock_recommend', __name__)
 
-def get_db_connection():
-    return pymysql.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        db=os.getenv('DB_NAME'),
-        charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor
-    )
-
 # 1. AI 분석 상세 및 투자 입력 페이지
 @stock_recommend_bp.route("/stock_analysis/<int:stock_id>")
 def stock_analysis(stock_id):
-    conn = get_db_connection()
+    conn = get_conn()
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -61,7 +50,7 @@ def execute_trade():
     strategy = request.form.get('strategy')
     user_id = 1  # 임시 사용자 ID
 
-    conn = get_db_connection()
+    conn = get_conn()
     try:
         with conn.cursor() as cursor:
             # 주가 확인
