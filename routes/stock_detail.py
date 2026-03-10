@@ -157,45 +157,72 @@ def show_stock_chart(ticker):
 @stock_detail_bp.route("/invest/execute", methods=['POST'])
 def execute_trade():
     if "nickname" not in session:
-        return redirect(url_for("auth_bp.login_page"))
+        return jsonify({"success": False, "message": "로그인이 필요합니다."})
 
-    stock_id = request.form.get('stock_id')
+    # 변수 초기화
+    ticker_from_form = request.form.get('stock_id')
     quantity = int(request.form.get('quantity') or 0)
-    ai_news = request.form.get('ai_news')
-    user_id = session.get('user_id', 1)  # 실제 서비스라면 세션의 user_id 사용
+    ai_news = request.form.get('ai_news') or request.form.get('strategy') or "전략 없음"
+    user_id = session.get('user_id', 1) 
+    
+    conn = None # ★ 중요: conn 변수를 미리 선언해서 NameError 방지
 
     if quantity <= 0:
-        return "<script>alert('구매할 수량을 입력하세요.'); history.back();</script>"
+        return jsonify({"success": False, "message": "구매할 수량을 입력하세요."})
 
-    conn = get_conn()
     try:
+        conn = get_conn() # 여기서 연결 시도
         with conn.cursor() as cursor:
-            # 현재가 조회 (예시: stock_details 혹은 history의 마지막 값)
-            cursor.execute("SELECT current_price FROM stock_details WHERE stock_id = %s", (stock_id,))
-            price_res = cursor.fetchone()
-            if not price_res:
-                return "<script>alert('현재가 정보를 불러올 수 없습니다.'); history.back();</script>"
+            # 1. 시세 및 종목 ID 조회
+            sql_stock = """
+                SELECT s.id, h.close_price 
+                FROM stocks s 
+                JOIN stock_price_history h ON s.id = h.stock_id 
+                WHERE s.ticker = %s 
+                ORDER BY h.price_date DESC 
+                LIMIT 1
+            """
+            cursor.execute(sql_stock, (ticker_from_form,))
+            stock_res = cursor.fetchone()
+
+            if not stock_res:
+                return jsonify({"success": False, "message": "시세 정보를 찾을 수 없습니다."})
             
-            price = price_res['current_price']
+            real_db_stock_id = stock_res['id']
+            price = float(stock_res['close_price'])
             total_cost = price * quantity
 
-            # 계좌 잔액 확인
+            # 2. 계좌 확인
             cursor.execute("SELECT id, current_balance FROM mock_accounts WHERE user_id = %s", (user_id,))
             account = cursor.fetchone()
-            if not account or account['current_balance'] < total_cost:
-                return "<script>alert('잔액이 부족합니다.'); history.back();</script>"
 
-            # 잔액 차감 및 거래 기록 저장
+            if not account:
+                return jsonify({"success": False, "message": "계좌가 존재하지 않습니다."})
+
+            if float(account['current_balance']) < total_cost:
+                return jsonify({"success": False, "message": f"잔액 부족! (필요: {total_cost:,.0f}원)"})
+
+            # 3. DB 업데이트 (잔액 차감 및 기록)
             cursor.execute("UPDATE mock_accounts SET current_balance = current_balance - %s WHERE id = %s", (total_cost, account['id']))
-            cursor.execute("""
+            
+            sql_insert = """
                 INSERT INTO trades (user_id, account_id, stock_id, trade_type, price, quantity, total_amount, strategy)
                 VALUES (%s, %s, %s, 'BUY', %s, %s, %s, %s)
-            """, (user_id, account['id'], stock_id, price, quantity, total_cost, strategy))
+            """
+            cursor.execute(sql_insert, (user_id, account['id'], real_db_stock_id, price, quantity, total_cost, ai_news))
             
             conn.commit()
-        return f"<script>alert('{quantity}주 매수 완료!'); location.href='/';</script>"
+            
+            return jsonify({
+                "success": True, 
+                "message": f"{quantity}주 매수 완료! (총 {total_cost:,.0f}원)",
+                "new_balance": float(account['current_balance']) - total_cost
+            })
+
     except Exception as e:
-        conn.rollback()
-        return f"거래 에러: {e}"
+        if conn: # conn이 정의되어 있을 때만 실행
+            conn.rollback()
+        return jsonify({"success": False, "message": f"거래 에러: {str(e)}"})
     finally:
-        conn.close()
+        if conn: # conn이 정의되어 있을 때만 실행
+            conn.close()
