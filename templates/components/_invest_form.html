@@ -1,0 +1,26 @@
+<div id="invest-section" style="display: none;" class="card shadow border-0 p-4">
+    <h3 class="fw-bold text-success mb-4">💰 투자 설정</h3>
+    <form action="{{ url_for('stock_recommend.execute_trade') }}" method="POST">
+        <input type="hidden" name="stock_id" value="{{ stock_id }}">
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold">투자할 주수</label>
+            <input type="number" class="form-control form-control-lg" name="quantity" min="1" placeholder="예: 10" required>
+            <div class="form-text">현재가 기준으로 잔액에서 차감됩니다.</div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold">AI 추천 전략 (참고용)</label>
+            <input type="text" class="form-control bg-light" name="strategy" value="{{ ai_strategy }}" readonly>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-8">
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">매수 주문하기</button>
+            </div>
+            <div class="col-4">
+                <button type="button" class="btn btn-outline-secondary btn-lg w-100" onclick="goBack()">취소</button>
+            </div>
+        </div>
+    </form>
+</div
