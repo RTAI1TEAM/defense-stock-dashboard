@@ -1,43 +1,119 @@
-<div class="inventory-section" style="margin-top: 40px;">
-    <h3 class="history-title">현재 보유 종목 상세</h3>
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; background: #fff;">
-            <thead>
-                <tr style="border-bottom: 2px solid #f0f0f0; text-align: left; color: #888; font-size: 13px;">
-                    <th style="padding: 15px 10px;">종목명</th>
-                    <th style="padding: 15px 10px;">보유 주수</th>
-                    <th style="padding: 15px 10px;">구매가</th>
-                    <th style="padding: 15px 10px;">현재가</th>
-                    <th style="padding: 15px 10px;">수익금</th>
-                    <th style="padding: 15px 10px;">수익률</th>
+{% extends "navbar.html" %}
+
+{% block title %}내 포트폴리오{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    
+    <div class="row mb-4">
+        <div class="col-md-6 d-flex">
+            <div class="card shadow-sm border-0 p-5 w-100" style="border-radius: 20px;">
+                <span class="badge bg-light text-secondary px-3 py-2 mb-3 rounded-pill" style="width:fit-content; border:1px solid #ddd;">총 평가자산</span>
+                <h1 style="font-weight: 900; font-size: 3.5rem;">{{ "{:,.0f}".format(total_assets) }}원</h1>
+                <p style="font-size: 1.1rem; font-weight: 600;">
+                    누적 수익금 
+                    <span style="color: {{ '#f23645' if total_profit > 0 else '#0062ff' }}">
+                        {{ '+' if total_profit > 0 }}{{ "{:,.0f}".format(total_profit) }}원 ({{ "%.2f"|format(total_profit_rate) }}%)
+                    </span>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex">
+            <div class="card shadow-sm border-0 p-4 w-100 text-center" style="border-radius: 20px;">
+                <h6 class="fw-bold text-secondary text-start mb-3">포트폴리오 비중</h6>
+                <div style="height: 220px;"><canvas id="portfolioPieChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius: 20px;">
+        <h5 class="fw-bold mb-3">내 보유 종목 및 AI 전략</h5>
+        <table class="table align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>종목명</th><th>보유주수</th><th>평가금액</th><th>수익률</th><th>적용 전략</th><th>관리</th>
                 </tr>
             </thead>
             <tbody>
-                <tr style="border-bottom: 1px solid #f9f9f9; font-size: 14px;">
-                    <td style="padding: 20px 10px;"><strong>LIG넥스원</strong></td>
-                    <td style="padding: 20px 10px;">10주</td>
-                    <td style="padding: 20px 10px; color: #666;">120,000원</td>
-                    <td style="padding: 20px 10px; font-weight: bold;">132,000원</td>
-                    <td style="padding: 20px 10px; color: var(--accent-red); font-weight: bold;">+12,000원</td>
-                    <td style="padding: 20px 10px;">
-                        <span style="background: rgba(242,54,69,0.1); color: var(--accent-red); padding: 4px 8px; border-radius: 6px; font-weight: bold;">
-                            +10.0%
+                {% for item in holdings %}
+                <tr>
+                    <td class="fw-bold">{{ item.name_kr }}</td>
+                    <td>{{ item.quantity }}주</td>
+                    <td class="fw-bold">{{ "{:,.0f}".format(item.total_current) }}원</td>
+                    <td>
+                        <span class="badge" style="background:rgba({{ '242,54,69' if item.profit_rate > 0 else '0,98,255' }},0.1); color:{{ '#f23645' if item.profit_rate > 0 else '#0062ff' }}">
+                            {{ '+' if item.profit_rate > 0 }}{{ "%.2f"|format(item.profit_rate) }}%
                         </span>
                     </td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f9f9f9; font-size: 14px;">
-                    <td style="padding: 20px 10px;"><strong>한화에어로스페이스</strong></td>
-                    <td style="padding: 20px 10px;">5주</td>
-                    <td style="padding: 20px 10px; color: #666;">210,000원</td>
-                    <td style="padding: 20px 10px; font-weight: bold;">205,000원</td>
-                    <td style="padding: 20px 10px; color: var(--accent-blue); font-weight: bold;">-25,000원</td>
-                    <td style="padding: 20px 10px;">
-                        <span style="background: rgba(0,98,255,0.1); color: var(--accent-blue); padding: 4px 8px; border-radius: 6px; font-weight: bold;">
-                            -2.38%
-                        </span>
+                    <td><span class="badge bg-light text-dark border">🤖 {{ item.strategy }}</span></td>
+                    <td>
+                        <button class="btn btn-outline-secondary btn-sm">변경</button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="sellStock({{ item.stock_id }})">매도/중지</button>
                     </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
+        <h5 class="fw-bold mb-3">최근 거래 내역</h5>
+        <table class="table text-center align-middle">
+            <thead class="table-light">
+                <tr><th>일시</th><th>구분</th><th>종목(수량)</th><th class="text-end">단가</th><th class="text-end">거래금액</th></tr>
+            </thead>
+            <tbody>
+                {% for trade in trades %}
+                <tr>
+                    <td>{{ trade.traded_at.strftime('%y.%m.%d %H:%M') }}</td>
+                    <td><span class="badge {{ 'bg-danger' if trade.trade_type=='BUY' else 'bg-primary' }}">{{ '매수' if trade.trade_type=='BUY' else '매도' }}</span></td>
+                    <td class="text-start fw-bold">{{ trade.name_kr }} ({{ trade.quantity }}주)</td>
+                    <td class="text-end">{{ "{:,.0f}".format(trade.price) }}원</td>
+                    <td class="text-end fw-bold">{{ "{:,.0f}".format(trade.total_amount) }}원</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if total_pages > 1 %}
+        <nav class="mt-4"><ul class="pagination justify-content-center">
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {{ 'active' if p == page }}"><a class="page-link" href="/portfolio?page={{ p }}">{{ p }}</a></li>
+            {% endfor %}
+        </ul></nav>
+        {% endif %}
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    Chart.register(ChartDataLabels);
+    new Chart(document.getElementById('portfolioPieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ pie_labels | tojson }},
+            datasets: [{ data: {{ pie_values | tojson }}, backgroundColor: ['#3b82f6', '#93c5fd', '#f87171', '#fecaca', '#dbeafe'] }]
+        },
+        options: {
+            cutout: '55%', plugins: {
+                legend: { display: false },
+                datalabels: {
+                    color: '#fff', font: { weight: 'bold' },
+                    formatter: (val, ctx) => {
+                        let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        return ctx.chart.data.labels[ctx.dataIndex] + '\n' + (val*100/sum).toFixed(1) + '%';
+                    }
+                }
+            }
+        }
+    });
+});
+
+function sellStock(id) {
+    if(confirm("전량 매도하시겠습니까?")) {
+        fetch('/api/sell_all', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stock_id:id}) })
+        .then(res => res.json()).then(data => { alert(data.message); location.reload(); });
+    }
+}
+</script>
+{% endblock %}
