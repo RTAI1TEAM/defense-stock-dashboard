@@ -1,20 +1,42 @@
-<div id="invest-section" style="display: none;" class="card shadow border-0 p-4">
-    <h3 class="fw-bold text-success mb-4">💰 투자 설정</h3>
-    
-        <div class="mb-4">
+<style>
+.back-btn {
+    border: none;
+    background: transparent;
+    padding: 6px;
+    cursor: pointer;
+    color: #495057;
+    transition: all 0.15s ease;
+}
 
-            <label class="form-label fw-bold">AI 추천 전략 (참고용)</label>
-            <input type="text" class="form-control bg-light" name="strategy" value="{{ ai_news }}" readonly>
-        </div>
+.back-btn:hover {
+    color: #000;
+    transform: translateX(-3px);
+}
+</style>
+<div id="invest-section" class="card shadow border-0 p-4">
+    <div class="d-flex align-items-center mb-4">
+
+        <button onclick="goBack()" class="back-btn me-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+            </svg>
+        </button>
+
+        <h4 class="fw-bold text-success mb-0">💰 투자 설정</h4>
+
+    </div>
+    <div class="mb-4">
+        <label class="form-label fw-bold">AI 추천 전략 (참고용)</label>
+        <input type="text" class="form-control bg-light" name="strategy" value="{{ ai_news }}" readonly>
+    </div>
 
     <form id="tradeForm" onsubmit="event.preventDefault(); submitTrade();">
         <input type="hidden" name="stock_id" value="{{ stock_id }}">
-        <input type="hidden" name="ai_news" value="{{ ai_news }}"> <div class="mb-3">
+        <input type="hidden" name="ai_news" value="{{ ai_news }}"> 
+        <div class="mb-3">
             <label class="form-label fw-bold">투자할 주수</label>
             <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" placeholder="몇 주를 살까요?" required>
-</div>
-        
-
+        </div>
         <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="submitTrade()">매수 주문하기</button>
     </form>
 </div>
