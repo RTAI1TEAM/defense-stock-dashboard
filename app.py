@@ -8,6 +8,7 @@ from routes.stock_recommend import stock_recommend_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
 from routes.stock_detail import stock_detail_bp
+from routes.rank2 import rank2_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
@@ -19,6 +20,7 @@ app.register_blueprint(stock_recommend_bp)
 app.register_blueprint(stocks_bp)
 app.register_blueprint(portfolio_bp)
 app.register_blueprint(stock_detail_bp)
+app.register_blueprint(rank2_bp)
 
 def get_main_etf():
     conn = get_conn()
