@@ -21,7 +21,7 @@
         <a class="nav-link" href="/">홈</a>
       </li>
       <li class="nav-item {% if request.path.startswith('/chart') %}active{% endif %}">
-        <a class="nav-link" href="{{ url_for('stock_detail.show_stock_chart', ticker='064350') }}">차트</a>
+        <a class="nav-link" href="{{ url_for('stocks.stock_list') }}">차트</a>
       </li>
       <li class="nav-item {% if request.path == '/portfolio' %}active{% endif %}">
         <a class="nav-link" href="/portfolio">포트폴리오</a>
