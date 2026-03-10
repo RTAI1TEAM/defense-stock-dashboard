@@ -1,4 +1,4 @@
-<div id="invest-section" style="display: none;" class="card shadow border-0 p-4">
+<div id="invest-section" class="card shadow border-0 p-4">
     <h3 class="fw-bold text-success mb-4">💰 투자 설정</h3>
     <form action="{{ url_for('stock_detail.execute_trade') }}" method="POST">
         <input type="hidden" name="stock_id" value="{{ stock_id }}">
