@@ -112,30 +112,39 @@
       <p>이메일로 회원가입</p>
     </div>
 
-    <!-- 에러 메시지 -->
     {% if error %}
     <div class="error-msg">{{ error }}</div>
     {% endif %}
 
-    <!-- Flask로 전송하는 form -->
     <form action="/register" method="POST">
-      <div class="form-group">
-        <input type="text" name="nickname" placeholder="닉네임" required />
-      </div>
 
-      <div class="form-group">
-        <input type="email" name="email" placeholder="이메일" required />
-      </div>
+      {% if show_code %}
+        <!-- 인증번호 입력 단계 -->
+        <input type="hidden" name="email" value="{{ email }}" />
+        <input type="hidden" name="password" value="{{ password }}" />
+        <input type="hidden" name="nickname" value="{{ nickname }}" />
+        <div class="form-group">
+          <input type="text" name="code" placeholder="인증번호 6자리 입력" required />
+        </div>
+        <button type="submit" class="btn-signup">인증 완료</button>
 
-      <div class="form-group">
-        <input type="password" name="password" placeholder="비밀번호" required />
-      </div>
+      {% else %}
+        <!-- 회원가입 입력 단계 -->
+        <div class="form-group">
+          <input type="text" name="nickname" placeholder="닉네임" required />
+        </div>
+        <div class="form-group">
+          <input type="email" name="email" placeholder="이메일" required />
+        </div>
+        <div class="form-group">
+          <input type="password" name="password" placeholder="비밀번호" required />
+        </div>
+        <div class="form-group">
+          <input type="password" name="password2" placeholder="비밀번호 확인" required />
+        </div>
+        <button type="submit" class="btn-signup">회원가입</button>
+      {% endif %}
 
-      <div class="form-group">
-        <input type="password" name="password2" placeholder="비밀번호 확인" required />
-      </div>
-
-      <button type="submit" class="btn-signup">회원가입</button>
     </form>
 
     <div class="footer-text">
@@ -143,5 +152,39 @@
     </div>
   </div>
 
+  <script>
+    {% if not show_code %}
+    document.querySelector("form").addEventListener("submit", function(e) {
+      const email = document.querySelector('input[name="email"]').value;
+      const password = document.querySelector('input[name="password"]').value;
+      const password2 = document.querySelector('input[name="password2"]').value;
+      const nickname = document.querySelector('input[name="nickname"]').value;
+
+      if (!email || !password || !password2 || !nickname) {
+        e.preventDefault();
+        alert("모든 항목을 입력해주세요!");
+        return;
+      }
+
+      if (!email.includes("@")) {
+        e.preventDefault();
+        alert("이메일 형식이 올바르지 않아요!");
+        return;
+      }
+
+      if (password.length < 8) {
+        e.preventDefault();
+        alert("비밀번호는 8자 이상이어야 해요!");
+        return;
+      }
+
+      if (password !== password2) {
+        e.preventDefault();
+        alert("비밀번호가 일치하지 않아요!");
+        return;
+      }
+    });
+    {% endif %}
+  </script>
 </body>
 </html>
