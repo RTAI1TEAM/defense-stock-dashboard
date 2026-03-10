@@ -8,7 +8,7 @@
         </div>
 
     <form id="tradeForm" onsubmit="event.preventDefault(); submitTrade();">
-        <input type="hidden" name="stock_id" value="{{ stock.ticker }}">
+        <input type="hidden" name="stock_id" value="{{ stock_id }}">
         <input type="hidden" name="ai_news" value="{{ ai_news }}"> <div class="mb-3">
             <label class="form-label fw-bold">투자할 주수</label>
             <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" placeholder="몇 주를 살까요?" required>
