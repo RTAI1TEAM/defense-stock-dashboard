@@ -6,6 +6,7 @@ def get_defense_data(conn):
 
         sql = """
         SELECT
+            s.ticker,
             s.name_kr,
             d.current_price,
             d.change_rate,
@@ -27,6 +28,7 @@ def get_defense_data(conn):
             trading_value = price * volume
 
             results.append({
+                "ticker":row["ticker"],
                 "name": row["name_kr"],
                 "price": int(price),
                 "change": float(row["change_rate"]),

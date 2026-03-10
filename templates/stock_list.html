@@ -78,7 +78,8 @@ function updateRank() {
 </script>
             <tbody>
                 {% for stock in stocks %}
-                <tr style="cursor: pointer;">
+                <tr style="cursor: pointer;"
+                onclick="window.location.href='{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}';">
                     <td class="font-weight-bold">{{ loop.index }}</td>
                     <td><strong>{{ stock.name }}</strong></td>
                     <td>{{ stock.price | comma }}원</td>
