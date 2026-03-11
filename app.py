@@ -182,7 +182,7 @@ def index():
         chart_data=chart_data,
         score=score,
         ai_news=ai_news,      # 템플릿에서 요약문으로 사용
-        news_list=news_list,  # 템플릿에서 뉴스 목록으로 사용
+        news_list=news_list[:3],  # 템플릿에서 뉴스 목록으로 사용, 뉴스 목록 5개로 제한
         color_class=color_class,
         ai_strategy=ai_news,  # 기존 ai_strategy 변수명도 대응
         defense_stocks=defense_stocks,
