@@ -263,3 +263,32 @@
     transform: translateX(-3px);
 }
 
+/* stock_chat */
+.stock-chat-box {
+    border-radius: 16px;
+}
+
+.stock-chat-messages {
+    height: 260px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+}
+
+.stock-chat-item:last-child {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.stock-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.stock-chat-messages::-webkit-scrollbar-thumb {
+    background: #cfd4da;
+    border-radius: 10px;
+}
+
+.stock-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
