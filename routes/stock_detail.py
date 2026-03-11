@@ -94,6 +94,56 @@ def get_live_analysis(stock_name):
         print(f"Gemini 분석 에러: {e}")
         return news_list, 50, "AI 분석 엔진 일시 오류", "분석 불가", "bg-secondary"
 
+def get_db_or_api_stock_news(stock_id, stock_name):
+    """stock_news 테이블에서 데이터를 조회하고, 없으면 API 호출 후 저장"""
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            # 1. DB에서 최신 데이터(예: 1시간 이내) 조회
+            sql_check = """
+                SELECT score, ai_summary, news_data 
+                FROM stock_news 
+                WHERE stock_id = %s 
+                AND updated_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            """
+            cursor.execute(sql_check, (stock_id,))
+            cached = cursor.fetchone()
+
+            if cached:
+                # ✅ 중요: JSON 문자열을 파이썬 리스트로 다시 변환 (그래야 HTML에서 for문 가능)
+                news_list = json.loads(cached['news_data'])
+                score = cached['score']
+                ai_news = cached['ai_summary']
+                print(f"[{stock_name}] DB 캐시 데이터 사용")
+            else:
+                # 2. 데이터가 없으면 기존 API 분석 함수 실행
+                print(f"[{stock_name}] API 신규 분석 실행")
+                news_list, score, ai_news, status, color = get_live_analysis(stock_name)
+                
+                # 3. 새로운 결과를 DB에 저장 (있으면 덮어쓰기)
+                sql_save = """
+                    INSERT INTO stock_news (stock_id, score, ai_summary, news_data, updated_at)
+                    VALUES (%s, %s, %s, %s, NOW())
+                    ON DUPLICATE KEY UPDATE 
+                        score = VALUES(score),
+                        ai_summary = VALUES(ai_summary),
+                        news_data = VALUES(news_data),
+                        updated_at = NOW()
+                """
+                cursor.execute(sql_save, (
+                    stock_id, score, ai_news, 
+                    json.dumps(news_list, ensure_ascii=False) # 리스트를 JSON 문자열로 저장
+                ))
+                conn.commit()
+
+            # UI용 상태값 최종 계산
+            if score >= 70: status, color = "긍정", "bg-success"
+            elif score >= 40: status, color = "보통", "bg-warning"
+            else: status, color = "부정", "bg-danger"
+            
+            return news_list, score, ai_news, status, color
+    finally:
+        conn.close()
 
 def get_stock(ticker="064350"):
     conn = get_conn()
@@ -157,7 +207,7 @@ def show_stock_chart(ticker):
     stock = get_stock(ticker)
     stock_list = get_stock_list()
     chart_data = get_stock_chart_data(stock["id"])
-    news_list, score, ai_news, status, color_class = get_live_analysis(stock["name_kr"])
+    news_list, score, ai_news, status, color_class = get_db_or_api_stock_news(stock["id"], stock["name_kr"])
     account = None
     conn = get_conn()
     try:
