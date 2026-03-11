@@ -64,7 +64,7 @@ if __name__ == "__main__":
         "주가 업데이트":  step("주가 업데이트  (stock_price_history / stock_details)", run_stock_update),
         "ETF 업데이트":   step("ETF 업데이트   (etf_price_history)", run_etf_update),
         "뉴스 업데이트":  step("뉴스 수집/저장 (news)", run_news_update),
-        "뉴스 분석 업데이트":  step("뉴스 수집/저장 (stock_news)", run_news_analysis()),
+        "뉴스 분석 업데이트":  step("뉴스 수집/저장 (stock_news)", run_news_analysis),
     }
 
     log("=" * 50)
