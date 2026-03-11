@@ -41,7 +41,6 @@
 </div>
 
 <script>
-// 전략 선택 시 수익률 텍스트 변경
 document.getElementById('strategySelector').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     const profit = selectedOption.getAttribute('data-profit');
@@ -50,13 +49,11 @@ document.getElementById('strategySelector').addEventListener('change', function(
 });
 
 function handleTrade(type) {
-    // 매수/매도 타입 설정
     document.getElementById('tradeTypeInput').value = type;
     
     const form = document.getElementById('tradeForm');
     const formData = new FormData(form);
 
-    // 디버깅용 로그
     console.log("전송 데이터:", Object.fromEntries(formData));
 
     fetch("{{ url_for('stock_detail.execute_trade') }}", {
@@ -65,18 +62,20 @@ function handleTrade(type) {
     })
     .then(response => response.json())
     .then(data => {
-    if (data.success) {
-        alert(data.message);
-        
-        const balanceElement = document.getElementById('current-balance');
-        if (balanceElement && data.new_balance) {
-            balanceElement.innerText = data.new_balance; // .toLocaleString() 제거
-        }
+        if (data.success) {
+            alert(data.message);
+            
+            const balanceElement = document.getElementById('current-balance');
+            if (balanceElement && data.new_balance) {
+                balanceElement.innerText = data.new_balance;
+            }
 
-    } else {
-        alert("거래 실패: " + data.message);
-    }
-})
+            document.getElementById('tradeQuantity').value = 1;
+
+        } else {
+            alert("거래 실패: " + data.message);
+        }
+    })
     .catch(error => {
         console.error('Error:', error);
         alert("통신 오류가 발생했습니다.");
