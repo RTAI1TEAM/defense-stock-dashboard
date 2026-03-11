@@ -6,22 +6,37 @@
 <div class="container mt-4 mb-5">
     
     <div class="row mb-4">
+        <!-- 총 평가자산 카드 -->
         <div class="col-md-6 d-flex">
-            <div class="card shadow-sm border-0 p-5 w-100" style="border-radius: 20px;">
+            <div class="card shadow-sm border-0 p-4 w-100" style="border-radius: 20px;">
                 <span class="badge bg-light text-secondary px-3 py-2 mb-3 rounded-pill" style="width:fit-content; border:1px solid #ddd;">총 평가자산</span>
-                <h1 style="font-weight: 900; font-size: 3.5rem;">{{ "{:,.0f}".format(total_assets) }}원</h1>
-                <p style="font-size: 1.1rem; font-weight: 600;">
+                <h1 style="font-weight: 900; font-size: 3rem;">{{ "{:,.0f}".format(total_assets) }}원</h1>
+                <p style="font-size: 1rem; font-weight: 600;" class="mb-3">
                     누적 수익금 
                     <span style="color: {{ '#f23645' if total_profit > 0 else '#0062ff' }}">
                         {{ '+' if total_profit > 0 }}{{ "{:,.0f}".format(total_profit) }}원 ({{ "%.2f"|format(total_profit_rate) }}%)
                     </span>
                 </p>
+                <!-- 현금 / 투자자산 분리 -->
+                <div class="d-flex gap-3 mt-auto">
+                    <div class="rounded-3 px-3 py-2 flex-fill text-center" style="background:#f0f4ff;">
+                        <div class="text-muted mb-1" style="font-size:.75rem;">💰 현금 잔고</div>
+                        <div class="fw-bold" style="font-size:.95rem; color:#0062ff;">{{ "{:,.0f}".format(cash_balance) }}원</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-2 flex-fill text-center" style="background:#fff0f0;">
+                        <div class="text-muted mb-1" style="font-size:.75rem;">📈 투자자산</div>
+                        <div class="fw-bold" style="font-size:.95rem; color:#f23645;">{{ "{:,.0f}".format(stock_value) }}원</div>
+                    </div>
+                </div>
             </div>
         </div>
+        <!-- 포트폴리오 비중 도넛 차트 -->
         <div class="col-md-6 d-flex">
             <div class="card shadow-sm border-0 p-4 w-100 text-center" style="border-radius: 20px;">
                 <h6 class="fw-bold text-secondary text-start mb-3">포트폴리오 비중</h6>
-                <div style="height: 220px;"><canvas id="portfolioPieChart"></canvas></div>
+                <div style="height: 220px; position: relative;">
+                    <canvas id="portfolioPieChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -92,14 +107,13 @@
     </div>
 </div>
 
-<div class="modal" id="sellModal" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+<!-- 매도 모달 -->
+<div class="modal" id="sellModal" tabindex="-1" style="display:none; background: rgba(0,0,0,0.5);">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 16px; border: none;">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="sellModalTitle">매도하기</h5>
-                <button type="button" class="close" onclick="closeModal('sellModal')">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close" onclick="closeModal('sellModal')"></button>
             </div>
             <div class="modal-body">
                 <p id="sellModalDesc" class="text-muted mb-3"></p>
@@ -116,20 +130,19 @@
     </div>
 </div>
 
-<div class="modal" id="strategyModal" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+<!-- 전략 변경 모달 -->
+<div class="modal" id="strategyModal" tabindex="-1" style="display:none; background: rgba(0,0,0,0.5);">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 16px; border: none;">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="strategyModalTitle">AI 전략 변경</h5>
-                <button type="button" class="close" onclick="closeModal('strategyModal')">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close" onclick="closeModal('strategyModal')"></button>
             </div>
             <div class="modal-body">
                 <p id="strategyModalDesc" class="text-muted mb-3"></p>
                 <div class="form-group mb-0">
                     <label class="fw-bold mb-2">새로운 전략 선택</label>
-                    <select id="strategySelect" class="form-control form-control-lg">
+                    <select id="strategySelectModal" class="form-control form-control-lg">
                         <option value="돌파매매 전략">돌파매매 전략</option>
                         <option value="골든크로스 전략">골든크로스 전략</option>
                         <option value="수동 운용">수동 운용</option>
@@ -146,23 +159,47 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-// 도넛 차트
 document.addEventListener("DOMContentLoaded", function() {
     Chart.register(ChartDataLabels);
+
+    const labels = {{ pie_labels | tojson }};
+    const values = {{ pie_values | tojson }};
+
+    // 현금 잔고도 비중에 포함
+    const cashBalance = {{ cash_balance }};
+    const allLabels = labels.length > 0 ? [...labels, '현금'] : ['현금'];
+    const allValues = labels.length > 0 ? [...values, cashBalance] : [cashBalance];
+    const colors    = ['#3b82f6','#f87171','#34d399','#fbbf24','#a78bfa','#93c5fd','#fca5a5'];
+    const bgColors  = allLabels.map((_, i) => colors[i % colors.length]);
+    // 현금은 항상 회색
+    bgColors[bgColors.length - 1] = '#d1d5db';
+
     new Chart(document.getElementById('portfolioPieChart'), {
         type: 'doughnut',
         data: {
-            labels: {{ pie_labels | tojson }},
-            datasets: [{ data: {{ pie_values | tojson }}, backgroundColor: ['#3b82f6', '#93c5fd', '#f87171', '#fecaca', '#dbeafe'] }]
+            labels: allLabels,
+            datasets: [{
+                data: allValues,
+                backgroundColor: bgColors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
         },
         options: {
-            cutout: '55%', plugins: {
+            cutout: '55%',
+            // circumference: 360 (기본값) → 반원 아닌 전체 원
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
                 legend: { display: false },
                 datalabels: {
-                    color: '#fff', font: { weight: 'bold' },
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
                     formatter: (val, ctx) => {
-                        let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                        return ctx.chart.data.labels[ctx.dataIndex] + '\n' + (val*100/sum).toFixed(1) + '%';
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const pct = (val * 100 / sum).toFixed(1);
+                        if (pct < 5) return ''; // 너무 작은 조각은 라벨 생략
+                        return ctx.chart.data.labels[ctx.dataIndex] + '\n' + pct + '%';
                     }
                 }
             }
@@ -170,90 +207,60 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// 🚀 모달 제어용 전역 변수
 let currentStockId = null;
-let currentMaxQty = 0;
+let currentMaxQty  = 0;
 
-// 모달 닫기
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
 
-// 매도 모달 열기
 function openSellModal(id, maxQty, stockName) {
     currentStockId = id;
-    currentMaxQty = maxQty;
-    
+    currentMaxQty  = maxQty;
     document.getElementById('sellModalTitle').innerText = `${stockName} 매도`;
-    document.getElementById('sellModalDesc').innerText = `최대 매도 가능 수량: ${maxQty}주`;
-    
-    let qtyInput = document.getElementById('sellQtyInput');
+    document.getElementById('sellModalDesc').innerText  = `최대 매도 가능 수량: ${maxQty}주`;
+    const qtyInput = document.getElementById('sellQtyInput');
     qtyInput.value = maxQty;
-    qtyInput.max = maxQty;
-    
+    qtyInput.max   = maxQty;
     document.getElementById('sellModal').style.display = 'block';
 }
 
-// 전략 변경 모달 열기
 function openStrategyModal(id, currentStrategy, stockName) {
     currentStockId = id;
-    
     document.getElementById('strategyModalTitle').innerText = `${stockName} 전략 변경`;
-    document.getElementById('strategyModalDesc').innerText = `현재 적용된 전략: ${currentStrategy}`;
-    
-    let select = document.getElementById('strategySelect');
-    // 셀렉트 박스에 기존 전략 이름이 있으면 그걸로 세팅, 없으면 수동 운용 세팅
-    if (Array.from(select.options).some(option => option.value === currentStrategy)) {
-        select.value = currentStrategy;
-    } else {
-        select.value = "수동 운용"; 
-    }
-    
+    document.getElementById('strategyModalDesc').innerText  = `현재 적용된 전략: ${currentStrategy}`;
+    const select = document.getElementById('strategySelectModal');
+    select.value = Array.from(select.options).some(o => o.value === currentStrategy)
+        ? currentStrategy : "수동 운용";
     document.getElementById('strategyModal').style.display = 'block';
 }
 
-// 매도 서버 요청
 function executeSell() {
-    let sellQty = parseInt(document.getElementById('sellQtyInput').value);
-    
+    const sellQty = parseInt(document.getElementById('sellQtyInput').value);
     if (isNaN(sellQty) || sellQty <= 0 || sellQty > currentMaxQty) {
-        alert("올바른 수량을 입력해 주세요.");
-        return;
+        alert("올바른 수량을 입력해 주세요."); return;
     }
-
     fetch('/api/sell_stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock_id: currentStockId, sell_qty: sellQty })
-    })
-    .then(res => res.json())
-    .then(data => {
+    }).then(r => r.json()).then(data => {
         alert(data.message);
-        if(data.success) {
-            location.reload();
-        } else {
-            closeModal('sellModal');
-        }
+        if (data.success) location.reload();
+        else closeModal('sellModal');
     });
 }
 
-// 전략 변경 서버 요청
 function executeStrategyChange() {
-    let newStrategy = document.getElementById('strategySelect').value;
-
+    const newStrategy = document.getElementById('strategySelectModal').value;
     fetch('/api/change_strategy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock_id: currentStockId, strategy: newStrategy })
-    })
-    .then(res => res.json())
-    .then(data => {
+    }).then(r => r.json()).then(data => {
         alert(data.message);
-        if(data.success) {
-            location.reload();
-        } else {
-            closeModal('strategyModal');
-        }
+        if (data.success) location.reload();
+        else closeModal('strategyModal');
     });
 }
 </script>

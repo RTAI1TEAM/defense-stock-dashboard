@@ -12,9 +12,56 @@
                 <span class="badge bg-light text-dark border">전일 데이터 분석</span>
             </div>
 
+            <!-- 전략 / 기간 / 분석하기 (차트 바로 위) -->
+            <div class="d-flex align-items-center gap-3 mb-2" style="flex-wrap:wrap;">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">전략</label>
+                    <select id="strategySelect" class="form-select form-select-sm" style="width:180px;">
+                        <option value="none">전략 없음</option>
+                        <option value="golden_cross">골든크로스 (MA5/MA20)</option>
+                        <option value="breakout">전고점 돌파 (20일)</option>
+                    </select>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">기간</label>
+                    <select id="periodSelect" class="form-select form-select-sm" style="width:120px;">
+                        <option value="30">1개월</option>
+                        <option value="60">2개월</option>
+                        <option value="90" selected>3개월</option>
+                        <option value="120">4개월 (전체)</option>
+                    </select>
+                </div>
+                <button id="analyzeBtn" onclick="updateStrategyChart()"
+                    class="btn btn-sm btn-primary fw-semibold">
+                    🔍 분석하기
+                </button>
+            </div>
+
             <!-- 한 줄 전략 설명 -->
-            <div id="strategyOneLiner" style="display:none;" class="mb-2">
+            <div id="strategyOneLiner" style="display:none;" class="mb-1">
                 <span id="strategyOneLinerText" class="text-muted" style="font-size:.82rem;"></span>
+            </div>
+
+            <!-- 백테스팅 결과 카드 -->
+            <div id="backtestCard" style="display:none;" class="mb-2">
+                <div class="d-flex gap-2" style="flex-wrap:wrap;">
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:110px;">
+                        <div class="text-muted" style="font-size:.72rem;">백테스팅 수익률</div>
+                        <div id="bt-profit" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
+                        <div class="text-muted" style="font-size:.72rem;">승률</div>
+                        <div id="bt-winrate" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
+                        <div class="text-muted" style="font-size:.72rem;">거래 횟수</div>
+                        <div id="bt-count" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:150px;">
+                        <div class="text-muted" style="font-size:.72rem;">시드 1,000만원 → 최종</div>
+                        <div id="bt-final" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                </div>
             </div>
 
             <!-- 캔들/라인 차트 -->
@@ -30,60 +77,8 @@
             </div>
         </div>
 
-        <!-- 오른쪽 사이드바 -->
+        <!-- 오른쪽 사이드바: AI분석 + 모의투자만 -->
         <div id="right-sidebar" style="position: sticky; top: 20px;">
-
-            <!-- 전략 / 기간 / 분석하기 -->
-            <div class="card shadow-sm border-0 p-3 mb-3" style="border-radius: 15px;">
-                <div class="d-flex flex-column gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="fw-semibold text-muted mb-0" style="font-size:.83rem; min-width:30px;">전략</label>
-                        <select id="strategySelect" class="form-select form-select-sm">
-                            <option value="none">전략 없음</option>
-                            <option value="golden_cross">골든크로스 (MA5/MA20)</option>
-                            <option value="breakout">전고점 돌파 (20일)</option>
-                        </select>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="fw-semibold text-muted mb-0" style="font-size:.83rem; min-width:30px;">기간</label>
-                        <select id="periodSelect" class="form-select form-select-sm">
-                            <option value="30">1개월</option>
-                            <option value="60">2개월</option>
-                            <option value="90" selected>3개월</option>
-                            <option value="120">4개월 (전체)</option>
-                        </select>
-                    </div>
-                    <button id="analyzeBtn" onclick="updateStrategyChart()"
-                        class="btn btn-sm btn-primary fw-semibold w-100">
-                        🔍 분석하기
-                    </button>
-                </div>
-
-                <!-- 백테스팅 결과 -->
-                <div id="backtestCard" style="display:none;" class="mt-3">
-                    <hr class="my-2">
-                    <div class="d-flex flex-column gap-1">
-                        <div class="d-flex justify-content-between align-items-center px-1">
-                            <span class="text-muted" style="font-size:.75rem;">백테스팅 수익률</span>
-                            <span id="bt-profit" class="fw-bold" style="font-size:1rem;">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center px-1">
-                            <span class="text-muted" style="font-size:.75rem;">승률</span>
-                            <span id="bt-winrate" class="fw-bold" style="font-size:1rem;">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center px-1">
-                            <span class="text-muted" style="font-size:.75rem;">거래 횟수</span>
-                            <span id="bt-count" class="fw-bold" style="font-size:1rem;">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center px-1">
-                            <span class="text-muted" style="font-size:.75rem;">1,000만원 → 최종</span>
-                            <span id="bt-final" class="fw-bold" style="font-size:1rem;">-</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AI 분석 / 모의투자 -->
             <div id="ai-analysis-wrapper">
                 {% include "components/_ai_analysis_card.html" %}
                 {% include "components/invest_start_button.html" %}
@@ -271,19 +266,13 @@
                     afterDatasetsDraw(chart) {
                         chart.data.datasets.forEach(ds => {
                             if (!ds._candleRaw || !ds._candleRaw.length) return;
-                            const ctx2   = chart.ctx;
-                            const xScale = chart.scales.x;
-                            const yScale = chart.scales.y;
-                            const raw    = ds._candleRaw;
-                            let candleW  = 8;
-                            if (raw.length >= 2) {
-                                candleW = Math.max(2, Math.abs(
-                                    xScale.getPixelForValue(raw[1].x) - xScale.getPixelForValue(raw[0].x)
-                                ) * 0.6);
-                            }
+                            const ctx2 = chart.ctx, xScale = chart.scales.x, yScale = chart.scales.y;
+                            const raw = ds._candleRaw;
+                            let candleW = 8;
+                            if (raw.length >= 2) candleW = Math.max(2, Math.abs(xScale.getPixelForValue(raw[1].x) - xScale.getPixelForValue(raw[0].x)) * 0.6);
                             raw.forEach(c => {
                                 if (!c) return;
-                                const px    = xScale.getPixelForValue(c.x);
+                                const px = xScale.getPixelForValue(c.x);
                                 const color = c.c >= c.o ? "#e15759" : "#4e79a7";
                                 ctx2.save();
                                 ctx2.beginPath(); ctx2.strokeStyle = color; ctx2.lineWidth = 1;
@@ -291,7 +280,7 @@
                                 ctx2.lineTo(px, yScale.getPixelForValue(c.l));
                                 ctx2.stroke();
                                 const bodyTop = Math.min(yScale.getPixelForValue(c.o), yScale.getPixelForValue(c.c));
-                                const bodyH   = Math.max(1, Math.abs(yScale.getPixelForValue(c.o) - yScale.getPixelForValue(c.c)));
+                                const bodyH = Math.max(1, Math.abs(yScale.getPixelForValue(c.o) - yScale.getPixelForValue(c.c)));
                                 ctx2.fillStyle = color;
                                 ctx2.fillRect(px - candleW / 2, bodyTop, candleW, bodyH);
                                 ctx2.restore();
@@ -309,10 +298,8 @@
                             chart.getDatasetMeta(di).data.forEach((pt, idx) => {
                                 if (!ds.data[idx] || isNaN(ds.data[idx].y)) return;
                                 ctx2.save();
-                                ctx2.font = "bold 9px Arial";
-                                ctx2.fillStyle = "#fff";
-                                ctx2.textAlign = "center";
-                                ctx2.textBaseline = "middle";
+                                ctx2.font = "bold 9px Arial"; ctx2.fillStyle = "#fff";
+                                ctx2.textAlign = "center"; ctx2.textBaseline = "middle";
                                 ctx2.fillText(isBuy ? "B" : "S", pt.x, pt.y);
                                 ctx2.restore();
                             });
@@ -322,9 +309,7 @@
             ]
         });
 
-        if (typeof setActiveChartButtons === "function") {
-            setActiveChartButtons("mainEtfChart", type);
-        }
+        if (typeof setActiveChartButtons === "function") setActiveChartButtons("mainEtfChart", type);
 
         if (!canvas._strategyBtnBound) {
             canvas._strategyBtnBound = true;
@@ -344,9 +329,7 @@
             document.getElementById("strategyOneLiner").style.display = "none";
             document.getElementById("backtestCard").style.display = "none";
             _lastStrategyData = null;
-            if (typeof switchChart === "function") {
-                switchChart("mainEtfChart", getCurrentChartType());
-            }
+            if (typeof switchChart === "function") switchChart("mainEtfChart", getCurrentChartType());
             return;
         }
 
