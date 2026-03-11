@@ -1,3 +1,45 @@
+.navbar{
+  min-height: 76px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.navbar-brand{
+  display: flex;
+  align-items: center;
+  height: 76px;
+  padding: 0;
+  margin-right: 28px;
+}
+
+.navbar-brand img{
+  height: 52px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.navbar-nav{
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.navbar-nav .nav-link{
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 0;
+  line-height: 1;
+}
+
+.navbar-nav .nav-link.active{
+  color: #111827;
+  font-weight: 700;
+}
+
+
 .main-dashboard {
     display: grid;
     grid-template-columns: minmax(0, 2fr) 360px;
@@ -14,6 +56,7 @@
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     border: 1px solid #eef2f7;
 }
+
 
 .section-title {
     font-size: 1.4rem;
