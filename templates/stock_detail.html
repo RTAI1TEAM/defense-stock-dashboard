@@ -1,5 +1,5 @@
 {% extends "navbar.html" %}
-{% from "components/chart_macros.html" import line_chart %}
+{% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% block content %}
 <!-- <style>
 .stock-dropdown-menu {
@@ -27,13 +27,13 @@
             </div>
             
             <div style="width: 100%;">
-                {{ line_chart(
-                    "mainStockChart",
-                    stock.name_kr ~ " 가격 추이",
-                    chart_labels,
-                    chart_values,
-                    "종가(KRW)",
-                    "500px" 
+                {{ chart_toggle(
+                    "mainEtfChart",
+                    "",
+                    chart_data,
+                    "ETF 종가",
+                    "ETF 캔들",
+                    "400px"
                 ) }}
             </div>
         </div>
