@@ -148,14 +148,20 @@ def show_stock_chart(ticker):
     if "nickname" not in session:
         return redirect(url_for("auth_bp.login_page"))
     
+    user_id = session.get('user_id')
     stock = get_stock(ticker)
     stock_list = get_stock_list()
     print(stock_list)
     chart_labels, chart_values = get_stock_chart_data(stock["id"])
     news_list, score, ai_news, status, color_class = get_live_analysis(stock["name_kr"])
+    account = None # 계좌 정보를 담을 변수
     conn = get_conn()
     try:
+
         with conn.cursor() as cursor:
+            cursor.execute("SELECT current_balance FROM mock_accounts WHERE user_id = %s", (user_id,))
+            account = cursor.fetchone()
+
             sql = """
                 SELECT price_date as date, close_price 
                 FROM stock_price_history 
@@ -190,6 +196,7 @@ def show_stock_chart(ticker):
         stock_list=stock_list,
         stock=stock,
         strategies=strategies,
+        account=account,
         chart_labels=chart_labels,
         chart_values=chart_values,
         news_list=news_list,
