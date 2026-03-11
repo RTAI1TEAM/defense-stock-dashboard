@@ -83,11 +83,15 @@ window.renderLineChart = function ({ canvasId, rawData, datasetLabel = "종가" 
             datasets: [{
                 label: datasetLabel,
                 data: rawData.map(d => ({ x: d.x, y: d.c })),
+                borderColor: "#0d6efd",
+                backgroundColor: "#0d6efd",
                 borderWidth: 2,
                 fill: false,
                 tension: 0.15,
                 pointRadius: 0,
                 pointHoverRadius: 2,
+                pointBackgroundColor: "#0d6efd",
+                pointBorderColor: "#0d6efd",
                 parsing: false
             }]
         },
@@ -97,7 +101,7 @@ window.renderLineChart = function ({ canvasId, rawData, datasetLabel = "종가" 
             parsing: false,
             interaction: { mode: "index", intersect: false },
             plugins: {
-                legend: { display: true },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         title: items => items[0] ? new Date(items[0].raw.x).toLocaleDateString("ko-KR") : "",
@@ -147,7 +151,7 @@ window.renderCandleChart = function ({ canvasId, rawData, datasetLabel = "주가
             animation: false,
             interaction: { mode: "index", intersect: false },
             plugins: {
-                legend: { display: true },
+                legend: { display: false },
                 zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
                 pan:  { enabled: true, mode: "x" },
                 tooltip: {
