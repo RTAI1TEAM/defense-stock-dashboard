@@ -5,24 +5,21 @@
 
 {% block content %}
 
-<div class="container-fluid px-4 mt-4 mb-4">
+<div class="container-fluid px-4 mt-3 mb-4">
     <div class="main-dashboard">
 
         <!-- 왼쪽 차트 -->
         <div class="dashboard-card">
-            <div class="mb-3">
-                <h2 class="section-title">{{ etf.name_kr }} ETF 차트</h2>
-                <p class="section-subtitle">최근 ETF 종가 흐름</p>
-            </div>
-                {{ chart_toggle(
-                    "mainEtfChart",
-                    "",
-                    chart_data,
-                    "ETF 종가",
-                    "ETF 캔들",
-                    "400px"
-                ) }}
-            </div>
+            {{ chart_toggle(
+                "mainEtfChart",
+                etf.name_kr+ " ETF 차트",
+                "최근 ETF 종가 흐름",
+                chart_data,
+                "ETF 종가",
+                "ETF 캔들",
+                "400px"
+            ) }}
+        </div>
 
         <!-- 오른쪽 -->
         <div class="right-column">

@@ -1,9 +1,12 @@
-{% macro chart_toggle(chart_id, title, chart_data, line_label='ETF 종가', candle_label='ETF 가격', height='400px') %}
-<div class="chart-card" style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+{% macro chart_toggle(chart_id, title, subtitle, chart_data, line_label='ETF 종가', candle_label='ETF 가격', height='400px') %}
+<div class="chart-card" style="background:#fff; border-radius:16px; padding:20px; {% if not title %} box-shadow:0 2px 10px rgba(0,0,0,0.08);{% endif %}">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
         <div>
             {% if title %}
-            <h3 style="margin:0;">{{ title }}</h3>
+            <h2 class="section-title">{{ title }}</h2>
+            {% endif %}
+            {%if subtitle %}
+            <p class="section-subtitle">최근 ETF 종가 흐름</p>
             {% endif %}
         </div>
 

@@ -166,7 +166,12 @@
 .stock-change {
     text-align: right;
 }
-
+.navbar-logo {
+    height: 20px !important;
+    width: auto !important;
+    max-height: 20px !important;
+    object-fit: contain;
+}
 .stock-price {
     font-size: 0.9rem;
     font-weight: 700;
