@@ -47,8 +47,45 @@
         <a class="nav-link" href="/rank">랭킹</a>
       </li>
     </ul>
-    {% from "components/search.html" import search_bar %}
-    {{search_bar(placeholder="주식명 혹은 종목번호를 입력하세요", current_query="", action="/stocks")}}
+    <div class="position-relative mx-3" style="width:260px;">
+
+<input
+type="text"
+id="navbarStockSearch"
+class="form-control"
+placeholder="🔍주식명 혹은 종목번호 입력"
+autocomplete="off"
+>
+
+<div id="navbarStockResults"
+     class="list-group position-absolute w-100 shadow"
+     style="z-index:999; display:none; max-height:300px; overflow-y:auto;">
+
+{% for s in stock_list %}
+
+<a class="list-group-item list-group-item-action navbar-stock-item"
+   href="/stocks/{{ s['ticker'] }}"
+   data-name="{{ s['name_kr']|lower }}"
+   data-ticker="{{ s['ticker']|lower }}">
+
+<div class="fw-bold">{{ s['name_kr'] }}</div>
+<div class="text-muted small">{{ s['ticker'] }}</div>
+
+</a>
+
+{% endfor %}
+
+<div id="navbarEmpty"
+     class="list-group-item text-muted"
+     style="display:none">
+
+검색 결과가 없습니다
+
+</div>
+
+</div>
+
+</div>
 
     {% if "nickname" in session %}
   <a href="{{ url_for('profile_bp.show_profile') }}"
@@ -71,6 +108,64 @@
 {% block content %}
     기본 내용
 {% endblock %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+const input = document.getElementById("navbarStockSearch");
+const results = document.getElementById("navbarStockResults");
+const items = document.querySelectorAll(".navbar-stock-item");
+const empty = document.getElementById("navbarEmpty");
+
+if(!input) return;
+
+input.addEventListener("input", function(){
+
+const keyword = this.value.trim().toLowerCase();
+
+if(keyword === ""){
+results.style.display = "none";
+return;
+}
+
+results.style.display = "block";
+
+let visible = 0;
+
+items.forEach(item => {
+
+const name = item.dataset.name;
+const ticker = item.dataset.ticker;
+
+if(name.includes(keyword) || ticker.includes(keyword)){
+
+item.style.display = "block";
+visible++;
+
+}else{
+
+item.style.display = "none";
+
+}
+
+});
+
+empty.style.display = visible === 0 ? "block" : "none";
+
+});
+
+document.addEventListener("click", function(e){
+
+if(!input.contains(e.target) && !results.contains(e.target)){
+results.style.display = "none";
+}
+
+});
+
+});
+
+</script>
 
 </body>
 </html>

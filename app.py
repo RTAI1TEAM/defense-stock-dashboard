@@ -127,6 +127,18 @@ def get_color_class(score):
 def comma_filter(value):
     return format(int(value), ',')
 
+@app.context_processor
+def inject_stock_list():
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT ticker, name_kr FROM stocks")
+    stock_list = cursor.fetchall()
+
+    conn.close()
+
+    return dict(stock_list=stock_list)
 
 @app.route("/")
 def index():
