@@ -7,13 +7,9 @@
         </button>
         <h4 class="fw-bold text-success mb-0">💰 투자 설정</h4>
     </div>
-    <div class="mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
-        <span class="fw-bold text-secondary">투자 가능 잔액</span>
-        <span class="h5 mb-0 fw-bold text-dark">
-        <span id="current-balance">{{ "{:,.0f}".format(account.current_balance) if account else '0' }}</span> 원
-        </span>
-    </div>
-    <div class="mb-4">
+
+    <!-- 알고리즘 매매 전략 선택 -->
+    <div class="mb-3">
         <label class="form-label fw-bold">알고리즘 매매 전략 선택</label>
         <select class="form-select form-select-lg" id="strategySelector">
             {% for key, val in strategies.items() %}
@@ -25,12 +21,40 @@
     </div>
 
     <form id="tradeForm">
-        <input type="hidden" name="stock_id" value="{{ stock.ticker }}"> <input type="hidden" id="tradeTypeInput" name="trade_type" value="BUY">
+        <input type="hidden" name="stock_id" value="{{ stock.ticker }}">
+        <input type="hidden" id="tradeTypeInput" name="trade_type" value="BUY">
         <input type="hidden" id="strategyInput" name="strategy" value="5/20 골든크로스">
-        
+
+        <!-- 구매 가격 -->
         <div class="mb-3">
-            <label class="form-label fw-bold">투자할 주수</label>
-            <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" value="1" required>
+            <label class="form-label fw-bold">구매 가격</label>
+            <div class="input-group">
+                <input type="number" class="form-control form-control-lg" value="{{ current_price|int }}" readonly>
+                <span class="input-group-text">원</span>
+            </div>
+        </div>
+
+        <!-- 수량 -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">수량</label>
+            <div class="input-group">
+                <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" value="1" required>
+                <span class="input-group-text">주</span>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- 구매 가능 금액 -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fw-bold">구매 가능 금액</span>
+            <span class="fw-bold"><span id="current-balance">{{ "{:,.0f}".format(account.current_balance) if account else '0' }}</span> 원</span>
+        </div>
+
+        <!-- 총 주문 금액 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-secondary fw-bold">총 주문 금액</span>
+            <span class="fw-bold text-primary" id="totalAmount">{{ "{:,.0f}".format(current_price) }} 원</span>
         </div>
 
         <div class="d-flex gap-2">
@@ -43,9 +67,15 @@
 <script>
 document.getElementById('strategySelector').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
-    const profit = selectedOption.getAttribute('data-profit');
-    document.getElementById('selectedProfit').innerText = profit + '%';
     document.getElementById('strategyInput').value = selectedOption.value;
+});
+
+const pricePerShare = {{ current_price|int }};
+
+document.getElementById('tradeQuantity').addEventListener('input', function() {
+    const quantity = parseInt(this.value) || 1;
+    const total = pricePerShare * quantity;
+    document.getElementById('totalAmount').innerText = total.toLocaleString() + ' 원';
 });
 
 function handleTrade(type) {
@@ -53,8 +83,6 @@ function handleTrade(type) {
     
     const form = document.getElementById('tradeForm');
     const formData = new FormData(form);
-
-    console.log("전송 데이터:", Object.fromEntries(formData));
 
     fetch("{{ url_for('stock_detail.execute_trade') }}", {
         method: "POST",
@@ -71,6 +99,7 @@ function handleTrade(type) {
             }
 
             document.getElementById('tradeQuantity').value = 1;
+            document.getElementById('totalAmount').innerText = pricePerShare.toLocaleString() + ' 원';
 
         } else {
             alert("거래 실패: " + data.message);
