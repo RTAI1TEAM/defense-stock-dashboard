@@ -1,22 +1,7 @@
 {% extends "navbar.html" %}
 {% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% block content %}
-<!-- <style>
-.stock-dropdown-menu {
-    max-height: 300px;
-    overflow-y: auto;
-    min-width: 260px;
-    border-radius: 12px;
-}
 
-.stock-dropdown-menu .dropdown-item {
-    padding: 10px 14px;
-}
-
-.stock-dropdown-menu .dropdown-item:hover {
-    background-color: #f8f9fa;
-}
-</style> -->
 <div class="container-fluid mt-4" style="padding: 0 40px;"> 
     <div style="display:grid; grid-template-columns: 3.5fr 1fr; gap:30px; align-items: start;">
         
@@ -25,7 +10,56 @@
                 {% include "components/_dropdown.html"%}
                 <span class="badge bg-light text-dark border">전일 데이터 분석</span>
             </div>
-            
+
+            <div class="d-flex align-items-center gap-3 mb-2" style="flex-wrap:wrap;">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">전략</label>
+                    <select id="strategySelect" class="form-select form-select-sm" style="width:180px;">
+                        <option value="none">전략 없음</option>
+                        <option value="golden_cross">골든크로스 (MA5/MA20)</option>
+                        <option value="breakout">전고점 돌파 (20일)</option>
+                    </select>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">기간</label>
+                    <select id="periodSelect" class="form-select form-select-sm" style="width:120px;">
+                        <option value="30">1개월</option>
+                        <option value="60">2개월</option>
+                        <option value="90" selected>3개월</option>
+                        <option value="120">4개월 (전체)</option>
+                    </select>
+                </div>
+                <button id="analyzeBtn" onclick="updateStrategyChart()"
+                    class="btn btn-sm btn-primary fw-semibold">
+                    🔍 분석하기
+                </button>
+            </div>
+
+            <div id="strategyOneLiner" style="display:none;" class="mb-1">
+                <span id="strategyOneLinerText" class="text-muted" style="font-size:.82rem;"></span>
+            </div>
+
+            <div id="backtestCard" style="display:none;" class="mb-2">
+                <div class="d-flex gap-2" style="flex-wrap:wrap;">
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:110px;">
+                        <div class="text-muted" style="font-size:.72rem;">백테스팅 수익률</div>
+                        <div id="bt-profit" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
+                        <div class="text-muted" style="font-size:.72rem;">승률</div>
+                        <div id="bt-winrate" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
+                        <div class="text-muted" style="font-size:.72rem;">거래 횟수</div>
+                        <div id="bt-count" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:150px;">
+                        <div class="text-muted" style="font-size:.72rem;">시드 1,000만원 → 최종</div>
+                        <div id="bt-final" class="fw-bold" style="font-size:1.05rem;">-</div>
+                    </div>
+                </div>
+            </div>
+
             <div style="width: 100%;">
                 {{ chart_toggle(
                     "mainEtfChart",
@@ -39,53 +73,28 @@
         </div>
 
         <div id="right-sidebar" style="position: sticky; top: 20px;">
-            
             <div id="ai-analysis-wrapper">
                 {% include "components/_ai_analysis_card.html" %}
                 {% include "components/invest_start_button.html" %}
             </div>
-
             <div id="invest-form-wrapper" style="display: none;" class="mt-3">
                 {% include "components/_invest_form.html" %}
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- <script>
-    // 섹션 전환 애니메이션을 위한 간단한 스크립트
-    function goToInvest() {
-        const analysis = document.getElementById('ai-analysis-wrapper');
-        const invest = document.getElementById('invest-form-wrapper');
-        if(analysis && invest) {
-            analysis.style.display = 'none';
-            invest.style.display = 'block';
-        }
-    }
-
-    function goBack() {
-        const analysis = document.getElementById('ai-analysis-wrapper');
-        const invest = document.getElementById('invest-form-wrapper');
-        if(analysis && invest) {
-            invest.style.display = 'none';
-            analysis.style.display = 'block';
-        }
-    }
-</script> -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const startBtn = document.getElementById('investStartBtn');
         const analysis = document.getElementById('ai-analysis-wrapper');
         const invest = document.getElementById('invest-form-wrapper');
-
         if (startBtn && analysis && invest) {
             startBtn.addEventListener('click', function () {
                 analysis.style.display = 'none';
                 invest.style.display = 'block';
             });
         }
-
         window.goBack = function () {
             if (analysis && invest) {
                 invest.style.display = 'none';
@@ -93,5 +102,266 @@
             }
         };
     });
+</script>
+
+<script>
+    const TICKER = "{{ stock.ticker }}";
+
+    const ONE_LINER = {
+        golden_cross: "📈 MA5(단기)가 MA20(장기)을 상향 돌파 시 매수 🔴B / 하향 돌파 시 매도 🔵S",
+        breakout:     "🚀 종가가 20일 최고가(저항선) 돌파 시 매수 🔴B / MA20(지지선) 아래 이탈 시 매도 🔵S"
+    };
+
+    let _lastStrategyData = null;
+
+    function destroyMainChart() {
+        const canvas = document.getElementById("mainEtfChart");
+        if (!canvas) return;
+        const existing = Chart.getChart(canvas);
+        if (existing) existing.destroy();
+        if (window.chartInstances && window.chartInstances["mainEtfChart"]) {
+            try { window.chartInstances["mainEtfChart"].destroy(); } catch(e) {}
+            delete window.chartInstances["mainEtfChart"];
+        }
+    }
+
+    function getCurrentChartType() {
+        const candleBtn = document.getElementById("mainEtfChart-btn-candle");
+        return candleBtn && candleBtn.classList.contains("btn-primary") ? "candle" : "line";
+    }
+
+    function updateBacktestCard(data) {
+        document.getElementById("backtestCard").style.display = "";
+        const profit = data.total_profit;
+        const profitEl = document.getElementById("bt-profit");
+        profitEl.textContent = (profit >= 0 ? "+" : "") + profit + "%";
+        profitEl.style.color = profit >= 0 ? "#2e7d32" : "#c62828";
+        document.getElementById("bt-winrate").textContent = data.win_rate + "%";
+        document.getElementById("bt-count").textContent   = data.trade_count + "회";
+        const finalAmount = Math.round(10_000_000 * (1 + profit / 100));
+        const finalEl = document.getElementById("bt-final");
+        finalEl.textContent = finalAmount.toLocaleString() + "원";
+        finalEl.style.color = profit >= 0 ? "#2e7d32" : "#c62828";
+    }
+
+    function renderStrategyOnMain(data) {
+        const type = getCurrentChartType();
+        const canvas = document.getElementById("mainEtfChart");
+        if (!canvas) return;
+
+        destroyMainChart();
+
+        const tsLabels = data.labels.map(d => new Date(d).getTime());
+
+        // NaN 사용: null 객체는 PointElement 생성 후 options 미초기화 → hitRadius 에러
+        // NaN이면 Chart.js가 element 자체를 생성하지 않음
+        const buyPoints  = data.labels.map((d, i) => {
+            const t = data.backtest.find(x => x.date === d && x.type === 'BUY');
+            return { x: tsLabels[i], y: t ? t.price : NaN };
+        });
+        const sellPoints = data.labels.map((d, i) => {
+            const t = data.backtest.find(x => x.date === d && (x.type === 'SELL' || x.type === 'SELL (End)'));
+            return { x: tsLabels[i], y: t ? t.price : NaN };
+        });
+
+        const datasets = [];
+
+        if (type === "candle") {
+            const rawAll = (window.chartRawData && window.chartRawData["mainEtfChart"])
+                ? window.chartRawData["mainEtfChart"].raw : [];
+            const labelSet = new Set(data.labels);
+            const filtered = rawAll.filter(c => {
+                if (!c || c.x == null) return false;
+                const key = new Date(c.x).toISOString().slice(0, 10);
+                return labelSet.has(key);
+            });
+            datasets.push({
+                type: "line", label: "캔들",
+                data: filtered.map(c => ({ x: c.x, y: c.c })),
+                _candleRaw: filtered,
+                borderColor: "transparent", backgroundColor: "transparent",
+                pointRadius: 0, showLine: false, order: 2, parsing: false
+            });
+        } else {
+            datasets.push({
+                type: "line", label: "종가",
+                data: tsLabels.map((ts, i) => ({ x: ts, y: data.close[i] })),
+                borderColor: "#4e79a7", borderWidth: 2, fill: false,
+                tension: 0.15, pointRadius: 0, order: 2, parsing: false
+            });
+        }
+
+        if (data.strategy === "golden_cross") {
+            datasets.push({ type:"line", label:"MA5",  data: tsLabels.map((ts,i) => ({ x:ts, y: data.ma_short[i] != null ? data.ma_short[i] : NaN })), borderColor:"#f28e2b", borderWidth:1.5, borderDash:[4,3], fill:false, tension:0.15, pointRadius:0, spanGaps:true, parsing:false, order:3 });
+            datasets.push({ type:"line", label:"MA20", data: tsLabels.map((ts,i) => ({ x:ts, y: data.ma_long[i]  != null ? data.ma_long[i]  : NaN })), borderColor:"#59a14f", borderWidth:1.5, borderDash:[4,3], fill:false, tension:0.15, pointRadius:0, spanGaps:true, parsing:false, order:4 });
+        } else {
+            datasets.push({ type:"line", label:"20일 최고가", data: tsLabels.map((ts,i) => ({ x:ts, y: data.high20[i] != null ? data.high20[i] : NaN })), borderColor:"#e15759", borderWidth:1.5, borderDash:[6,3], fill:false, tension:0,    pointRadius:0, spanGaps:true, parsing:false, order:3 });
+            datasets.push({ type:"line", label:"MA20",        data: tsLabels.map((ts,i) => ({ x:ts, y: data.ma20[i]   != null ? data.ma20[i]   : NaN })), borderColor:"#59a14f", borderWidth:1.5, borderDash:[4,3], fill:false, tension:0.15, pointRadius:0, spanGaps:true, parsing:false, order:4 });
+        }
+
+        const buyRadii  = buyPoints.map(p  => isNaN(p.y) ? 0 : 10);
+        const sellRadii = sellPoints.map(p => isNaN(p.y) ? 0 : 10);
+        datasets.push({ type:"line", label:"매수(B)", data: buyPoints,  borderColor:"#e15759", backgroundColor:"#e15759", pointRadius:buyRadii,  pointHoverRadius:buyRadii,  showLine:false, order:1, parsing:false });
+        datasets.push({ type:"line", label:"매도(S)", data: sellPoints, borderColor:"#4e79a7", backgroundColor:"#4e79a7", pointRadius:sellRadii, pointHoverRadius:sellRadii, showLine:false, order:1, parsing:false });
+
+        window.chartInstances = window.chartInstances || {};
+        window.chartInstances["mainEtfChart"] = new Chart(canvas.getContext("2d"), {
+            type: "line",
+            data: { datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                parsing: false,
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        filter: item => item.raw != null && !isNaN(item.raw.y),
+                        callbacks: {
+                            title: function(items) {
+                                if (!items[0]?.raw) return "";
+                                return new Date(items[0].raw.x).toLocaleDateString("ko-KR");
+                            },
+                            label: function(ctx) {
+                                if (!ctx.raw || isNaN(ctx.raw.y)) return null;
+                                if (ctx.dataset.label === "매수(B)") {
+                                    const t = data.backtest.find(x => x.type === 'BUY' && new Date(x.date).getTime() === ctx.raw.x);
+                                    return t ? `▲ 매수: ${t.price.toLocaleString()}원 (${t.shares}주)` : "▲ 매수";
+                                }
+                                if (ctx.dataset.label === "매도(S)") {
+                                    const t = data.backtest.find(x => (x.type==='SELL'||x.type==='SELL (End)') && new Date(x.date).getTime() === ctx.raw.x);
+                                    return t ? `▼ 매도: ${t.price.toLocaleString()}원 ${t.profit_rate>=0?'+':''}${t.profit_rate}%` : "▼ 매도";
+                                }
+                                const val = typeof ctx.raw === 'object' ? (ctx.raw.y ?? ctx.raw.c) : ctx.raw;
+                                return val != null ? `${ctx.dataset.label}: ${val.toLocaleString()}원` : null;
+                            }
+                        }
+                    },
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: "x"
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: "x"
+                    }
+                },
+                scales: {
+                    x: { type: "time", time: { unit: "day" }, ticks: { maxTicksLimit: 8 } },
+                    y: { beginAtZero: false }
+                }
+            },
+            plugins: [
+                {
+                    id: "inlineCandle",
+                    afterDatasetsDraw(chart) {
+                        chart.data.datasets.forEach((ds, di) => {
+                            if (!ds._candleRaw || !ds._candleRaw.length) return;
+                            const ctx2 = chart.ctx;
+                            const xScale = chart.scales.x;
+                            const yScale = chart.scales.y;
+                            const raw = ds._candleRaw;
+                            let candleW = 8;
+                            if (raw.length >= 2) {
+                                const x0 = xScale.getPixelForValue(raw[0].x);
+                                const x1 = xScale.getPixelForValue(raw[1].x);
+                                candleW = Math.max(2, Math.abs(x1 - x0) * 0.6);
+                            }
+                            raw.forEach(c => {
+                                if (c == null) return;
+                                const xPx = xScale.getPixelForValue(c.x);
+                                const oPx = yScale.getPixelForValue(c.o);
+                                const hPx = yScale.getPixelForValue(c.h);
+                                const lPx = yScale.getPixelForValue(c.l);
+                                const cPx = yScale.getPixelForValue(c.c);
+                                const color = c.c >= c.o ? "#e15759" : "#4e79a7";
+                                ctx2.save();
+                                ctx2.beginPath();
+                                ctx2.strokeStyle = color;
+                                ctx2.lineWidth = 1;
+                                ctx2.moveTo(xPx, hPx);
+                                ctx2.lineTo(xPx, lPx);
+                                ctx2.stroke();
+                                const bodyTop = Math.min(oPx, cPx);
+                                const bodyH   = Math.max(1, Math.abs(oPx - cPx));
+                                ctx2.fillStyle = color;
+                                ctx2.fillRect(xPx - candleW / 2, bodyTop, candleW, bodyH);
+                                ctx2.restore();
+                            });
+                        });
+                    }
+                },
+                {
+                    id: "bsLabels",
+                    afterDatasetsDraw(chart) {
+                        const ctx2 = chart.ctx;
+                        chart.data.datasets.forEach((ds, di) => {
+                            if (ds.label !== "매수(B)" && ds.label !== "매도(S)") return;
+                            const isBuy = ds.label === "매수(B)";
+                            chart.getDatasetMeta(di).data.forEach((pt, idx) => {
+                                if (!ds.data[idx] || isNaN(ds.data[idx].y)) return;
+                                ctx2.save();
+                                ctx2.font = "bold 9px Arial";
+                                ctx2.fillStyle = "#fff";
+                                ctx2.textAlign = "center";
+                                ctx2.textBaseline = "middle";
+                                ctx2.fillText(isBuy ? "B" : "S", pt.x, pt.y);
+                                ctx2.restore();
+                            });
+                        });
+                    }
+                }
+            ]
+        });
+
+        if (typeof setActiveChartButtons === "function") {
+            setActiveChartButtons("mainEtfChart", type);
+        }
+
+        if (!canvas._strategyBtnBound) {
+            canvas._strategyBtnBound = true;
+            const candleBtn = document.getElementById("mainEtfChart-btn-candle");
+            const lineBtn   = document.getElementById("mainEtfChart-btn-line");
+            if (candleBtn) candleBtn.addEventListener("click", () => { if (_lastStrategyData) renderStrategyOnMain(_lastStrategyData); });
+            if (lineBtn)   lineBtn.addEventListener("click",   () => { if (_lastStrategyData) renderStrategyOnMain(_lastStrategyData); });
+        }
+    }
+
+    function updateStrategyChart() {
+        const strategy = document.getElementById("strategySelect").value;
+        const days     = document.getElementById("periodSelect").value;
+        const btn      = document.getElementById("analyzeBtn");
+
+        if (strategy === "none") {
+            document.getElementById("strategyOneLiner").style.display = "none";
+            document.getElementById("backtestCard").style.display = "none";
+            _lastStrategyData = null;
+            if (typeof switchChart === "function") {
+                switchChart("mainEtfChart", getCurrentChartType());
+            }
+            return;
+        }
+
+        document.getElementById("strategyOneLiner").style.display = "";
+        document.getElementById("strategyOneLinerText").textContent = ONE_LINER[strategy] || "";
+        btn.textContent = "⏳ 분석 중...";
+        btn.disabled = true;
+
+        fetch(`/api/strategy/${TICKER}?strategy=${strategy}&days=${days}`)
+            .then(r => r.json())
+            .then(data => {
+                btn.textContent = "🔍 분석하기";
+                btn.disabled = false;
+                if (!data.success) { alert("전략 계산 오류: " + data.message); return; }
+                _lastStrategyData = data;
+                renderStrategyOnMain(data);
+                updateBacktestCard(data);
+            })
+            .catch(err => {
+                btn.textContent = "🔍 분석하기";
+                btn.disabled = false;
+                alert("서버 오류: " + err);
+            });
+    }
 </script>
 {% endblock %}

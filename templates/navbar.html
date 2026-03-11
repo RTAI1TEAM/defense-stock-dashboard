@@ -8,11 +8,17 @@
     <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <!--
+        ✅ Chart.js 3.x 확정 스택
+        - chartjs-chart-financial 완전 제거 (hitRadius 에러 근본 원인)
+        - 캔들스틱은 charts.js 내 커스텀 플러그인으로 직접 구현
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/stock_table.js') }}"></script>
 </head>
@@ -40,35 +46,25 @@
       <li class="nav-item {% if request.path == '/rank' %}active{% endif %}">
         <a class="nav-link" href="/rank">랭킹</a>
       </li>
-
     </ul>
     {% from "components/search.html" import search_bar %}
     {{search_bar(placeholder="주식명 혹은 종목번호를 입력하세요", current_query="", action="/stocks")}}
-    <!-- <form class="form-inline my-2 my-lg-0 mx-3">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search">
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-    </form> -->
 
     {% if "nickname" in session %}
   <a href="{{ url_for('profile_bp.show_profile') }}"
     class="d-flex align-items-center mx-2 text-decoration-none">
-
       <div class="navbar-avatar" id="navbarAvatar">
           {{ session.get("avatar", "🧑‍💼") }}
       </div>
-
       <span class="ms-2 fw-semibold text-dark" id="navbarNickname">
           {{ session["nickname"] }} 님
       </span>
 </a>
-
 {% else %}
 <a href="{{ url_for('auth_bp.login_page') }}" class="mx-2">
     로그인
 </a>
 {% endif %}
-
-    
   </div>
 </nav>
 
