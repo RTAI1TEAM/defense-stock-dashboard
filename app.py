@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, redirect, url_for, session, request
 from datetime import datetime
 from database import get_conn
@@ -8,7 +9,7 @@ from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
-from routes.stock_detail import stock_detail_bp
+from routes.stock_detail import stock_detail_bp, get_defense_sector_analysis, update_sector_ai_analysis
 from routes.profile import profile_bp
 from routes.stock_chat import stock_chat_bp
 
@@ -117,9 +118,9 @@ def get_main_stock_analysis():
 
 
 def get_color_class(score):
-    if score >= 80:
+    if score >= 70:
         return "bg-success"
-    elif score >= 60:
+    elif score >= 40:
         return "bg-warning"
     else:
         return "bg-danger"
@@ -144,33 +145,50 @@ def inject_stock_list():
 
 @app.route("/")
 def index():
+    # 1. ETF 데이터 (기존 유지)
     etf = get_main_etf()
     chart_data = get_etf_chart_data(etf["id"])
 
-    stock_id, analysis_list, score = get_main_stock_analysis()
-    color_class = get_color_class(score if score is not None else 0)
+    # 2. 업종 분석 데이터 가져오기 (수정됨!)
+    # stock_detail.py에서 만든 9999번 데이터를 읽어오는 함수 호출
+    score, ai_news, news_list = get_defense_sector_analysis()
 
-    # 투자 폼에 넣을 전략 문구
-    ai_strategy = analysis_list[0]["ai_summary"] if analysis_list else "AI 분석 데이터 없음"
+    # 조건문을 좀 더 널널하게 변경 (내용이 "데이터 분석 대기 중..."인 경우도 포함)
+    if score == 0 or not news_list or "대기 중" in ai_news:
+        print("Gemini 업종 분석을 실행합니다...")
+        update_sector_ai_analysis()
+        score, ai_news, news_list = get_defense_sector_analysis()
+    
+    # 🚀 [수정 포인트] 점수 타입 확인 및 색상 결정
+    try:
+        # score가 None이거나 계산 불가능한 경우를 대비
+        final_score = int(score) if score is not None else 0
+    except (ValueError, TypeError):
+        final_score = 0
 
+    color_class = get_color_class(final_score)
+
+    # 3. 방산주 리스트 (기존 유지)
     conn = get_conn()
     try:
         defense_stocks = get_defense_data(conn)
     finally:
         conn.close()
 
+    # 4. 템플릿으로 전달 (변수 이름 맞춤)
     return render_template(
         "index.html",
         etf=etf,
         chart_data=chart_data,
-        stock_id=stock_id,
-        news_list=analysis_list,
-        score=score if score is not None else 0,
+        score=score,
+        ai_news=ai_news,      # 템플릿에서 요약문으로 사용
+        news_list=news_list,  # 템플릿에서 뉴스 목록으로 사용
         color_class=color_class,
-        ai_strategy=ai_strategy,
+        ai_strategy=ai_news,  # 기존 ai_strategy 변수명도 대응
         defense_stocks=defense_stocks,
-        strategies={},  # 템플릿의 for문을 통과시키기 위함
-        stock=None      # stock.ticker 에러를 방지하기 위함
+        stock_id=9999,        # 업종 종합 ID
+        strategies={}, 
+        stock={'ticker': 'DEFENSE'} # 에러 방지용 가상 객체
     )
 
 

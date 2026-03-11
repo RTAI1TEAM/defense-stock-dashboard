@@ -165,6 +165,74 @@ def get_stock(ticker="064350"):
     finally:
         conn.close()
 
+def update_sector_ai_analysis():
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT title, summary as description_clean, source_url as link 
+                FROM news 
+                ORDER BY published_at DESC 
+                LIMIT 10
+            """)
+            news_items = cursor.fetchall()
+            
+            if not news_items:
+                print("분석할 뉴스가 없습니다.")
+                return
+
+            news_context = "\n".join([f"제목: {n['title']}\n내용: {n['description_clean']}" for n in news_items])
+            prompt = f"""
+            당신은 대한민국 방위산업 투자 전문가입니다. 
+            아래 10개의 최신 방산 뉴스를 종합하여 업종 전체의 투자 점수와 핵심 요약을 작성하세요.
+            반드시 JSON 형식으로 응답하세요:
+            {{
+                "score": 0~100 사이 숫자,
+                "ai_news": "업종 전체의 흐름을 보여주는 한 줄 요약 (25자 이내)"
+            }}
+            뉴스 데이터:
+            {news_context}
+            """
+
+            response = client.models.generate_content(
+                model=MODEL_ID,
+                contents=prompt,
+                config={'response_mime_type': 'application/json'}
+            )
+            data = json.loads(response.text.strip())
+            
+            sql_save = """
+                INSERT INTO stock_news (stock_id, score, ai_summary, news_data, updated_at)
+                VALUES (9999, %s, %s, %s, NOW())
+                ON DUPLICATE KEY UPDATE 
+                    score = VALUES(score),
+                    ai_summary = VALUES(ai_summary),
+                    news_data = VALUES(news_data),
+                    updated_at = NOW()
+            """
+            cursor.execute(sql_save, (
+                data['score'], 
+                data['ai_news'], 
+                json.dumps(news_items, ensure_ascii=False)
+            ))
+            conn.commit()
+
+    except Exception as e:
+        print(f"업종 분석 중 오류: {e}")
+    finally:
+        conn.close()
+
+def get_defense_sector_analysis():
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT score, ai_summary, news_data FROM stock_news WHERE stock_id = 9999")
+            row = cursor.fetchone()
+            if row:
+                return row['score'], row['ai_summary'], json.loads(row['news_data'])
+            return 0, "데이터 분석 대기 중...", []
+    finally:
+        conn.close()
 
 def get_stock_chart_data(stock_id):
     conn = get_conn()
