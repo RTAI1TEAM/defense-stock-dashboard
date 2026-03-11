@@ -142,7 +142,7 @@ def get_stock_list():
     finally:
         conn.close()
 
-@stock_detail_bp.route("/chart/<ticker>")
+@stock_detail_bp.route("/stocks/<ticker>")
 def show_stock_chart(ticker):
     if "nickname" not in session:
         return redirect(url_for("auth_bp.login_page"))
