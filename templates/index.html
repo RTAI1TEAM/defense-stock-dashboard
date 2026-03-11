@@ -4,55 +4,79 @@
 
 {% block content %}
 
-<div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
 
-    <!-- 왼쪽 : 차트 -->
-    <div>
-        {{ line_chart(
-            "mainEtfChart",
-            etf.name_kr ~ " ETF 차트",
-            chart_labels,
-            chart_values,
-            "ETF 종가",
-            "420px"
-        ) }}
-    </div>
+<div class="container-fluid px-4 mt-4 mb-4">
+    <div class="main-dashboard">
 
-    <!-- 오른쪽 영역 -->
-    <div style="display:grid; grid-template-rows: 1fr 1fr; gap:24px;">
+        <!-- 왼쪽 차트 -->
+        <div class="dashboard-card">
+            <div class="mb-3">
+                <h2 class="section-title">{{ etf.name_kr }} ETF 차트</h2>
+                <p class="section-subtitle">최근 ETF 종가 흐름</p>
+            </div>
 
-        <!-- 종목 리스트 자리 -->
-        <div style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
-            <h3 style="margin-top:0;">방산주 목록</h3>
+            {{ line_chart(
+                "mainEtfChart",
+                "",
+                chart_labels,
+                chart_values,
+                "ETF 종가",
+                "400px"
+            ) }}
+        </div>
 
-            <!-- 나중에 리스트 컴포넌트 -->
-            <div id="stock-list-container">
+        <!-- 오른쪽 -->
+        <div class="right-column">
+
+            <div class="compact-stock-card">
+                <div class="compact-stock-header">
+                    <h3 class="compact-stock-title">방산주 TOP 5</h3>
+                    <span class="compact-badge">거래대금 기준</span>
+                </div>
+
+                <div class="stock-mini-list">
+                    {% for stock in defense_stocks[:5] %}
+                    <a class="stock-mini-item"
+                       href="{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}">
+                        <div class="stock-rank">{{ loop.index }}</div>
+
+                        <div class="stock-info">
+                            <p class="stock-name">{{ stock.name }}</p>
+                            <div class="stock-meta">{{ stock.ticker }}</div>
+                        </div>
+
+                        <div class="stock-change">
+                            <div class="stock-price">{{ "{:,.0f}".format(stock.price) }}원</div>
+                            <div class="stock-rate {{ 'positive' if stock.change > 0 else 'negative' if stock.change < 0 else 'neutral' }}">
+                                {{ '+' if stock.change > 0 }}{{ stock.change }}%
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="analysis-panel">
+                <div class="mb-2">
+                    <h3 class="compact-stock-title">AI 종목 분석</h3>
+                    <p class="section-subtitle">뉴스 기반 투자 참고</p>
+                </div>
+
+                <div id="ai-analysis-container">
+                    <div id="analysis-view">
+                        {% include "components/_ai_analysis_card.html" %}
+                    </div>
+
+                    <div id="invest-view" style="display:none;">
+                        {% include "components/_invest_form.html" %}
+                    </div>
+                </div>
             </div>
 
         </div>
-
-        <!-- AI 분석 자리 -->
-        <!-- AI 분석 / 투자 폼 -->
-        <div style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
-            <h3 style="margin-top:0;">AI 종목 분석</h3>
-
-            <div id="ai-analysis-container">
-                <!-- 분석 카드 영역 -->
-                <div id="analysis-view">
-                    {% include "components/_ai_analysis_card.html" %}
-                    {% include "components/invest_start_button.html" %}
-                </div>
-
-                <!-- 투자 폼 영역 -->
-                <div id="invest-view" style="display:none;">
-                    {% include "components/_invest_form.html" %}
-                </div>
-            </div>
-        </div>
-
     </div>
-
 </div>
+
 <script>
     function goToInvest() {
         document.getElementById("analysis-view").style.display = "none";

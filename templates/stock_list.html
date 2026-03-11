@@ -1,101 +1,10 @@
 {% extends "navbar.html" %}
+{% from "components/stock_table_macros.html" import stock_rank_table %}
 
 {% block title %}K-방산 전일 기준 차트{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 style="font-weight: 800;">K-방산 전일 기준 목록</h2>
-        </div>
-
-        <div style="font-size:13px;color:#888;margin-bottom:15px;">
-            ※ 전일 종가 기준 데이터 (등락률: 전일 vs 전전일, 거래대금: 전일 기준)
-        </div>
-
-        <table class="table table-hover">
-            <thead>
-                <tr class="text-secondary" style="font-size: 0.85rem; cursor: pointer;">
-                    <th onclick="sortTable(0)">순위</th>
-                    <th onclick="sortTable(1)">종목명</th>
-                    <th onclick="sortTable(2)">전일 종가 ↕</th>
-                    <th onclick="sortTable(3)">전일 등락률 ↕</th>
-                    <th onclick="sortTable(4)" class="text-right">전일 거래대금 ↕</th>
-                </tr>
-            </thead>
-
-<script>
-let sortOrder = [true, true, true, true, true];
-
-function sortTable(n) {
-    const table = document.querySelector(".table");
-    let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-    switching = true;
-    dir = sortOrder[n] ? "asc" : "desc";
-
-    while (switching) {
-        switching = false;
-        rows = table.rows;
-        for (i = 1; i < (rows.length - 1); i++) {
-            shouldSwitch = false;
-            x = rows[i].getElementsByTagName("TD")[n];
-            y = rows[i + 1].getElementsByTagName("TD")[n];
-
-            let xVal = x.innerText.replace(/[^0-9.-]+/g, "");
-            let yVal = y.innerText.replace(/[^0-9.-]+/g, "");
-
-            let xFinal = isNaN(parseFloat(xVal)) ? x.innerText.toLowerCase() : parseFloat(xVal);
-            let yFinal = isNaN(parseFloat(yVal)) ? y.innerText.toLowerCase() : parseFloat(yVal);
-
-            if (dir == "asc") {
-                if (xFinal > yFinal) { shouldSwitch = true; break; }
-            } else if (dir == "desc") {
-                if (xFinal < yFinal) { shouldSwitch = true; break; }
-            }
-        }
-        if (shouldSwitch) {
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-            switchcount++;
-        } else {
-            if (switchcount == 0 && dir == "asc") {
-                dir = "desc";
-                switching = true;
-            }
-        }
-    }
-    sortOrder[n] = !sortOrder[n];
-    updateRank();
-}
-
-function updateRank() {
-    const rows = document.querySelectorAll(".table tbody tr");
-    rows.forEach((row, index) => {
-        row.cells[0].innerText = index + 1;
-    });
-}
-</script>
-
-            <tbody>
-                {% for stock in stocks %}
-                <tr style="cursor: pointer;"
-                onclick="window.location.href='{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}';">
-                    <td class="font-weight-bold">{{ loop.index }}</td>
-                    <td><strong>{{ stock.name }}</strong></td>
-                    <td>{{ stock.price | comma }}원</td>
-
-                    <td style="color: {{ '#f23645' if stock.change > 0 else '#0062ff' }}">
-                        {{ '+' if stock.change > 0 }}{{ stock.change }}%
-                    </td>
-
-                    <td class="text-right text-muted">
-                        {{ stock.value }}억원
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-
-        </table>
-    </div>
+    {{ stock_rank_table('defenseTable', 'K-방산 전일 기준 목록', stocks, 999, True) }}
 </div>
 {% endblock %}

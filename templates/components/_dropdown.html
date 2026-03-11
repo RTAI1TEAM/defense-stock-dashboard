@@ -1,0 +1,119 @@
+<style>
+.stock-dropdown-menu {
+    width: 320px;
+    max-height: 380px;
+    overflow: hidden;
+    border-radius: 14px;
+    padding: 0;
+}
+
+.stock-dropdown-header {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.stock-search-input {
+    border-radius: 10px;
+}
+
+.stock-dropdown-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.stock-dropdown-list .dropdown-item {
+    padding: 10px 14px;
+    white-space: normal;
+}
+
+.stock-dropdown-list .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.stock-code {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.stock-empty {
+    padding: 14px;
+    text-align: center;
+    color: #999;
+    display: none;
+}
+</style>
+
+<div class="dropdown">
+  <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+    {{ stock.name_kr }} <span class="text-muted ms-1">{{ stock.ticker }}</span>
+  </button>
+
+  <div class="dropdown-menu stock-dropdown-menu">
+    <div class="stock-dropdown-header">
+      <input
+        type="text"
+        id="stockSearchInput"
+        class="form-control stock-search-input"
+        placeholder="종목명 또는 코드 검색"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="stock-dropdown-list" id="stockDropdownList">
+      {% for s in stock_list %}
+      <a
+        class="dropdown-item stock-item"
+        href="/chart/{{ s['ticker'] }}"
+        data-name="{{ s['name_kr']|lower }}"
+        data-ticker="{{ s['ticker']|lower }}"
+      >
+        <div class="fw-bold">{{ s['name_kr'] }}</div>
+        <div class="stock-code">{{ s['ticker'] }}</div>
+      </a>
+      {% endfor %}
+      <div id="stockEmptyMessage" class="stock-empty">검색 결과가 없습니다.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("stockSearchInput");
+    const items = document.querySelectorAll(".stock-item");
+    const emptyMessage = document.getElementById("stockEmptyMessage");
+
+    if (!input) return;
+
+    input.addEventListener("input", function () {
+        const keyword = this.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            const name = item.dataset.name || "";
+            const ticker = item.dataset.ticker || "";
+
+            const matched = name.includes(keyword) || ticker.includes(keyword);
+
+            if (matched) {
+                item.style.display = "block";
+                visibleCount++;
+            } else {
+                item.style.display = "none";
+            }
+        });
+
+        emptyMessage.style.display = visibleCount === 0 ? "block" : "none";
+    });
+
+    document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => {
+        btn.addEventListener("shown.bs.dropdown", function () {
+            setTimeout(() => input.focus(), 100);
+        });
+    });
+});
+</script>
