@@ -178,6 +178,13 @@
         return;
       }
 
+      const pwRule = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+      if (!pwRule.test(password)) {
+        e.preventDefault();
+        alert("비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 해요!");
+        return;
+      }
+
       if (password !== password2) {
         e.preventDefault();
         alert("비밀번호가 일치하지 않아요!");
