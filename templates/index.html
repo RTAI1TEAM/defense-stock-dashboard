@@ -1,5 +1,6 @@
 {% extends "navbar.html" %}
 {% from "components/chart_macros.html" import line_chart %}
+{% from "components/stock_table_macros.html" import stock_mini_card, stock_rank_table %}
 {% block title %}메인 - AI Quant{% endblock %}
 
 {% block content %}
@@ -35,24 +36,7 @@
                 </div>
 
                 <div class="stock-mini-list">
-                    {% for stock in defense_stocks[:5] %}
-                    <a class="stock-mini-item"
-                       href="{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}">
-                        <div class="stock-rank">{{ loop.index }}</div>
-
-                        <div class="stock-info">
-                            <p class="stock-name">{{ stock.name }}</p>
-                            <div class="stock-meta">{{ stock.ticker }}</div>
-                        </div>
-
-                        <div class="stock-change">
-                            <div class="stock-price">{{ "{:,.0f}".format(stock.price) }}원</div>
-                            <div class="stock-rate {{ 'positive' if stock.change > 0 else 'negative' if stock.change < 0 else 'neutral' }}">
-                                {{ '+' if stock.change > 0 }}{{ stock.change }}%
-                            </div>
-                        </div>
-                    </a>
-                    {% endfor %}
+                    {{ stock_mini_card('방산 인기 종목', defense_stocks, 5) }}
                 </div>
             </div>
 

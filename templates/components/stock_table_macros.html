@@ -1,3 +1,52 @@
+{% macro stock_items(stocks, limit=5, mode='mini') %}
+    {% for stock in stocks[:limit] %}
+        {% if mode == 'mini' %}
+        <a class="stock-mini-item"
+           href="{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}">
+            <div class="stock-rank">{{ loop.index }}</div>
+
+            <div class="stock-info">
+                <p class="stock-name">{{ stock.name }}</p>
+                <div class="stock-meta">{{ stock.ticker }}</div>
+            </div>
+
+            <div class="stock-change">
+                <div class="stock-price">{{ "{:,.0f}".format(stock.price) }}원</div>
+                <div class="stock-rate {{ 'positive' if stock.change > 0 else 'negative' if stock.change < 0 else 'neutral' }}">
+                    {{ '+' if stock.change > 0 else '' }}{{ stock.change }}%
+                </div>
+            </div>
+        </a>
+
+        {% elif mode == 'table' %}
+        <tr style="cursor: pointer;"
+            onclick="window.location.href='{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}';">
+            <td class="font-weight-bold">{{ loop.index }}</td>
+            <td><strong>{{ stock.name }}</strong></td>
+            <td>{{ stock.price | comma }}원</td>
+            <td style="color: {{ '#f23645' if stock.change > 0 else '#0062ff' if stock.change < 0 else '#6c757d' }}">
+                {{ '+' if stock.change > 0 else '' }}{{ stock.change }}%
+            </td>
+            <td class="text-right text-muted">{{ stock.value }}억원</td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+
+{% macro stock_mini_card(title, stocks, limit=5) %}
+<div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 style="font-weight: 800; margin: 0;">{{ title }}</h4>
+    </div>
+
+    <div class="stock-mini-list">
+        {{ stock_items(stocks, limit, 'mini') }}
+    </div>
+</div>
+{% endmacro %}
+
+
 {% macro stock_rank_table(table_id, title, stocks, limit=5, show_desc=True) %}
 <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -21,18 +70,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for stock in stocks[:limit] %}
-            <tr style="cursor: pointer;"
-                onclick="window.location.href='{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}';">
-                <td class="font-weight-bold">{{ loop.index }}</td>
-                <td><strong>{{ stock.name }}</strong></td>
-                <td>{{ stock.price | comma }}원</td>
-                <td style="color: {{ '#f23645' if stock.change > 0 else '#0062ff' }}">
-                    {{ '+' if stock.change > 0 }}{{ stock.change }}%
-                </td>
-                <td class="text-right text-muted">{{ stock.value }}억원</td>
-            </tr>
-            {% endfor %}
+            {{ stock_items(stocks, limit, 'table') }}
         </tbody>
     </table>
 </div>
