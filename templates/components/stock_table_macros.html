@@ -2,7 +2,7 @@
     {% for stock in stocks[:limit] %}
         {% if mode == 'mini' %}
         <a class="stock-mini-item"
-           href="{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}">
+            href="{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}">
             <div class="stock-rank">{{ loop.index }}</div>
 
             <div class="stock-info">
@@ -11,10 +11,13 @@
             </div>
 
             <div class="stock-change">
-                <div class="stock-price">{{ "{:,.0f}".format(stock.price) }}원</div>
-                <div class="stock-rate {{ 'positive' if stock.change > 0 else 'negative' if stock.change < 0 else 'neutral' }}">
-                    {{ '+' if stock.change > 0 else '' }}{{ stock.change }}%
-                </div>
+            <div class="stock-price">{{ "{:,.0f}".format(stock.price) }}원</div>
+            <div class="stock-rate {{ 'positive' if stock.change > 0 else 'negative' if stock.change < 0 else 'neutral' }}">
+                {{ '+' if stock.change > 0 else '' }}{{ stock.change }}%
+            </div>
+            <div style="font-size:12px;color:#999;">
+                거래대금 {{ stock.value }}억원
+            </div>
             </div>
         </a>
 

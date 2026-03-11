@@ -1,5 +1,5 @@
 {% extends "navbar.html" %}
-{% from "components/chart_macros.html" import line_chart %}
+{% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% from "components/stock_table_macros.html" import stock_mini_card, stock_rank_table %}
 {% block title %}메인 - AI Quant{% endblock %}
 
@@ -14,16 +14,15 @@
                 <h2 class="section-title">{{ etf.name_kr }} ETF 차트</h2>
                 <p class="section-subtitle">최근 ETF 종가 흐름</p>
             </div>
-
-            {{ line_chart(
-                "mainEtfChart",
-                "",
-                chart_labels,
-                chart_values,
-                "ETF 종가",
-                "400px"
-            ) }}
-        </div>
+                {{ chart_toggle(
+                    "mainEtfChart",
+                    "",
+                    chart_data,
+                    "ETF 종가",
+                    "ETF 캔들",
+                    "400px"
+                ) }}
+            </div>
 
         <!-- 오른쪽 -->
         <div class="right-column">
