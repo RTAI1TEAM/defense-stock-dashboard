@@ -130,6 +130,7 @@ def index():
 
     # 투자 폼에 넣을 전략 문구
     ai_strategy = analysis_list[0]["ai_summary"] if analysis_list else "AI 분석 데이터 없음"
+
     conn = get_conn()
     try:
         defense_stocks = get_defense_data(conn)
@@ -146,7 +147,9 @@ def index():
         score=score if score is not None else 0,
         color_class=color_class,
         ai_strategy=ai_strategy,
-        defense_stocks=defense_stocks
+        defense_stocks=defense_stocks,
+        strategies={},  # 템플릿의 for문을 통과시키기 위함
+        stock=None      # stock.ticker 에러를 방지하기 위함
     )
 
 
