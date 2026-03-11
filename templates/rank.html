@@ -156,7 +156,8 @@
     <thead>
         <tr>
             <th>순위</th>
-            <th>닉네임</th>
+            <th></th>
+            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;닉네임</th>
             <th>수익률</th>
             <th>총 자산</th>
         </tr>
@@ -165,6 +166,7 @@
         {% for user in others %}
         <tr>
             <td>{{ loop.index + 3 }}</td>
+            <td></td>
             <td>
                 <div class="rank-user-cell">
                     <span class="rank-table-avatar">{{ user.avatar or "🧑‍💼" }}</span>
