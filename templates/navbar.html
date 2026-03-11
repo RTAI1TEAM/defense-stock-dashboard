@@ -25,7 +25,8 @@
   </button>
 
   <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+    
+    <ul class="navbar-menu">
       <li class="nav-item {% if request.path == '/' %}active{% endif %}">
         <a class="nav-link" href="/">홈</a>
       </li>
@@ -42,7 +43,8 @@
         <a class="nav-link" href="/rank">랭킹</a>
       </li>
     </ul>
-    <div class="position-relative mx-3" style="width:260px;">
+    <div class="navbar-right">
+    <div class="position-relative ml-3" style="width:260px;">
 
 <input
 type="text"
@@ -50,6 +52,7 @@ id="navbarStockSearch"
 class="form-control"
 placeholder="🔍주식명 혹은 종목번호 입력"
 autocomplete="off"
+style="border-radius: 16px;"
 >
 
 <div id="navbarStockResults"
@@ -84,7 +87,7 @@ autocomplete="off"
 
     {% if "nickname" in session %}
   <a href="{{ url_for('profile_bp.show_profile') }}"
-    class="d-flex align-items-center mx-2 text-decoration-none">
+    class="navbar-profile d-flex align-items-center mx-4 text-decoration-none">
       <div class="navbar-avatar" id="navbarAvatar">
           {{ session.get("avatar", "🧑‍💼") }}
       </div>
@@ -98,8 +101,8 @@ autocomplete="off"
 </a>
 {% endif %}
   </div>
+</div>
 </nav>
-
 {% block content %}
     기본 내용
 {% endblock %}

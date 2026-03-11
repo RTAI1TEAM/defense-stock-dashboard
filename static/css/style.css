@@ -6,10 +6,12 @@ html, body {
 
 /* 네비게이션 바 */
 .navbar{
-  min-height: 60px;
-  padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid #eef2f7;
+  height:60px;
+  padding:0 24px;
+  background:#ffffff;
+  border-bottom:1px solid #e5e7eb;
+  display:flex;
+  align-items:center;
 }
 
 .navbar-brand{
@@ -21,31 +23,114 @@ html, body {
 }
 
 .navbar-brand img{
-  height: 34px;
+  height: 28px;
   width: auto;
   display: block;
   object-fit: contain;
   padding-left: 16px;
 }
+.navbar-menu{
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
-.navbar-nav{
+.navbar-menu .nav-item{
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.navbar-menu .nav-link{
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 14px;
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color .2s ease;
+  position: relative;
+}
+
+.navbar-menu .nav-link:hover{
+  color: #111827;
+}
+
+.navbar-menu .nav-item::after{
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: 2px;
+  background: #2563eb;
+  border-radius: 999px 999px 0 0;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform .2s ease;
+}
+
+.navbar-menu .nav-item:hover::after{
+  transform: scaleX(1);
+}
+
+.navbar-menu .nav-item.active .nav-link{
+  color: #111827;
+  font-weight: 700;
+}
+
+.navbar-menu .nav-item.active::after{
+  transform: scaleX(1);
+}
+.navbar-right{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+/* .navbar-nav{
   display: flex;
   align-items: center;
   gap: 28px;
 }
 
 .navbar-nav .nav-link{
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: #6b7280;
-  padding: 0;
-  line-height: 1;
+  font-size:1rem;
+  font-weight:500;
+  color:#6b7280;
+  padding:8px 12px;
+  border-radius:8px;
+  transition:all .15s ease;
+}
+
+.navbar-nav .nav-link:hover{
+  background:#f1f5f9;
+  color:#111827;
 }
 
 .navbar-nav .nav-link.active{
-  color: #111827;
-  font-weight: 700;
+  color:#2563eb;
+  font-weight:600; 
+} */
+.navbar-profile:hover{
+    transform:scale(1.05);
 }
+.navbar-avatar{
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  background:#eef2ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+}
+
 
 /* index */
 .main-dashboard {
@@ -313,21 +398,6 @@ html, body {
     color: #0062ff;
 }
 
-.navbar-avatar{
-    width:32px;
-    height:32px;
-    border-radius:50%;
-    background:#eef4ff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:16px;
-    transition:all .2s ease;
-}
-
-.navbar-avatar:hover{
-    transform:scale(1.1);
-}
 .neutral {
     color: #64748b;
 }
