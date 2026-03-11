@@ -131,10 +131,10 @@
       {% else %}
         <!-- 회원가입 입력 단계 -->
         <div class="form-group">
-          <input type="text" name="nickname" placeholder="닉네임" required />
+          <input type="text" name="nickname" placeholder="닉네임" {% if error %} value="{{ nickname }}"{% endif %} required />
         </div>
         <div class="form-group">
-          <input type="email" name="email" placeholder="이메일" required />
+          <input type="email" name="email" placeholder="이메일" {% if error %} value="{{ email }}"{% endif %} required />
         </div>
         <div class="form-group">
           <input type="password" name="password" placeholder="비밀번호" required />
@@ -175,6 +175,13 @@
       if (password.length < 8) {
         e.preventDefault();
         alert("비밀번호는 8자 이상이어야 해요!");
+        return;
+      }
+
+      const pwRule = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+      if (!pwRule.test(password)) {
+        e.preventDefault();
+        alert("비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 해요!");
         return;
       }
 

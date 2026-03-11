@@ -134,6 +134,20 @@
       font-size: 14px;
       margin-bottom: 14px;
     }
+
+    .guest-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      color: #c0f5f0;
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .guest-link:hover {
+      color: #a0ede6;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -143,12 +157,10 @@
       <h1>🚀 AI Quant</h1>
     </div>
 
-    <!-- 에러 메시지 -->
     {% if error %}
     <div class="error-msg">{{ error }}</div>
     {% endif %}
 
-    <!-- Flask로 전송하는 form -->
     <form action="/login" method="POST">
       <div class="form-group">
         <input type="email" name="email" placeholder="이메일" required />
@@ -164,6 +176,8 @@
     </div>
 
     <button class="btn-signup" onclick="window.location.href='/signup'">회원가입</button>
+
+    <a href="/" class="guest-link">로그인 없이 이용하기</a>
   </div>
 
 </body>

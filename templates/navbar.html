@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}기본 제목{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    
+    <script src="{{ url_for('static', filename='js/stock_table.js') }}"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
@@ -20,7 +24,7 @@
       <li class="nav-item {% if request.path == '/' %}active{% endif %}">
         <a class="nav-link" href="/">홈</a>
       </li>
-      <li class="nav-item {% if request.path.startswith('/chart') %}active{% endif %}">
+      <li class="nav-item {% if request.path.startswith('/stocks') or request.path.startswith('/chart')  %}active{% endif %}">
         <a class="nav-link" href="{{ url_for('stocks.stock_list') }}">차트</a>
       </li>
       <li class="nav-item {% if request.path == '/portfolio' %}active{% endif %}">
@@ -38,8 +42,16 @@
       <input class="form-control mr-sm-2" type="search" placeholder="Search">
       <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
     </form>
-    <a href="#" class="mx-4">내 프로필</a>
-    <a href="{{url_for('auth_bp.logout')}}" class="mx-4">로그아웃</a>
+    {% if "nickname" in session %}
+    <a href="{{url_for('profile_bp.show_profile')}}" class="mx-2">{{session["nickname"]}} 님</a>
+    {% endif %}
+    {% if "nickname" in session %}
+    <a href="{{url_for('auth_bp.logout')}}" class="mx-2">로그아웃</a>
+    {% else %}
+    <a href="{{url_for('auth_bp.login')}}" class="mx-2">로그인</a>
+    {% endif %}
+
+    
   </div>
 </nav>
 

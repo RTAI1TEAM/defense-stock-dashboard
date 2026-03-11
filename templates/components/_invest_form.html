@@ -1,26 +1,73 @@
-<div id="invest-section" style="display: none;" class="card shadow border-0 p-4">
-    <h3 class="fw-bold text-success mb-4">💰 투자 설정</h3>
-    <form action="{{ url_for('stock_recommend.execute_trade') }}" method="POST">
+<style>
+.back-btn {
+    border: none;
+    background: transparent;
+    padding: 6px;
+    cursor: pointer;
+    color: #495057;
+    transition: all 0.15s ease;
+}
+
+.back-btn:hover {
+    color: #000;
+    transform: translateX(-3px);
+}
+</style>
+<div id="invest-section" class="card shadow border-0 p-4">
+    <div class="d-flex align-items-center mb-4">
+
+        <button onclick="goBack()" class="back-btn me-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+            </svg>
+        </button>
+
+        <h4 class="fw-bold text-success mb-0">💰 투자 설정</h4>
+
+    </div>
+    <div class="mb-4">
+        <label class="form-label fw-bold">AI 추천 전략 (참고용)</label>
+        <input type="text" class="form-control bg-light" name="strategy" value="{{ ai_news }}" readonly>
+    </div>
+
+    <form id="tradeForm" onsubmit="event.preventDefault(); submitTrade();">
         <input type="hidden" name="stock_id" value="{{ stock_id }}">
-        
+        <input type="hidden" name="ai_news" value="{{ ai_news }}"> 
         <div class="mb-3">
             <label class="form-label fw-bold">투자할 주수</label>
-            <input type="number" class="form-control form-control-lg" name="quantity" min="1" placeholder="예: 10" required>
-            <div class="form-text">현재가 기준으로 잔액에서 차감됩니다.</div>
+            <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" placeholder="몇 주를 살까요?" required>
         </div>
-
-        <div class="mb-4">
-            <label class="form-label fw-bold">AI 추천 전략 (참고용)</label>
-            <input type="text" class="form-control bg-light" name="strategy" value="{{ ai_strategy }}" readonly>
-        </div>
-
-        <div class="row g-2">
-            <div class="col-8">
-                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">매수 주문하기</button>
-            </div>
-            <div class="col-4">
-                <button type="button" class="btn btn-outline-secondary btn-lg w-100" onclick="goBack()">취소</button>
-            </div>
-        </div>
+        <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="submitTrade()">매수 주문하기</button>
     </form>
-</div
+</div>
+
+<script>
+function submitTrade() {
+    const form = document.getElementById('tradeForm');
+    const formData = new FormData(form);
+
+    // fetch를 통해 백엔드에 '몰래' 데이터를 보냅니다.
+    fetch("{{ url_for('stock_detail.execute_trade') }}", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json()) // 여기서 JSON 데이터를 파싱합니다.
+    .then(data => {
+        if (data.success) {
+            // 성공 시 알림창을 띄우고 창을 닫습니다.
+            alert(data.message);
+            
+            // 3. 페이지 새로고침 없이 UI 업데이트 (옵션)
+            // 예: document.getElementById('user-balance').innerText = data.new_balance.toLocaleString() + '원';
+            
+            goBack(); // 분석 카드로 돌아가는 함수 실행
+        } else {
+            alert("거래 실패: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("통신 오류가 발생했습니다.");
+    });
+}
+</script>

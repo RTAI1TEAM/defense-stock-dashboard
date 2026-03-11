@@ -13,36 +13,28 @@
     }
 </style>
 
-<div id="analysis-section">
-    <div class="card shadow-sm mb-4 border-0 bg-light">
-        <div class="card-body text-center">
-            <h4 class="mb-3">🤖 AI 투자 매력도: <strong>{{ score }}점</strong></h4>
-            <div class="progress" style="height: 25px; border-radius: 12px;">
-                <div class="progress-bar {{ color_class }} progress-bar-striped progress-bar-animated" 
-                     role="progressbar" style="width: {{ score }}%;" 
-                     aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <h5 class="fw-bold mb-3 mt-4">📌 실시간 핵심 뉴스 요약</h5>
-    <div class="list-group shadow-sm border-0">
-        {% for news in news_list %}
-        <a href="{{ news.link }}" target="_blank" class="list-group-item list-group-item-action border-start-0 border-end-0 py-3">
-            <div class="d-flex align-items-center">
-                <span class="me-2 text-primary">●</span>
-                <span class="news-summary">{{ news.description_clean }}</span>
-            </div>
-        </a>
-        {% else %}
-        <div class="list-group-item text-center text-muted">최근 관련 뉴스가 없습니다.</div>
-        {% endfor %}
+<div id="analysis-section" class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="card-header {{ color_class }} text-white py-2 text-center border-0">
+        <h6 class="mb-0 fw-bold">AI 투자 점수: {{ score }}점</h6>
     </div>
 
-    <div class="d-grid gap-2 mt-5">
-        <button type="button" class="btn btn-primary btn-lg shadow-sm" onclick="goToInvest()">
-            🚀 이 종목 모의투자 시작하기
-        </button>
+    <div class="card-body p-2">
+
+        <div class="bg-light p-2 rounded-2 mb-2 border-start border-3 border-primary">
+            <div style="font-size: 0.65rem; color: #666; font-weight: bold;">핵심 요약</div>
+            <div class="fw-bold mt-1" style="font-size: 0.75rem; line-height: 1.2;">{{ ai_news }}</div>
+        </div>
+        <div class="list-group list-group-flush mb-2">
+            {% for news in news_list %}
+            <a href="{{ news.link }}" target="_blank" class="list-group-item list-group-item-action px-1 py-1 border-0" style="font-size: 0.75rem;">
+                <div class="text-truncate text-dark">• {{ news.title }}</div>
+            </a>
+            {% endfor %}
+        </div>
+
+
+        <!-- <button type="button" class="btn btn-primary btn-sm w-100 fw-bold py-1" onclick="goToInvest()">
+            모의투자 시작하기
+        </button> -->
     </div>
 </div>
