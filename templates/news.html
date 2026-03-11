@@ -43,22 +43,33 @@
 
     <div class="bg-white rounded-4 shadow-sm overflow-hidden">
         {% for news in list_news %}
-        <a href="{{ news.source_url }}" target="_blank" class="news-item p-4 d-block">
-            <div class="d-flex gap-4 align-items-center">
-                <img src="{{ news.image_url or '/static/images/news_default.png' }}" class="top-img"
-                onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
+        <a href="{{ news.source_url }}" target="_blank" class="news-item p-4 d-block text-decoration-none">
+            <div class="d-flex gap-4 align-items-start">
+                <img
+                    src="{{ news.image_url or '/static/images/news_default.png' }}"
+                    class="list-img"
+                    onerror="this.onerror=null;this.src='/static/images/news_default.jpg';"
+                    alt="뉴스 이미지"
+                >
+
                 <div class="flex-grow-1">
                     <div class="mb-1 text-muted small">
                         {{ news.source_name }} · {{ news.pubDate_raw }}
                     </div>
-                    <h6 class="fw-bold mb-2 text-dark">{{ news.title_clean }}</h6>
-                    <p class="text-muted small m-0 line-clamp-2">{{ news.description_clean }}</p>
+
+                    <h6 class="fw-bold mb-2 text-dark">
+                        {{ news.title_clean }}
+                    </h6>
+
+                    <p class="text-muted small m-0 line-clamp-2">
+                        {{ news.description_clean }}
+                    </p>
                 </div>
             </div>
         </a>
         {% endfor %}
-        </div>
-    </section>
+    </div>
+</section>
 </div>
 
 {% endblock %}

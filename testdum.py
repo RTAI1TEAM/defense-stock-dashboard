@@ -16,16 +16,16 @@ from database import get_conn
 # 다양한 케이스를 테스트할 수 있도록 잔액 차등 설정
 # ─────────────────────────────────────────────────────────
 TEST_USERS = [
-    {"nickname": "수익왕",       "current_balance": 14_200_000, "avatar": "👑"},
-    {"nickname": "방산왕",       "current_balance": 13_150_000, "avatar": "🦊"},
-    {"nickname": "AI마스터",     "current_balance": 12_840_000, "avatar": "🤖"},
-    {"nickname": "코딩트레이더",  "current_balance": 11_500_000, "avatar": "👨‍💻"},
-    {"nickname": "개미투자자",    "current_balance": 10_800_000, "avatar": "🐜"},
-    {"nickname": "단타신",       "current_balance": 10_200_000, "avatar": "🔥"},
-    {"nickname": "장기투자자",    "current_balance": 9_800_000,  "avatar": "🐢"},
-    {"nickname": "차트분석가",    "current_balance": 9_200_000,  "avatar": "📈"},
-    {"nickname": "배당러",       "current_balance": 8_700_000,  "avatar": "💰"},
-    {"nickname": "주린이",       "current_balance": 8_100_000,  "avatar": "🐸"},
+    {"nickname": "수익왕",       "current_balance": 14_200_000, "avatar": ""},
+    {"nickname": "방산왕",       "current_balance": 13_150_000, "avatar": ""},
+    {"nickname": "AI마스터",     "current_balance": 12_840_000, "avatar": ""},
+    {"nickname": "코딩트레이더",  "current_balance": 11_500_000, "avatar": ""},
+    {"nickname": "개미투자자",    "current_balance": 10_800_000, "avatar": ""},
+    {"nickname": "단타신",       "current_balance": 10_200_000, "avatar": ""},
+    {"nickname": "장기투자자",    "current_balance": 9_800_000,  "avatar": ""},
+    {"nickname": "차트분석가",    "current_balance": 9_200_000,  "avatar": ""},
+    {"nickname": "배당러",       "current_balance": 8_700_000,  "avatar": ""},
+    {"nickname": "주린이",       "current_balance": 8_100_000,  "avatar": ""},
 ]
 
 INITIAL_BALANCE = 10_000_000  # 초기 자본금 1000만원
