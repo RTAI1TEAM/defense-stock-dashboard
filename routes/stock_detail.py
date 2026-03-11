@@ -4,6 +4,7 @@ import html
 import json
 import requests
 import google.generativeai as genai
+from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 from database import get_conn
@@ -118,7 +119,7 @@ def get_stock_chart_data(stock_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT price_date, close_price
+            SELECT price_date, open_price, high_price, low_price, close_price
             FROM stock_price_history
             WHERE stock_id = %s
             ORDER BY price_date
@@ -126,10 +127,17 @@ def get_stock_chart_data(stock_id):
             cursor.execute(sql, (stock_id,))
             rows = cursor.fetchall()
 
-            labels = [row["price_date"].strftime("%Y-%m-%d") for row in rows]
-            values = [float(row["close_price"]) for row in rows]
+            candle_data = []
+            for row in rows:
+                candle_data.append({
+                    "x": int(datetime.combine(row["price_date"], datetime.min.time()).timestamp() * 1000),
+                    "o": float(row["open_price"]),
+                    "h": float(row["high_price"]),
+                    "l": float(row["low_price"]),
+                    "c": float(row["close_price"])
+                })
 
-            return labels, values
+            return candle_data
     finally:
         conn.close()
 
@@ -152,7 +160,7 @@ def show_stock_chart(ticker):
     stock = get_stock(ticker)
     stock_list = get_stock_list()
     print(stock_list)
-    chart_labels, chart_values = get_stock_chart_data(stock["id"])
+    chart_data = get_stock_chart_data(stock["id"])
     news_list, score, ai_news, status, color_class = get_live_analysis(stock["name_kr"])
     account = None # 계좌 정보를 담을 변수
     conn = get_conn()
@@ -196,9 +204,7 @@ def show_stock_chart(ticker):
         stock_list=stock_list,
         stock=stock,
         strategies=strategies,
-        account=account,
-        chart_labels=chart_labels,
-        chart_values=chart_values,
+        chart_data=chart_data,
         news_list=news_list,
         score=score,
         ai_news=ai_news,

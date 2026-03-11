@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, redirect, url_for, session, request
+from datetime import datetime
 from database import get_conn
 from finance_data import get_defense_data
 from routes.app_login import auth_bp
@@ -43,7 +44,7 @@ def get_etf_chart_data(etf_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT price_date, close_price
+            SELECT price_date, open_price, high_price, low_price, close_price
             FROM etf_price_history
             WHERE etf_id = %s
             ORDER BY price_date
@@ -51,10 +52,17 @@ def get_etf_chart_data(etf_id):
             cursor.execute(sql, (etf_id,))
             rows = cursor.fetchall()
 
-            labels = [row["price_date"].strftime("%Y-%m-%d") for row in rows]
-            values = [float(row["close_price"]) for row in rows]
+            candle_data = []
+            for row in rows:
+                candle_data.append({
+                    "x": int(datetime.combine(row["price_date"], datetime.min.time()).timestamp() * 1000),
+                    "o": float(row["open_price"]),
+                    "h": float(row["high_price"]),
+                    "l": float(row["low_price"]),
+                    "c": float(row["close_price"])
+                })
 
-            return labels, values
+            return candle_data
     finally:
         conn.close()
 
@@ -123,7 +131,7 @@ def comma_filter(value):
 @app.route("/")
 def index():
     etf = get_main_etf()
-    chart_labels, chart_values = get_etf_chart_data(etf["id"])
+    chart_data = get_etf_chart_data(etf["id"])
 
     stock_id, analysis_list, score = get_main_stock_analysis()
     color_class = get_color_class(score if score is not None else 0)
@@ -140,8 +148,7 @@ def index():
     return render_template(
         "index.html",
         etf=etf,
-        chart_labels=chart_labels,
-        chart_values=chart_values,
+        chart_data=chart_data,
         stock_id=stock_id,
         news_list=analysis_list,
         score=score if score is not None else 0,
