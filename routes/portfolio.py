@@ -118,6 +118,8 @@ def portfolio_view():
             total_assets = current_balance + total_stock_value
             total_profit = total_assets - initial_balance
             total_profit_rate = (total_profit / initial_balance) * 100 if initial_balance > 0 else 0
+            cash_balance = current_balance      # 현금 잔고
+            stock_value  = total_stock_value    # 투자자산(주식 평가액)
 
     finally:
         conn.close()
@@ -132,7 +134,9 @@ def portfolio_view():
         pie_labels=pie_labels,
         pie_values=pie_values,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        cash_balance=cash_balance,
+        stock_value=stock_value
     )
 
 
