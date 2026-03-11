@@ -4,10 +4,11 @@ import html
 import json
 import requests
 import google.generativeai as genai
+import pandas as pd
 from dotenv import load_dotenv
 from database import get_conn
 from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
-
+from algorithm import strategy_golden_cross, strategy_breakout, run_backtest
 stock_detail_bp = Blueprint('stock_detail', __name__)
 
 # --- API 설정 ---
@@ -152,11 +153,43 @@ def show_stock_chart(ticker):
     print(stock_list)
     chart_labels, chart_values = get_stock_chart_data(stock["id"])
     news_list, score, ai_news, status, color_class = get_live_analysis(stock["name_kr"])
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                SELECT price_date as date, close_price 
+                FROM stock_price_history 
+                WHERE stock_id = %s 
+                ORDER BY price_date
+            """
+            cursor.execute(sql, (stock["id"],))
+            rows = cursor.fetchall()
+            
+        # 2. Pandas DataFrame 변환 및 전략 실행
+        df = pd.DataFrame(rows)
+        
+        # 골든크로스 백테스팅
+        df_gc = strategy_golden_cross(df)
+        profit_gc, _ = run_backtest(df_gc)
+        
+        # 전고점 돌파 백테스팅
+        df_bo = strategy_breakout(df)
+        profit_bo, _ = run_backtest(df_bo)
+        
+        # 3. 전략 결과 데이터 구성
+        strategies = {
+            "GOLDEN_CROSS": {"name": "5/20 골든크로스", "profit": profit_gc},
+            "BREAKOUT": {"name": "20일 전고점 돌파", "profit": profit_bo}
+        }
+
+    finally:
+        conn.close()
 
     return render_template(
         "stock_detail.html",
         stock_list=stock_list,
         stock=stock,
+        strategies=strategies,
         chart_labels=chart_labels,
         chart_values=chart_values,
         news_list=news_list,
@@ -172,25 +205,33 @@ def execute_trade():
     if "nickname" not in session:
         return jsonify({"success": False, "message": "로그인이 필요합니다."})
 
-    # 변수 초기화
-    ticker_from_form = request.form.get('stock_id')
-    quantity = int(request.form.get('quantity') or 0)
-    ai_news = request.form.get('ai_news') or request.form.get('strategy') or "전략 없음"
-    user_id = session.get('user_id', 1) 
-    
-    conn = None # ★ 중요: conn 변수를 미리 선언해서 NameError 방지
-
-    if quantity <= 0:
-        return jsonify({"success": False, "message": "구매할 수량을 입력하세요."})
-
+    # 1. 입력 데이터 정리
+    ticker_from_form = request.form.get('stock_id')  # HTML의 name="stock_id"
     try:
-        conn = get_conn() # 여기서 연결 시도
+        quantity = int(request.form.get('quantity') or 0)
+    except ValueError:
+        return jsonify({"success": False, "message": "수량 형식이 올바르지 않습니다."})
+        
+    trade_type = request.form.get('trade_type', 'BUY')
+    strategy_name = request.form.get('strategy') or "일반 매매"
+    user_id = session.get('user_id')
+
+    if not user_id:
+        return jsonify({"success": False, "message": "세션이 만료되었습니다. 다시 로그인해주세요."})
+    if not ticker_from_form:
+        return jsonify({"success": False, "message": "종목 코드가 누락되었습니다."})
+    if quantity <= 0:
+        return jsonify({"success": False, "message": "수량을 1주 이상 입력하세요."})
+
+    conn = None
+    try:
+        conn = get_conn()
         with conn.cursor() as cursor:
-            # 1. 시세 및 종목 ID 조회
+            # [A] 시세 및 종목 ID 조회
             sql_stock = """
-                SELECT s.id, h.close_price 
+                SELECT s.id, h.close_price, s.name_kr
                 FROM stocks s 
-                JOIN stock_price_history h ON s.id = h.stock_id 
+                INNER JOIN stock_price_history h ON s.id = h.stock_id 
                 WHERE s.ticker = %s 
                 ORDER BY h.price_date DESC 
                 LIMIT 1
@@ -199,43 +240,75 @@ def execute_trade():
             stock_res = cursor.fetchone()
 
             if not stock_res:
-                return jsonify({"success": False, "message": "시세 정보를 찾을 수 없습니다."})
+                return jsonify({"success": False, "message": "해당 종목의 시세 데이터를 찾을 수 없습니다."})
             
-            real_db_stock_id = stock_res['id']
+            stock_id = stock_res['id']
             price = float(stock_res['close_price'])
-            total_cost = price * quantity
+            total_amount = price * quantity
 
-            # 2. 계좌 확인
+            # [B] 계좌 확인 및 자동 생성 (사용자 스키마 반영)
             cursor.execute("SELECT id, current_balance FROM mock_accounts WHERE user_id = %s", (user_id,))
             account = cursor.fetchone()
-
-            if not account:
-                return jsonify({"success": False, "message": "계좌가 존재하지 않습니다."})
-
-            if float(account['current_balance']) < total_cost:
-                return jsonify({"success": False, "message": f"잔액 부족! (필요: {total_cost:,.0f}원)"})
-
-            # 3. DB 업데이트 (잔액 차감 및 기록)
-            cursor.execute("UPDATE mock_accounts SET current_balance = current_balance - %s WHERE id = %s", (total_cost, account['id']))
             
-            sql_insert = """
+            if not account:
+                # 스키마에 정의된 기본값 1,000만원으로 생성
+                cursor.execute("""
+                    INSERT INTO mock_accounts (user_id, initial_balance, current_balance)
+                    VALUES (%s, 10000000.00, 10000000.00)
+                """, (user_id,))
+                conn.commit()
+                # 생성 후 다시 조회
+                cursor.execute("SELECT id, current_balance FROM mock_accounts WHERE user_id = %s", (user_id,))
+                account = cursor.fetchone()
+
+            # [C] 매수/매도 로직
+            if trade_type == 'BUY':
+                if float(account['current_balance']) < total_amount:
+                    return jsonify({"success": False, "message": f"잔액 부족 (필요: {total_amount:,.0f}원)"})
+                
+                # 잔액 차감
+                cursor.execute("UPDATE mock_accounts SET current_balance = current_balance - %s WHERE id = %s", (total_amount, account['id']))
+                
+                # 포트폴리오 업데이트
+                cursor.execute("""
+                    INSERT INTO portfolio_holdings (user_id, account_id, stock_id, quantity, avg_buy_price, total_invested)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                        avg_buy_price = (total_invested + VALUES(total_invested)) / (quantity + VALUES(quantity)),
+                        quantity = quantity + VALUES(quantity),
+                        total_invested = total_invested + VALUES(total_invested)
+                """, (user_id, account['id'], stock_id, quantity, price, total_amount))
+
+            elif trade_type == 'SELL':
+                cursor.execute("SELECT id, quantity FROM portfolio_holdings WHERE user_id = %s AND stock_id = %s", (user_id, stock_id))
+                holding = cursor.fetchone()
+                
+                if not holding or holding['quantity'] < quantity:
+                    return jsonify({"success": False, "message": "보유 수량이 부족합니다."})
+                
+                # 잔액 증가
+                cursor.execute("UPDATE mock_accounts SET current_balance = current_balance + %s WHERE id = %s", (total_amount, account['id']))
+                # 수량 감소
+                cursor.execute("UPDATE portfolio_holdings SET quantity = quantity - %s, total_invested = total_invested - (%s * avg_buy_price) WHERE id = %s", (quantity, quantity, holding['id']))
+                # 수량 0이면 삭제
+                cursor.execute("DELETE FROM portfolio_holdings WHERE id = %s AND quantity <= 0", (holding['id'],))
+
+            # [D] 거래 기록 저장
+            cursor.execute("""
                 INSERT INTO trades (user_id, account_id, stock_id, trade_type, price, quantity, total_amount, strategy)
-                VALUES (%s, %s, %s, 'BUY', %s, %s, %s, %s)
-            """
-            cursor.execute(sql_insert, (user_id, account['id'], real_db_stock_id, price, quantity, total_cost, ai_news))
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, account['id'], stock_id, trade_type, price, quantity, total_amount, strategy_name))
             
             conn.commit()
-            
             return jsonify({
                 "success": True, 
-                "message": f"{quantity}주 매수 완료! (총 {total_cost:,.0f}원)",
-                "new_balance": float(account['current_balance']) - total_cost
+                "message": f"{stock_res['name_kr']} {quantity}주 {trade_type} 완료!",
+                "new_balance": format(int(float(account['current_balance']) + (total_amount if trade_type == 'SELL' else -total_amount)), ',')
             })
 
     except Exception as e:
-        if conn: # conn이 정의되어 있을 때만 실행
-            conn.rollback()
-        return jsonify({"success": False, "message": f"거래 에러: {str(e)}"})
+        if conn: conn.rollback()
+        print(f"Transaction Error: {e}")
+        return jsonify({"success": False, "message": f"시스템 오류: {str(e)}"})
     finally:
-        if conn: # conn이 정의되어 있을 때만 실행
-            conn.close()
+        if conn: conn.close()

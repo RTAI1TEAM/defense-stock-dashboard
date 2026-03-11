@@ -66,16 +66,16 @@ def run_backtest(df):
             sell_price = current_price
             
             # 수익률 계산: (매도가 - 매수가) / 매수가 * 100
-            profit_rate = ((sell_price - buy_price) / buy_price) * 100
+            profit_rate = float(((sell_price - buy_price) / buy_price) * 100)
             total_profit_rate += profit_rate
             
-            trades.append({'date': row['date'], 'type': 'SELL', 'price': current_price, 'profit_rate': round(profit_rate, 2)})
+            trades.append({'date': row['date'], 'type': 'SELL', 'price': float(current_price), 'profit_rate': round(profit_rate, 2)})
 
     # 만약 마지막 날까지 들고 있다면, 마지막 날 종가로 팔았다고 가정하고 수익률 계산
     if is_holding:
         final_price = df.iloc[-1][price_col]
-        profit_rate = ((final_price - buy_price) / buy_price) * 100
+        profit_rate = float(((final_price - buy_price) / buy_price) * 100)
         total_profit_rate += profit_rate
-        trades.append({'date': df.iloc[-1]['date'], 'type': 'SELL (End)', 'price': final_price, 'profit_rate': round(profit_rate, 2)})
+        trades.append({'date': df.iloc[-1]['date'], 'type': 'SELL (End)', 'price': float(final_price), 'profit_rate': round(profit_rate, 2)})
 
     return round(total_profit_rate, 2), trades
