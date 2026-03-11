@@ -1,6 +1,6 @@
 import math
 import os
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, Response
 from database import get_conn
 
 portfolio_bp = Blueprint('portfolio', __name__)
@@ -27,8 +27,12 @@ def portfolio_view():
     # 로그인 확인
     user_id = get_user_id_from_session()
     if user_id is None:
-        return redirect(url_for('auth_bp.login_page'))
-
+        return Response("""
+        <script>
+        alert("로그인이 필요한 페이지입니다.");
+        location.href="/login";
+        </script>
+        """, mimetype='text/html')
     conn = get_conn()
 
     # 페이지네이션 설정
