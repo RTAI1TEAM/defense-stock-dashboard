@@ -1,17 +1,36 @@
 import math
 import os
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from database import get_conn
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
+
+# ──────────────────────────────────────────────
+# 내부 헬퍼: nickname으로 user_id 조회
+# ──────────────────────────────────────────────
+def get_user_id_from_session():
+    if 'nickname' not in session:
+        return None
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE nickname = %s", (session['nickname'],))
+            user = cur.fetchone()
+            return user['id'] if user else None
+    finally:
+        conn.close()
+
+
 @portfolio_bp.route("/portfolio")
 def portfolio_view():
+    # 로그인 확인
+    user_id = get_user_id_from_session()
+    if user_id is None:
+        return redirect(url_for('auth_bp.login_page'))
+
     conn = get_conn()
-    
-    # 📌 로그인 세션 대비 (로그인 안 되어 있으면 테스트 유저 1번 사용)
-    user_id = session.get('user_id', 1) 
-    
+
     # 페이지네이션 설정
     page = int(request.args.get('page', 1))
     per_page = 5
@@ -112,13 +131,17 @@ def portfolio_view():
         total_pages=total_pages
     )
 
-# 🚀 [추가됨] 부분 매도 기능을 지원하는 API
+
+# 🚀 부분 매도 기능을 지원하는 API
 @portfolio_bp.route("/api/sell_stock", methods=["POST"])
 def sell_stock():
+    user_id = get_user_id_from_session()
+    if user_id is None:
+        return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
+
     data = request.json
     stock_id = data.get('stock_id')
     sell_qty = int(data.get('sell_qty', 0))
-    user_id = session.get('user_id', 1)
 
     if sell_qty <= 0:
         return jsonify({"success": False, "message": "매도 수량은 1주 이상이어야 합니다."}), 400
@@ -163,18 +186,21 @@ def sell_stock():
     finally:
         conn.close()
 
-# 🚀 [추가됨] AI 전략 변경 API
+
+# 🚀 AI 전략 변경 API
 @portfolio_bp.route("/api/change_strategy", methods=["POST"])
 def change_strategy():
+    user_id = get_user_id_from_session()
+    if user_id is None:
+        return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
+
     data = request.json
     stock_id = data.get('stock_id')
     new_strategy = data.get('strategy')
-    user_id = session.get('user_id', 1)
 
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            # 해당 주식의 가장 최근 매수 기록의 전략 이름을 업데이트합니다.
             sql_update = """
                 UPDATE trades SET strategy = %s 
                 WHERE id = (

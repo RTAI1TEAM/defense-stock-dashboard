@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, redirect, url_for, session, request
 from database import get_conn
+from finance_data import get_defense_data
 from routes.app_login import auth_bp
 from routes.rank import rank_bp
 from routes.news import news_bp
@@ -131,6 +132,11 @@ def index():
 
     # 투자 폼에 넣을 전략 문구
     ai_strategy = analysis_list[0]["ai_summary"] if analysis_list else "AI 분석 데이터 없음"
+    conn = get_conn()
+    try:
+        defense_stocks = get_defense_data(conn)
+    finally:
+        conn.close()
 
     return render_template(
         "index.html",
@@ -141,7 +147,8 @@ def index():
         news_list=analysis_list,
         score=score if score is not None else 0,
         color_class=color_class,
-        ai_strategy=ai_strategy
+        ai_strategy=ai_strategy,
+        defense_stocks=defense_stocks
     )
 
 

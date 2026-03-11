@@ -1,0 +1,157 @@
+.main-dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) 360px;
+    gap: 20px;
+    align-items: start;
+}
+
+.dashboard-card,
+.compact-stock-card,
+.analysis-panel {
+    background: #fff;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    color: #111827;
+}
+
+.section-subtitle {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+.right-column {
+    display: grid;
+    gap: 16px;
+}
+
+.compact-stock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.compact-stock-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0;
+    color: #111827;
+}
+
+.compact-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+.stock-mini-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stock-mini-item {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 10px;
+    border-radius: 14px;
+    background: #f8fafc;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    border: 1px solid transparent;
+}
+
+.stock-mini-item:hover {
+    background: #f1f5f9;
+    border-color: #dbeafe;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.stock-rank {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: #e0ecff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.82rem;
+}
+
+.stock-info {
+    min-width: 0;
+}
+
+.stock-name {
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.stock-meta {
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stock-change {
+    text-align: right;
+}
+
+.stock-price {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.1;
+}
+
+.stock-rate {
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-top: 2px;
+    line-height: 1.1;
+}
+
+.positive {
+    color: #f23645;
+}
+
+.negative {
+    color: #0062ff;
+}
+
+.neutral {
+    color: #64748b;
+}
+
+@media (max-width: 1200px) {
+    .main-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
