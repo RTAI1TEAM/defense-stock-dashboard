@@ -1,0 +1,6 @@
+{% macro search_bar(placeholder, current_query, action) %}
+<form class="input-group search-bar shadow-sm" method="get" action="{{ action }}">
+    <input type="text" class="form-control border-0 ps-4" name="q" placeholder="{{ placeholder }}" value="{{ current_query }}">
+    <button class="btn btn-link text-primary fw-bold pe-4 text-decoration-none" type="submit">🔍</button>
+</form>
+{% endmacro %}
