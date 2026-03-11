@@ -37,6 +37,7 @@ def login():
 
     if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
         session['nickname'] = user['nickname']
+        session['avatar'] = user.get('avatar') or '🧑‍💼'
         return redirect(url_for("index"))
 
     return render_template(

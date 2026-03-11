@@ -2,113 +2,246 @@
 {% block title %}내 프로필{% endblock %}
 
 {% block content %}
+<style>
+    .profile-avatar-trigger {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .profile-avatar-circle {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #eef4ff 0%, #e8f0fe 100%);
+        font-size: 2.4rem;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .profile-avatar-trigger:hover .profile-avatar-circle {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+    }
+
+    .profile-avatar-edit-badge {
+        position: absolute;
+        right: -4px;
+        bottom: -4px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        font-size: 0.9rem;
+    }
+
+    .avatar-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 1050;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .avatar-modal.show {
+        display: flex;
+    }
+
+    .avatar-modal-card {
+        width: 100%;
+        max-width: 420px;
+        border-radius: 24px;
+        padding: 24px;
+        background: #ffffff;
+    }
+
+    .avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .avatar-option {
+        aspect-ratio: 1 / 1;
+        border-radius: 18px;
+        background: #f8fafc;
+        font-size: 1.8rem;
+        transition: all 0.18s ease;
+        border: none;
+    }
+
+    .avatar-option:hover {
+        background: #eef4ff !important;
+        transform: translateY(-2px);
+    }
+
+    .avatar-option.selected {
+        background: #dbeafe !important;
+        box-shadow: inset 0 0 0 2px #3b82f6;
+    }
+</style>
+
 <div class="container mt-4 mb-5" style="max-width: 600px;">
 
     <!-- 상단 프로필 헤더 -->
     <div class="card shadow-sm border-0 p-4 mb-4 text-center" style="border-radius: 20px;">
-        <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
-             style="width:80px; height:80px; border-radius:50%; background:#e8f0fe; font-size:2.2rem;">
-            🧑‍💼
+        <div class="position-relative d-inline-block mx-auto mb-3">
+            <button type="button" id="openAvatarModal" class="profile-avatar-trigger">
+                <div id="profileAvatar"
+                     class="mx-auto d-flex align-items-center justify-content-center profile-avatar-circle">
+                    {{ user_info.avatar or "🧑‍💼" }}
+                </div>
+            </button>
+
+            <div class="d-flex align-items-center justify-content-center shadow-sm profile-avatar-edit-badge">
+                ✏️
+            </div>
         </div>
+
         <h4 class="fw-bold mb-0">{{ user_info.nickname }}</h4>
         <p class="text-muted mt-1 mb-0" style="font-size:0.9rem;">{{ user_info.email }}</p>
     </div>
 
-    <!-- ① 닉네임 변경 -->
+    <!-- 닉네임 변경 -->
     <div class="card shadow-sm border-0 p-4 mb-3" style="border-radius: 20px;">
         <h6 class="fw-bold mb-3">닉네임 변경</h6>
+
         {% if error_nickname %}
         <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
             {{ error_nickname }}
         </div>
         {% endif %}
+
         <form method="post" action="/profile/change_nickname">
             <div class="input-group">
-                <input type="text" name="new_nickname" class="form-control"
-                       placeholder="새 닉네임 입력" value="{{ user_info.nickname }}"
+                <input type="text"
+                       name="new_nickname"
+                       class="form-control"
+                       placeholder="새 닉네임 입력"
+                       value="{{ user_info.nickname }}"
                        style="border-radius:10px 0 0 10px;">
-                <div class="input-group-append">
-                    <button class="btn btn-primary" type="submit"
-                            style="border-radius:0 10px 10px 0; font-weight:600;">변경</button>
-                </div>
+                <button class="btn btn-primary"
+                        type="submit"
+                        style="border-radius:0 10px 10px 0; font-weight:600;">
+                    변경
+                </button>
             </div>
         </form>
     </div>
 
-    <!-- ② 이메일 변경 -->
+    <!-- 이메일 변경 -->
     <div class="card shadow-sm border-0 p-4 mb-3" style="border-radius: 20px;">
         <h6 class="fw-bold mb-3">이메일 변경</h6>
+
         {% if error_email %}
         <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
             {{ error_email }}
         </div>
         {% endif %}
+
         <form method="post" action="/profile/change_email">
             <div class="input-group">
-                <input type="email" name="new_email" class="form-control"
-                       placeholder="새 이메일 입력" value="{{ user_info.email }}"
+                <input type="email"
+                       name="new_email"
+                       class="form-control"
+                       placeholder="새 이메일 입력"
+                       value="{{ user_info.email }}"
                        style="border-radius:10px 0 0 10px;">
-                <div class="input-group-append">
-                    <button class="btn btn-primary" type="submit"
-                            style="border-radius:0 10px 10px 0; font-weight:600;">변경</button>
-                </div>
+                <button class="btn btn-primary"
+                        type="submit"
+                        style="border-radius:0 10px 10px 0; font-weight:600;">
+                    변경
+                </button>
             </div>
         </form>
     </div>
 
-    <!-- ③ 비밀번호 변경 -->
+    <!-- 비밀번호 변경 -->
     <div class="card shadow-sm border-0 p-4 mb-3" style="border-radius: 20px;">
         <h6 class="fw-bold mb-3">비밀번호 변경</h6>
+
         {% if error_password %}
         <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
             {{ error_password }}
         </div>
         {% endif %}
+
         <form method="post" action="/profile/change_password">
             <div class="form-group mb-2">
-                <input type="password" name="current_password" class="form-control"
-                       placeholder="현재 비밀번호" style="border-radius:10px;">
+                <input type="password"
+                       name="current_password"
+                       class="form-control"
+                       placeholder="현재 비밀번호"
+                       style="border-radius:10px;">
             </div>
+
             <div class="form-group mb-2">
-                <input type="password" name="new_password" class="form-control"
-                       placeholder="새 비밀번호 (8자 이상)" style="border-radius:10px;">
+                <input type="password"
+                       name="new_password"
+                       class="form-control"
+                       placeholder="새 비밀번호 (8자 이상)"
+                       style="border-radius:10px;">
             </div>
+
             <div class="form-group mb-3">
-                <input type="password" name="confirm_password" class="form-control"
-                       placeholder="새 비밀번호 확인" style="border-radius:10px;">
+                <input type="password"
+                       name="confirm_password"
+                       class="form-control"
+                       placeholder="새 비밀번호 확인"
+                       style="border-radius:10px;">
             </div>
-            <button type="submit" class="btn btn-primary btn-block fw-bold"
-                    style="border-radius:10px;">비밀번호 변경</button>
+
+            <button type="submit"
+                    class="btn btn-primary w-100 fw-bold"
+                    style="border-radius:10px;">
+                비밀번호 변경
+            </button>
         </form>
     </div>
 
-    <!-- ④ 회원 탈퇴 (접어두기) -->
-    <div class="card border-0 p-4" style="border-radius:20px; background:rgba(242,54,69,0.04); border:1px solid rgba(242,54,69,0.15) !important;">
+    <!-- 회원 탈퇴 -->
+    <div class="card border-0 p-4"
+         style="border-radius:20px; background:rgba(242,54,69,0.04); border:1px solid rgba(242,54,69,0.15) !important;">
+
         <h6 class="fw-bold mb-1" style="color:#f23645;">회원 탈퇴</h6>
         <p class="text-muted mb-3" style="font-size:0.85rem;">
             탈퇴 시 모든 거래 내역과 포트폴리오가 영구 삭제됩니다.
         </p>
 
-        <!-- 탈퇴 폼 토글 -->
-        <button class="btn btn-sm fw-bold"
-                style="border-radius:10px; background:rgba(242,54,69,0.1); color:#f23645; border:none;"
-                onclick="toggleDeleteForm()">
+        <button type="button"
+                id="toggleDeleteBtn"
+                class="btn btn-sm fw-bold"
+                style="border-radius:10px; background:rgba(242,54,69,0.1); color:#f23645; border:none;">
             탈퇴 진행하기
         </button>
 
-        <form id="deleteForm" method="post" action="/profile/delete_account"
+        <form id="deleteForm"
+              method="post"
+              action="/profile/delete_account"
+              data-has-delete-error="{% if error_delete %}true{% else %}false{% endif %}"
               style="display:none; margin-top:16px;">
+
             {% if error_delete %}
             <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
                 {{ error_delete }}
             </div>
             {% endif %}
+
             <div class="form-group mb-2">
-                <input type="password" name="delete_password" class="form-control"
+                <input type="password"
+                       name="delete_password"
+                       class="form-control"
                        placeholder="비밀번호를 입력하면 탈퇴됩니다"
                        style="border-radius:10px; border-color:#f23645;">
             </div>
-            <button type="submit" class="btn btn-danger btn-block fw-bold"
+
+            <button type="submit"
+                    class="btn btn-danger w-100 fw-bold"
                     style="border-radius:10px;"
                     onclick="return confirm('정말 탈퇴하시겠습니까? 모든 데이터가 삭제됩니다.')">
                 탈퇴 확인
@@ -116,17 +249,146 @@
         </form>
     </div>
 
+    <!-- 로그아웃 -->
+    <div class="mt-3">
+        <a href="/logout"
+           class="btn btn-outline-secondary w-100 fw-bold"
+           style="border-radius:10px;">
+            로그아웃
+        </a>
+    </div>
+</div>
+
+<!-- 아바타 선택 모달 -->
+<div id="avatarModal" class="avatar-modal">
+    <div class="avatar-modal-card shadow-lg">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-1">프로필 이모지 선택</h5>
+                <p class="text-muted mb-0" style="font-size:0.9rem;">
+                    마음에 드는 이모지를 골라 프로필을 꾸며보세요.
+                </p>
+            </div>
+
+            <button type="button"
+                    id="closeAvatarModal"
+                    class="btn btn-light border-0"
+                    style="border-radius:12px; width:40px; height:40px;">
+                ✕
+            </button>
+        </div>
+
+        <div class="avatar-grid">
+            {% for emoji in ["🧑‍💼","😀","😎","🤓","🦊","🐼","🐯","🐸","🐶","🐱","🐻","🐰","🐧","🦁","🤖","👨‍💻","👩‍💻","🔥","⭐","🚀"] %}
+            <button type="button"
+                    class="avatar-option"
+                    data-avatar="{{ emoji }}">
+                {{ emoji }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
 <script>
-// 에러가 있으면 탈퇴 폼 자동으로 펼치기
-{% if error_delete %}
-document.getElementById('deleteForm').style.display = 'block';
-{% endif %}
+document.addEventListener("DOMContentLoaded", function () {
+    const deleteForm = document.getElementById("deleteForm");
+    const toggleDeleteBtn = document.getElementById("toggleDeleteBtn");
 
-function toggleDeleteForm() {
-    const form = document.getElementById('deleteForm');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
-}
+    if (deleteForm && toggleDeleteBtn) {
+        toggleDeleteBtn.addEventListener("click", function () {
+            const isHidden =
+                deleteForm.style.display === "none" || deleteForm.style.display === "";
+
+            deleteForm.style.display = isHidden ? "block" : "none";
+        });
+
+        const hasDeleteError = deleteForm.dataset.hasDeleteError === "true";
+        if (hasDeleteError) {
+            deleteForm.style.display = "block";
+        }
+    }
+
+    const avatarModal = document.getElementById("avatarModal");
+    const openAvatarModal = document.getElementById("openAvatarModal");
+    const closeAvatarModal = document.getElementById("closeAvatarModal");
+    const profileAvatar = document.getElementById("profileAvatar");
+    const avatarOptions = document.querySelectorAll(".avatar-option");
+
+    function openModal() {
+        if (avatarModal) {
+            avatarModal.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+    }
+
+    function closeModal() {
+        if (avatarModal) {
+            avatarModal.classList.remove("show");
+            document.body.style.overflow = "";
+        }
+    }
+
+    if (openAvatarModal) {
+        openAvatarModal.addEventListener("click", openModal);
+    }
+
+    if (closeAvatarModal) {
+        closeAvatarModal.addEventListener("click", closeModal);
+    }
+
+    if (avatarModal) {
+        avatarModal.addEventListener("click", function (e) {
+            if (e.target === avatarModal) {
+                closeModal();
+            }
+        });
+    }
+
+    avatarOptions.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            const selectedAvatar = btn.dataset.avatar;
+
+            avatarOptions.forEach(function (item) {
+                item.classList.remove("selected");
+            });
+            btn.classList.add("selected");
+
+            fetch("/profile/change_avatar", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    avatar: selectedAvatar
+                })
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("아바타 저장 실패");
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                if (data.status === "ok" && profileAvatar) {
+                    profileAvatar.textContent = selectedAvatar;
+                    
+                    //프로필아바타 변경시 navbar 적용
+                    const navbarAvatar = document.getElementById("navbarAvatar");
+                    if (navbarAvatar) {
+                    navbarAvatar.textContent = selectedAvatar;
+        }
+
+                    closeModal();
+                }
+            })
+
+            .catch(function (error) {
+                console.error(error);
+                alert("아바타 저장 중 오류가 발생했습니다.");
+            });
+        });
+    });
+});
 </script>
 {% endblock %}
