@@ -209,7 +209,8 @@ def show_stock_chart(ticker):
         score=score,
         ai_news=ai_news,
         status=status,
-        color_class=color_class
+        color_class=color_class,
+        account=account
     )
 
 
