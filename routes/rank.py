@@ -12,6 +12,7 @@ def rank():
         with conn.cursor() as cursor:
             sql = """
                 SELECT 
+                    u.avatar,
                     u.nickname,
                     (ma.current_balance + IFNULL(p_sum.stock_eval, 0)) AS total_asset,
                     CASE 
@@ -37,6 +38,7 @@ def rank():
             rankings = cursor.fetchall()
 
             for row in rankings:
+                row["avatar"] = row.get("avatar") or "🧑‍💼"
                 row["total_asset"] = float(row["total_asset"] or 0)
                 row["profit_rate"] = float(row["profit_rate"] or 0)
 

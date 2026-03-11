@@ -44,8 +44,20 @@
             margin-bottom: 10px;
         }
 
+        .podium-avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 38px;
+            border-radius: 50%;
+            background: #eef4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px auto;
+        }
+
         .podium-name {
-            font-size: 22px;
+            font-size: 16px;
             font-weight: bold;
             margin-bottom: 8px;
         }
@@ -104,6 +116,7 @@
             {% if top3|length > 1 %}
             <div class="podium-card second">
                 <div class="podium-rank">🥈</div>
+                <div class="podium-avatar">{{ top3[1].avatar or "🧑‍💼" }}</div>
                 <div class="podium-name">{{ top3[1].nickname }}</div>
                 <div class="podium-profit {% if top3[1].profit_rate >= 0 %}profit-plus{% else %}profit-minus{% endif %}">
                     {{ "%+.1f"|format(top3[1].profit_rate) }}%
@@ -116,6 +129,7 @@
             {% if top3|length > 0 %}
             <div class="podium-card first">
                 <div class="podium-rank">👑</div>
+                <div class="podium-avatar">{{ top3[0].avatar or "🧑‍💼" }}</div>
                 <div class="podium-name">{{ top3[0].nickname }}</div>
                 <div class="podium-profit {% if top3[0].profit_rate >= 0 %}profit-plus{% else %}profit-minus{% endif %}">
                     {{ "%+.1f"|format(top3[0].profit_rate) }}%
@@ -128,6 +142,7 @@
             {% if top3|length > 2 %}
             <div class="podium-card third">
                 <div class="podium-rank">🥉</div>
+                <div class="podium-avatar">{{ top3[2].avatar or "🧑‍💼" }}</div>
                 <div class="podium-name">{{ top3[2].nickname }}</div>
                 <div class="podium-profit {% if top3[2].profit_rate >= 0 %}profit-plus{% else %}profit-minus{% endif %}">
                     {{ "%+.1f"|format(top3[2].profit_rate) }}%
@@ -137,27 +152,32 @@
             {% endif %}
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>순위</th>
-                    <th>닉네임</th>
-                    <th>수익률</th>
-                    <th>총 자산</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in others %}
-                <tr>
-                    <td>{{ loop.index + 3 }}</td>
-                    <td>{{ user.nickname }}</td>
-                    <td class="{% if user.profit_rate >= 0 %}profit-plus{% else %}profit-minus{% endif %}">
-                        {{ "%+.1f"|format(user.profit_rate) }}%
-                    </td>
-                    <td>{{ "{:,.0f}".format(user.total_asset) }}원</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<table>
+    <thead>
+        <tr>
+            <th>순위</th>
+            <th>닉네임</th>
+            <th>수익률</th>
+            <th>총 자산</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in others %}
+        <tr>
+            <td>{{ loop.index + 3 }}</td>
+            <td>
+                <div class="rank-user-cell">
+                    <span class="rank-table-avatar">{{ user.avatar or "🧑‍💼" }}</span>
+                    <span class="rank-table-name">{{ user.nickname }}</span>
+                </div>
+            </td>
+            <td class="{% if user.profit_rate >= 0 %}profit-plus{% else %}profit-minus{% endif %}">
+                {{ "%+.1f"|format(user.profit_rate) }}%
+            </td>
+            <td>{{ "{:,.0f}".format(user.total_asset) }}원</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
     </div>
 {% endblock %}

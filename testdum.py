@@ -16,16 +16,16 @@ from database import get_conn
 # 다양한 케이스를 테스트할 수 있도록 잔액 차등 설정
 # ─────────────────────────────────────────────────────────
 TEST_USERS = [
-    {"nickname": "수익왕",        "current_balance": 14_200_000},  # 수익 1위
-    {"nickname": "방산왕",        "current_balance": 13_150_000},  # 수익 2위
-    {"nickname": "AI마스터",      "current_balance": 12_840_000},  # 수익 3위
-    {"nickname": "코딩트레이더",   "current_balance": 11_500_000},
-    {"nickname": "개미투자자",     "current_balance": 10_800_000},
-    {"nickname": "단타신",        "current_balance": 10_200_000},  # 본전 근처
-    {"nickname": "장기투자자",     "current_balance": 9_800_000},
-    {"nickname": "차트분석가",     "current_balance": 9_200_000},
-    {"nickname": "배당러",        "current_balance": 8_700_000},
-    {"nickname": "주린이",        "current_balance": 8_100_000},   # 손실 최하위
+    {"nickname": "수익왕",       "current_balance": 14_200_000, "avatar": "👑"},
+    {"nickname": "방산왕",       "current_balance": 13_150_000, "avatar": "🦊"},
+    {"nickname": "AI마스터",     "current_balance": 12_840_000, "avatar": "🤖"},
+    {"nickname": "코딩트레이더",  "current_balance": 11_500_000, "avatar": "👨‍💻"},
+    {"nickname": "개미투자자",    "current_balance": 10_800_000, "avatar": "🐜"},
+    {"nickname": "단타신",       "current_balance": 10_200_000, "avatar": "🔥"},
+    {"nickname": "장기투자자",    "current_balance": 9_800_000,  "avatar": "🐢"},
+    {"nickname": "차트분석가",    "current_balance": 9_200_000,  "avatar": "📈"},
+    {"nickname": "배당러",       "current_balance": 8_700_000,  "avatar": "💰"},
+    {"nickname": "주린이",       "current_balance": 8_100_000,  "avatar": "🐸"},
 ]
 
 INITIAL_BALANCE = 10_000_000  # 초기 자본금 1000만원
@@ -62,11 +62,12 @@ def create_user(cursor, i, user_info, password_hash):
     email = f"test_{i}@test.com"
     nickname = user_info["nickname"]
     current_balance = user_info["current_balance"]
+    avatar = user_info.get("avatar", "🧑‍💼")
 
     cursor.execute("""
-        INSERT INTO users (email, password_hash, nickname, is_verified)
-        VALUES (%s, %s, %s, 1)
-    """, (email, password_hash, nickname))
+        INSERT INTO users (email, password_hash, nickname, is_verified, avatar)
+        VALUES (%s, %s, %s, 1, %s)
+    """, (email, password_hash, nickname, avatar))
     user_id = cursor.lastrowid
 
     cursor.execute("""
@@ -149,7 +150,11 @@ def create_test_dummy():
                 if stock_ids:
                     create_holdings_and_trades(cursor, user_id, account_id, stock_ids)
 
-                print(f"[OK] {i:2}. {user_info['nickname']:12} | {email} | 잔액 {user_info['current_balance']:,}원")
+                print(
+                    f"[OK] {i:2}. {user_info['nickname']:12} | "
+                    f"{user_info.get('avatar', '🧑‍💼')} | "
+                    f"{email} | 잔액 {user_info['current_balance']:,}원"
+                )
 
         conn.commit()
         print(f"\n✅ 테스트 더미 {len(TEST_USERS)}명 생성 완료")

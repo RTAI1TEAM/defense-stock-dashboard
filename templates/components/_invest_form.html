@@ -68,13 +68,11 @@ function handleTrade(type) {
     if (data.success) {
         alert(data.message);
         
-        // 백엔드에서 이미 콤마가 포함된 "10,000,000"을 보내주므로 그대로 대입!
         const balanceElement = document.getElementById('current-balance');
         if (balanceElement && data.new_balance) {
             balanceElement.innerText = data.new_balance; // .toLocaleString() 제거
         }
-        
-        // location.reload(); // 주석 처리하거나 삭제해서 깜빡임 방지
+
     } else {
         alert("거래 실패: " + data.message);
     }
