@@ -19,7 +19,7 @@
       {% for s in stock_list %}
       <a
         class="dropdown-item stock-item"
-        href="/chart/{{ s['ticker'] }}"
+        href="/stocks/{{ s['ticker'] }}"
         data-name="{{ s['name_kr']|lower }}"
         data-ticker="{{ s['ticker']|lower }}"
       >

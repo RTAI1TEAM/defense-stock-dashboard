@@ -10,8 +10,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-    
     <script src="{{ url_for('static', filename='js/stock_table.js') }}"></script>
 </head>
 <body>
@@ -48,13 +50,23 @@
     </form> -->
 
     {% if "nickname" in session %}
-    <a href="{{url_for('profile_bp.show_profile')}}" class="mx-2">{{session["nickname"]}} 님</a>
-    {% endif %}
-    {% if "nickname" in session %}
-    <a href="{{url_for('auth_bp.logout')}}" class="mx-2">로그아웃</a>
-    {% else %}
-    <a href="{{url_for('auth_bp.login')}}" class="mx-2">로그인</a>
-    {% endif %}
+  <a href="{{ url_for('profile_bp.show_profile') }}"
+    class="d-flex align-items-center mx-2 text-decoration-none">
+
+      <div class="navbar-avatar" id="navbarAvatar">
+          {{ session.get("avatar", "🧑‍💼") }}
+      </div>
+
+      <span class="ms-2 fw-semibold text-dark" id="navbarNickname">
+          {{ session["nickname"] }} 님
+      </span>
+</a>
+
+{% else %}
+<a href="{{ url_for('auth_bp.login_page') }}" class="mx-2">
+    로그인
+</a>
+{% endif %}
 
     
   </div>

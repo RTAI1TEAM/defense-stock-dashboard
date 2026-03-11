@@ -1,5 +1,5 @@
 {% extends "navbar.html" %}
-{% from "components/chart_macros.html" import line_chart %}
+{% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% from "components/stock_table_macros.html" import stock_mini_card, stock_rank_table %}
 {% block title %}메인 - AI Quant{% endblock %}
 
@@ -14,26 +14,27 @@
                 <h2 class="section-title">{{ etf.name_kr }} ETF 차트</h2>
                 <p class="section-subtitle">최근 ETF 종가 흐름</p>
             </div>
-
-            {{ line_chart(
-                "mainEtfChart",
-                "",
-                chart_labels,
-                chart_values,
-                "ETF 종가",
-                "400px"
-            ) }}
-        </div>
+                {{ chart_toggle(
+                    "mainEtfChart",
+                    "",
+                    chart_data,
+                    "ETF 종가",
+                    "ETF 캔들",
+                    "400px"
+                ) }}
+            </div>
 
         <!-- 오른쪽 -->
         <div class="right-column">
 
             <div class="compact-stock-card">
-                <div class="compact-stock-header">
-                    <h3 class="compact-stock-title">방산 인기 종목</h3>
-                    <span class="compact-badge">거래대금 기준</span>
-                </div>
-
+<div class="compact-stock-header" style="display:flex; align-items:center; justify-content:space-between;">
+                    <div>
+                        <h3 class="compact-stock-title" style="margin:0;">방산주 TOP 5</h3>
+                        <span style="font-size:12px;color:#888;">거래대금 기준</span>
+                    </div>
+                    <a href="/stocks" style="font-size:13px;color:#888;text-decoration:none;">더보기 ></a>
+                    </div>
                 <div class="stock-mini-list">
                     {{ stock_mini_card(defense_stocks, 5) }}
                 </div>

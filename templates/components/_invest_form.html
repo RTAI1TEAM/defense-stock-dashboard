@@ -1,70 +1,82 @@
-<style>
-.back-btn {
-    border: none;
-    background: transparent;
-    padding: 6px;
-    cursor: pointer;
-    color: #495057;
-    transition: all 0.15s ease;
-}
-
-.back-btn:hover {
-    color: #000;
-    transform: translateX(-3px);
-}
-</style>
-<div id="invest-section" class="card shadow border-0 p-4">
+<div id="invest-section" class="card shadow border-0 p-4" style="border-radius: 15px;">
     <div class="d-flex align-items-center mb-4">
-
         <button onclick="goBack()" class="back-btn me-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
             </svg>
         </button>
-
         <h4 class="fw-bold text-success mb-0">💰 투자 설정</h4>
-
+    </div>
+    <div class="mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-secondary">투자 가능 잔액</span>
+        <span class="h5 mb-0 fw-bold text-dark">
+        <span id="current-balance">{{ "{:,.0f}".format(account.current_balance) if account else '0' }}</span> 원
+        </span>
     </div>
     <div class="mb-4">
-        <label class="form-label fw-bold">AI 추천 전략 (참고용)</label>
-        <input type="text" class="form-control bg-light" name="strategy" value="{{ ai_news }}" readonly>
+        <label class="form-label fw-bold">알고리즘 매매 전략 선택</label>
+        <select class="form-select form-select-lg" id="strategySelector">
+            {% for key, val in strategies.items() %}
+            <option value="{{ val.name }}" data-profit="{{ val.profit }}">
+                {{ val.name }} (과거 수익률: {{ val.profit }}%)
+            </option>
+            {% endfor %}
+        </select>
     </div>
 
-    <form id="tradeForm" onsubmit="event.preventDefault(); submitTrade();">
-        <input type="hidden" name="stock_id" value="{{ stock_id }}">
-        <input type="hidden" name="ai_news" value="{{ ai_news }}"> 
+    <form id="tradeForm">
+        <input type="hidden" name="stock_id" value="{{ stock.ticker }}"> <input type="hidden" id="tradeTypeInput" name="trade_type" value="BUY">
+        <input type="hidden" id="strategyInput" name="strategy" value="5/20 골든크로스">
+        
         <div class="mb-3">
             <label class="form-label fw-bold">투자할 주수</label>
-            <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" placeholder="몇 주를 살까요?" required>
+            <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" value="1" required>
         </div>
-        <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="submitTrade()">매수 주문하기</button>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success flex-fill py-3 fw-bold" onclick="handleTrade('BUY')">매수</button>
+            <button type="button" class="btn btn-danger flex-fill py-3 fw-bold" onclick="handleTrade('SELL')">매도</button>
+        </div>
     </form>
 </div>
 
 <script>
-function submitTrade() {
+// 전략 선택 시 수익률 텍스트 변경
+document.getElementById('strategySelector').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const profit = selectedOption.getAttribute('data-profit');
+    document.getElementById('selectedProfit').innerText = profit + '%';
+    document.getElementById('strategyInput').value = selectedOption.value;
+});
+
+function handleTrade(type) {
+    // 매수/매도 타입 설정
+    document.getElementById('tradeTypeInput').value = type;
+    
     const form = document.getElementById('tradeForm');
     const formData = new FormData(form);
 
-    // fetch를 통해 백엔드에 '몰래' 데이터를 보냅니다.
+    // 디버깅용 로그
+    console.log("전송 데이터:", Object.fromEntries(formData));
+
     fetch("{{ url_for('stock_detail.execute_trade') }}", {
         method: "POST",
         body: formData
     })
-    .then(response => response.json()) // 여기서 JSON 데이터를 파싱합니다.
+    .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            // 성공 시 알림창을 띄우고 창을 닫습니다.
-            alert(data.message);
-            
-            // 3. 페이지 새로고침 없이 UI 업데이트 (옵션)
-            // 예: document.getElementById('user-balance').innerText = data.new_balance.toLocaleString() + '원';
-            
-            goBack(); // 분석 카드로 돌아가는 함수 실행
-        } else {
-            alert("거래 실패: " + data.message);
+    if (data.success) {
+        alert(data.message);
+        
+        const balanceElement = document.getElementById('current-balance');
+        if (balanceElement && data.new_balance) {
+            balanceElement.innerText = data.new_balance; // .toLocaleString() 제거
         }
-    })
+
+    } else {
+        alert("거래 실패: " + data.message);
+    }
+})
     .catch(error => {
         console.error('Error:', error);
         alert("통신 오류가 발생했습니다.");
