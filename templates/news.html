@@ -4,15 +4,12 @@
 {% block content %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <div class="container py-4">
-    <header class="d-flex justify-content-between align-items-center mb-5 sticky-nav py-3">
-        <h2 class="fw-bold m-0 text-dark">Defense <span class="text-primary">News</span></h2>
-    {% from "components/search.html" import search_bar %}
-    {{search_bar(placeholder="기사를 검색하세요", current_query=current_query, action="/news")}}
-
- </header>
+    <!-- <header class="d-flex justify-content-between align-items-right mb-5 sticky-nav py-3"> -->
+        <!-- <h2 class="fw-bold m-0 text-dark">Defense <span class="text-primary">News</span></h2> -->
+ <!-- </header> -->
 
     <section class="mb-5">
-        <h5 class="fw-bold mb-4">🔥 실시간 조회수 Top 3</h5>
+        <h3 class="fw-bold mb-4 pt-4">🔥 실시간 조회수 Top 3</h3>
         <div class="row g-4">
             {% for news in top3_news %}
             <div class="col-md-4">
@@ -38,7 +35,12 @@
     </section>
 <!--뉴스 리스트-->
     <section>
-    <h5 class="fw-bold mb-4">관련 뉴스</h5>
+    <div class="p-4 d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold mb-4">관련 뉴스</h5>          
+    {% from "components/search.html" import search_bar %}
+    {{search_bar(placeholder="기사를 검색하세요", current_query=current_query, action="/news")}}
+    </div>
+
     <div class="bg-white rounded-4 shadow-sm overflow-hidden">
         {% for news in list_news %}
         <a href="{{ news.source_url }}" target="_blank" class="news-item p-4 d-block">
