@@ -38,7 +38,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 12px;
     margin-left: 12px;
 }
 
@@ -233,5 +232,19 @@
     text-align: center;
     color: #999;
     display: none;
+}
+
+/* invest_form */
+.back-btn {
+    border: none;
+    background: transparent;
+    padding: 6px;
+    cursor: pointer;
+    color: #495057;
+    transition: all 0.15s ease;
+}
+.back-btn:hover {
+    color: #000;
+    transform: translateX(-3px);
 }
 
