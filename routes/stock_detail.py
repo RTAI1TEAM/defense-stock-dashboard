@@ -4,7 +4,7 @@ import html
 import json
 import math
 import requests
-import google.generativeai as genai
+from google import genai
 from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
@@ -16,9 +16,9 @@ stock_detail_bp = Blueprint('stock_detail', __name__)
 
 # --- API 설정 ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel(model_name='gemini-2.5-flash')
+MODEL_ID = "gemini-2.5-flash-lite"
 
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
@@ -68,28 +68,47 @@ def get_live_analysis(stock_name):
         return [], 50, f"'{stock_name}' 관련 최신 뉴스가 없습니다.", "데이터 부족", "bg-secondary"
 
     news_context = "\n".join([f"제목: {n['title']}\n내용: {n['description_clean']}" for n in news_list])
+    
     prompt = f"""
     당신은 주식 투자 전문가입니다. 아래 제공된 '{stock_name}' 관련 뉴스 3개를 읽고 분석하세요.
-    1. 투자 매력도 점수 (0~100점)를 산정하세요.
-    2. 뉴스 내용을 20자 이내로 요약하세요.
-    반드시 아래 JSON 형식으로만 답변하세요. 마크다운 기호(```)를 포함하지 마세요.
-    {{
-      "score": 숫자,
-      "ai_news": "뉴스 요약"
-    }}
+    - score: 투자 매력도 (0~100 숫자)
+    - ai_news: 뉴스 요약 (20자 이내)
+    반드시 JSON 형식으로만 답변하세요.
     뉴스 내용:
     {news_context}
     """
+
     try:
-        response = model.generate_content(prompt)
-        clean_json = re.sub(r'```(?:json)?|```', '', response.text).strip()
-        data = json.loads(clean_json)
+        # 신규 SDK 호출
+        response = client.models.generate_content(
+            model=MODEL_ID,
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json'
+            }
+        )
+        
+        # 1. 응답 텍스트 가져오기
+        raw_text = response.text.strip()
+        
+        # 2. JSON 파싱
+        data = json.loads(raw_text)
+        
+        # 🔥 에러 원인 해결: 만약 AI가 결과를 리스트( [ { ... } ] )로 보냈을 경우 처리
+        if isinstance(data, list):
+            data = data[0] if len(data) > 0 else {}
+
+        # 3. 데이터 추출 (이제 .get() 사용 가능)
         score = int(data.get("score", 50))
         ai_news = data.get("ai_news", "시장 관망 후 진입을 추천합니다.")
+        
+        # 점수에 따른 상태 결정
         if score >= 70:   status, color = "긍정", "bg-success"
         elif score >= 40: status, color = "보통", "bg-warning"
         else:             status, color = "부정", "bg-danger"
+        
         return news_list, score, ai_news, status, color
+
     except Exception as e:
         print(f"Gemini 분석 에러: {e}")
         return news_list, 50, "AI 분석 엔진 일시 오류", "분석 불가", "bg-secondary"
