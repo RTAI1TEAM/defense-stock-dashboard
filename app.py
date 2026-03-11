@@ -10,6 +10,7 @@ from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
 from routes.stock_detail import stock_detail_bp
 from routes.profile import profile_bp
+from routes.stock_chat import stock_chat_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
@@ -21,6 +22,7 @@ app.register_blueprint(stocks_bp)
 app.register_blueprint(portfolio_bp)
 app.register_blueprint(stock_detail_bp)
 app.register_blueprint(profile_bp)
+app.register_blueprint(stock_chat_bp)
 
 
 def get_main_etf():
@@ -127,6 +129,18 @@ def get_color_class(score):
 def comma_filter(value):
     return format(int(value), ',')
 
+@app.context_processor
+def inject_stock_list():
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT ticker, name_kr FROM stocks")
+    stock_list = cursor.fetchall()
+
+    conn.close()
+
+    return dict(stock_list=stock_list)
 
 @app.route("/")
 def index():

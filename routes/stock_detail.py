@@ -9,9 +9,8 @@ from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 from database import get_conn
-from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
+from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify, abort
 from algorithm import strategy_golden_cross, strategy_breakout, run_backtest
-
 stock_detail_bp = Blueprint('stock_detail', __name__)
 
 # --- API 설정 ---
@@ -210,15 +209,23 @@ def show_stock_chart(ticker):
 
     user_id = session.get('user_id')
     stock = get_stock(ticker)
+
+    if stock is None:
+        abort(404)
+
     stock_list = get_stock_list()
     chart_data = get_stock_chart_data(stock["id"])
     news_list, score, ai_news, status, color_class = get_db_or_api_stock_news(stock["id"], stock["name_kr"])
+
     account = None
     current_price = 0
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT current_balance FROM mock_accounts WHERE user_id = %s", (user_id,))
+            cursor.execute(
+                "SELECT current_balance FROM mock_accounts WHERE user_id = %s",
+                (user_id,)
+            )
             account = cursor.fetchone()
 
             # 현재 주가 조회
@@ -251,7 +258,7 @@ def show_stock_chart(ticker):
 
         strategies = {
             "GOLDEN_CROSS": {"name": "5/20 골든크로스", "profit": profit_gc},
-            "BREAKOUT":     {"name": "20일 전고점 돌파", "profit": profit_bo}
+            "BREAKOUT": {"name": "20일 전고점 돌파", "profit": profit_bo}
         }
 
         chart_labels = [str(r["date"]) for r in rows]
@@ -264,6 +271,8 @@ def show_stock_chart(ticker):
         "stock_detail.html",
         stock_list=stock_list,
         stock=stock,
+        ticker=stock["ticker"],      # 추가
+        stock_id=stock["id"],        # 추가
         strategies=strategies,
         chart_data=chart_data,
         chart_labels=chart_labels,
@@ -276,7 +285,6 @@ def show_stock_chart(ticker):
         account=account,
         current_price=current_price
     )
-
 
 @stock_detail_bp.route("/invest/execute", methods=['POST'])
 def execute_trade():
