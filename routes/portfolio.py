@@ -49,7 +49,7 @@ def portfolio_view():
             # 2. 보유 종목 리스트
             sql_holdings = """
                 SELECT 
-                    s.name_kr, ph.quantity, ph.avg_buy_price, sd.current_price, ph.stock_id
+                    s.ticker,s.name_kr, ph.quantity, ph.avg_buy_price, sd.current_price, ph.stock_id
                 FROM portfolio_holdings ph
                 JOIN stocks s ON ph.stock_id = s.id
                 JOIN stock_details sd ON ph.stock_id = sd.stock_id
@@ -101,7 +101,7 @@ def portfolio_view():
             total_pages = math.ceil(total_trades / per_page) if total_trades > 0 else 1
 
             sql_trades = """
-                SELECT t.trade_type, t.quantity, t.price, t.total_amount, t.traded_at, s.name_kr
+                SELECT t.stock_id, t.trade_type, t.quantity, t.price, t.total_amount, t.traded_at, s.name_kr, s.ticker
                 FROM trades t
                 JOIN stocks s ON t.stock_id = s.id
                 WHERE t.user_id = %s
@@ -227,3 +227,5 @@ def change_strategy():
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         conn.close()
+
+# 종목명 누르면 개별종목으로 이동
