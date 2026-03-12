@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    
+
     <div class="row mb-4">
         <!-- 총 평가자산 카드 -->
         <div class="col-md-6 d-flex">
@@ -12,12 +12,11 @@
                 <span class="badge bg-light text-secondary px-3 py-2 mb-3 rounded-pill" style="width:fit-content; border:1px solid #ddd;">총 평가자산</span>
                 <h1 style="font-weight: 900; font-size: 3rem;">{{ "{:,.0f}".format(total_assets) }}원</h1>
                 <p style="font-size: 1rem; font-weight: 600;" class="mb-3">
-                    누적 수익금 
+                    누적 수익금
                     <span style="color: {{ '#f23645' if total_profit > 0 else '#0062ff' }}">
                         {{ '+' if total_profit > 0 }}{{ "{:,.0f}".format(total_profit) }}원 ({{ "%.2f"|format(total_profit_rate) }}%)
                     </span>
                 </p>
-                <!-- 현금 / 투자자산 분리 -->
                 <div class="d-flex gap-3 mt-auto">
                     <div class="rounded-3 px-3 py-2 flex-fill text-center" style="background:#f0f4ff;">
                         <div class="text-muted mb-1" style="font-size:.75rem;">💰 현금 잔고</div>
@@ -41,36 +40,92 @@
         </div>
     </div>
 
+    <!-- 보유 종목 및 AI 전략 -->
     <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius: 20px;">
         <h5 class="fw-bold mb-3">내 보유 종목 및 AI 전략</h5>
         <div class="table-responsive">
             <table class="table align-middle text-center mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>종목명</th><th>보유주수</th><th>평가금액</th><th>수익률</th><th>적용 전략</th><th>관리</th>
+                        <th style="width:32px;"></th>
+                        <th class="text-start">종목명</th>
+                        <th>총 보유주수</th>
+                        <th>총 평가금액</th>
+                        <th>평균 수익률</th>
+                        <th>적용 전략</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in holdings %}
-                    <tr>
-                        <td class="fw-bold">
-                        <a href="{{ url_for('stock_detail.show_stock_chart', ticker=item.ticker) }}" class="stock-link">
-                        {{ item.name_kr }}
-                        </a>
-                    </td>             
-                        <td>{{ item.quantity }}주</td>
-                        <td class="fw-bold">{{ "{:,.0f}".format(item.total_current) }}원</td>
+                    {% set grouped = holdings | groupby('name_kr') %}
+                    {% for stock_name, items in grouped %}
+                    {% set items = items | list %}
+                    {% set total_qty     = items | sum(attribute='quantity') %}
+                    {% set total_current = items | sum(attribute='total_current') %}
+                    {% set total_buy     = items | sum(attribute='total_buy') %}
+                    {% set avg_profit    = ((total_current - total_buy) / total_buy * 100) if total_buy > 0 else 0 %}
+                    {% set gid = 'g' ~ loop.index %}
+
+                    <!-- 요약 행: 종목별 1줄 -->
+                    <tr class="summary-row" style="cursor:pointer;" onclick="toggleGroup('{{ gid }}', this)">
+                        <td><span class="toggle-icon" style="font-size:0.75rem; color:#aaa;">▶</span></td>
+                        <td class="fw-bold text-start">
+                            <a href="{{ url_for('stock_detail.show_stock_chart', ticker=items[0].ticker) }}" class="stock-link"
+                               onclick="event.stopPropagation()">{{ stock_name }}</a>
+                        </td>
+                        <td>{{ total_qty }}주</td>
+                        <td class="fw-bold">{{ "{:,.0f}".format(total_current) }}원</td>
                         <td>
-                            <span class="badge" style="background:rgba({{ '242,54,69' if item.profit_rate > 0 else '0,98,255' }},0.1); color:{{ '#f23645' if item.profit_rate > 0 else '#0062ff' }}">
+                            <span class="badge" style="background:rgba({{ '242,54,69' if avg_profit > 0 else '0,98,255' }},0.1); color:{{ '#f23645' if avg_profit > 0 else '#0062ff' }}">
+                                {{ '+' if avg_profit > 0 }}{{ "%.2f"|format(avg_profit) }}%
+                            </span>
+                        </td>
+                        <td>
+                            {% for item in items %}
+                                {% if item.strategy == '수동 운용' %}
+                                    <span class="badge bg-light text-dark border me-1">🖐 {{ item.strategy }}</span>
+                                {% elif '골든크로스' in item.strategy %}
+                                    <span class="badge bg-warning text-dark border me-1">🤖 {{ item.strategy }}</span>
+                                {% elif '돌파' in item.strategy %}
+                                    <span class="badge bg-info text-dark border me-1">🤖 {{ item.strategy }}</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border me-1">🤖 {{ item.strategy }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+
+                    <!-- 전략별 상세 행: 기본 숨김 -->
+                    {% for item in items %}
+                    <tr class="detail-row detail-{{ gid }}" style="display:none; background:#f8faff;">
+                        <td></td>
+                        <td class="text-start ps-4" style="font-size:0.88rem; color:#666;">
+                            └&nbsp;
+                            {% if item.strategy == '수동 운용' %}
+                                <span class="badge bg-light text-dark border">🖐 {{ item.strategy }}</span>
+                            {% elif '골든크로스' in item.strategy %}
+                                <span class="badge bg-warning text-dark border">🤖 {{ item.strategy }}</span>
+                            {% elif '돌파' in item.strategy %}
+                                <span class="badge bg-info text-dark border">🤖 {{ item.strategy }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border">🤖 {{ item.strategy }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.9rem;">{{ item.quantity }}주</td>
+                        <td style="font-size:0.9rem;">{{ "{:,.0f}".format(item.total_current) }}원</td>
+                        <td>
+                            <span class="badge" style="font-size:0.8rem; background:rgba({{ '242,54,69' if item.profit_rate > 0 else '0,98,255' }},0.1); color:{{ '#f23645' if item.profit_rate > 0 else '#0062ff' }}">
                                 {{ '+' if item.profit_rate > 0 }}{{ "%.2f"|format(item.profit_rate) }}%
                             </span>
                         </td>
-                        <td><span class="badge bg-light text-dark border">🤖 {{ item.strategy }}</span></td>
                         <td>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="openStrategyModal({{ item.stock_id }}, '{{ item.strategy }}', '{{ item.name_kr }}')">변경</button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="openSellModal({{ item.stock_id }}, {{ item.quantity }}, '{{ item.name_kr }}')">매도</button>
+                            <button class="btn btn-outline-secondary btn-sm me-1"
+                                    onclick="event.stopPropagation(); openStrategyModal({{ item.holding_id }}, '{{ item.strategy }}', '{{ item.name_kr }}')">전략변경</button>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    onclick="event.stopPropagation(); openSellModal({{ item.holding_id }}, {{ item.quantity }}, '{{ item.name_kr }}', '{{ item.strategy }}')">매도</button>
                         </td>
                     </tr>
+                    {% endfor %}
+
                     {% else %}
                     <tr><td colspan="6" class="py-5 text-muted">보유 종목이 없습니다.</td></tr>
                     {% endfor %}
@@ -79,12 +134,16 @@
         </div>
     </div>
 
+    <!-- 최근 거래 내역 -->
     <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
         <h5 class="fw-bold mb-3">최근 거래 내역</h5>
         <div class="table-responsive">
             <table class="table text-center align-middle mb-0">
                 <thead class="table-light">
-                    <tr><th>일시</th><th>구분</th><th>종목(수량)</th><th class="text-end">단가</th><th class="text-end">거래금액</th></tr>
+                    <tr>
+                        <th>일시</th><th>구분</th><th>종목(수량)</th>
+                        <th class="text-end">단가</th><th class="text-end">거래금액</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for trade in trades %}
@@ -92,10 +151,10 @@
                         <td>{{ trade.traded_at.strftime('%y.%m.%d %H:%M') }}</td>
                         <td><span class="badge {{ 'bg-danger' if trade.trade_type=='BUY' else 'bg-primary' }}">{{ '매수' if trade.trade_type=='BUY' else '매도' }}</span></td>
                         <td class="text-start fw-bold">
-                        <a href="{{ url_for('stock_detail.show_stock_chart', ticker=trade.ticker) }}" class="stock-link">
-                        {{ trade.name_kr }}
-                        </a>
-                        ({{ trade.quantity }}주)
+                            <a href="{{ url_for('stock_detail.show_stock_chart', ticker=trade.ticker) }}" class="stock-link">
+                                {{ trade.name_kr }}
+                            </a>
+                            ({{ trade.quantity }}주)
                         </td>
                         <td class="text-end">{{ "{:,.0f}".format(trade.price) }}원</td>
                         <td class="text-end fw-bold">{{ "{:,.0f}".format(trade.total_amount) }}원</td>
@@ -109,7 +168,9 @@
         {% if total_pages > 1 %}
         <nav class="mt-4"><ul class="pagination justify-content-center">
             {% for p in range(1, total_pages + 1) %}
-            <li class="page-item {{ 'active' if p == page }}"><a class="page-link" href="/portfolio?page={{ p }}">{{ p }}</a></li>
+            <li class="page-item {{ 'active' if p == page }}">
+                <a class="page-link" href="/portfolio?page={{ p }}">{{ p }}</a>
+            </li>
             {% endfor %}
         </ul></nav>
         {% endif %}
@@ -117,9 +178,9 @@
 </div>
 
 <!-- 매도 모달 -->
-<div class="modal" id="sellModal" tabindex="-1" style="display:none; background: rgba(0,0,0,0.5);">
+<div class="modal" id="sellModal" tabindex="-1" style="display:none; background:rgba(0,0,0,0.5);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px; border: none;">
+        <div class="modal-content" style="border-radius:16px; border:none;">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="sellModalTitle">매도하기</h5>
                 <button type="button" class="btn-close" onclick="closeModal('sellModal')"></button>
@@ -140,9 +201,9 @@
 </div>
 
 <!-- 전략 변경 모달 -->
-<div class="modal" id="strategyModal" tabindex="-1" style="display:none; background: rgba(0,0,0,0.5);">
+<div class="modal" id="strategyModal" tabindex="-1" style="display:none; background:rgba(0,0,0,0.5);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px; border: none;">
+        <div class="modal-content" style="border-radius:16px; border:none;">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="strategyModalTitle">AI 전략 변경</h5>
                 <button type="button" class="btn-close" onclick="closeModal('strategyModal')"></button>
@@ -152,8 +213,8 @@
                 <div class="form-group mb-0">
                     <label class="fw-bold mb-2">새로운 전략 선택</label>
                     <select id="strategySelectModal" class="form-control form-control-lg">
-                        <option value="돌파매매 전략">돌파매매 전략</option>
-                        <option value="골든크로스 전략">골든크로스 전략</option>
+                        <option value="5/20 골든크로스">5/20 골든크로스</option>
+                        <option value="20일 전고점 돌파">20일 전고점 돌파</option>
                         <option value="수동 운용">수동 운용</option>
                     </select>
                 </div>
@@ -168,35 +229,28 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+// ── 파이 차트 ─────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function () {
     Chart.register(ChartDataLabels);
 
-    const labels = {{ pie_labels | tojson }};
-    const values = {{ pie_values | tojson }};
-
-    // 현금 잔고도 비중에 포함
+    const labels      = {{ pie_labels | tojson }};
+    const values      = {{ pie_values | tojson }};
     const cashBalance = {{ cash_balance }};
+
     const allLabels = labels.length > 0 ? [...labels, '현금'] : ['현금'];
     const allValues = labels.length > 0 ? [...values, cashBalance] : [cashBalance];
     const colors    = ['#3b82f6','#f87171','#34d399','#fbbf24','#a78bfa','#93c5fd','#fca5a5'];
     const bgColors  = allLabels.map((_, i) => colors[i % colors.length]);
-    // 현금은 항상 회색
     bgColors[bgColors.length - 1] = '#d1d5db';
 
     new Chart(document.getElementById('portfolioPieChart'), {
         type: 'doughnut',
         data: {
             labels: allLabels,
-            datasets: [{
-                data: allValues,
-                backgroundColor: bgColors,
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
+            datasets: [{ data: allValues, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff' }]
         },
         options: {
             cutout: '55%',
-            // circumference: 360 (기본값) → 반원 아닌 전체 원
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -207,7 +261,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     formatter: (val, ctx) => {
                         const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                         const pct = (val * 100 / sum).toFixed(1);
-                        if (pct < 5) return ''; // 너무 작은 조각은 라벨 생략
+                        if (pct < 5) return '';
                         return ctx.chart.data.labels[ctx.dataIndex] + '\n' + pct + '%';
                     }
                 }
@@ -216,34 +270,45 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-let currentStockId = null;
-let currentMaxQty  = 0;
-
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+// ── 아코디언 토글 ─────────────────────────────────────────────
+function toggleGroup(gid, summaryRow) {
+    const rows   = document.querySelectorAll('.detail-' + gid);
+    const icon   = summaryRow.querySelector('.toggle-icon');
+    const isOpen = rows.length > 0 && rows[0].style.display !== 'none';
+    rows.forEach(r => r.style.display = isOpen ? 'none' : 'table-row');
+    icon.textContent           = isOpen ? '▶' : '▼';
+    summaryRow.style.background = isOpen ? '' : '#eef2ff';
 }
 
-function openSellModal(id, maxQty, stockName) {
-    currentStockId = id;
-    currentMaxQty  = maxQty;
+// ── 모달 공통 ─────────────────────────────────────────────────
+let currentHoldingId = null;
+let currentMaxQty    = 0;
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// ── 매도 모달 ─────────────────────────────────────────────────
+function openSellModal(holdingId, maxQty, stockName, strategy) {
+    currentHoldingId = holdingId;
+    currentMaxQty    = maxQty;
     document.getElementById('sellModalTitle').innerText = `${stockName} 매도`;
-    document.getElementById('sellModalDesc').innerText  = `최대 매도 가능 수량: ${maxQty}주`;
-    const qtyInput = document.getElementById('sellQtyInput');
-    qtyInput.value = maxQty;
-    qtyInput.max   = maxQty;
+    document.getElementById('sellModalDesc').innerText  = `전략: ${strategy} | 최대 매도 가능: ${maxQty}주`;
+    const q = document.getElementById('sellQtyInput');
+    q.value = maxQty; q.max = maxQty;
     document.getElementById('sellModal').style.display = 'block';
 }
 
-function openStrategyModal(id, currentStrategy, stockName) {
-    currentStockId = id;
+// ── 전략 변경 모달 ────────────────────────────────────────────
+function openStrategyModal(holdingId, currentStrategy, stockName) {
+    currentHoldingId = holdingId;
     document.getElementById('strategyModalTitle').innerText = `${stockName} 전략 변경`;
     document.getElementById('strategyModalDesc').innerText  = `현재 적용된 전략: ${currentStrategy}`;
-    const select = document.getElementById('strategySelectModal');
-    select.value = Array.from(select.options).some(o => o.value === currentStrategy)
-        ? currentStrategy : "수동 운용";
+    const sel = document.getElementById('strategySelectModal');
+    sel.value = Array.from(sel.options).some(o => o.value === currentStrategy)
+        ? currentStrategy : '수동 운용';
     document.getElementById('strategyModal').style.display = 'block';
 }
 
+// ── 매도 실행 ─────────────────────────────────────────────────
 function executeSell() {
     const sellQty = parseInt(document.getElementById('sellQtyInput').value);
     if (isNaN(sellQty) || sellQty <= 0 || sellQty > currentMaxQty) {
@@ -252,7 +317,7 @@ function executeSell() {
     fetch('/api/sell_stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock_id: currentStockId, sell_qty: sellQty })
+        body: JSON.stringify({ holding_id: currentHoldingId, sell_qty: sellQty })
     }).then(r => r.json()).then(data => {
         alert(data.message);
         if (data.success) location.reload();
@@ -260,12 +325,13 @@ function executeSell() {
     });
 }
 
+// ── 전략 변경 실행 ────────────────────────────────────────────
 function executeStrategyChange() {
     const newStrategy = document.getElementById('strategySelectModal').value;
     fetch('/api/change_strategy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock_id: currentStockId, strategy: newStrategy })
+        body: JSON.stringify({ holding_id: currentHoldingId, strategy: newStrategy })
     }).then(r => r.json()).then(data => {
         alert(data.message);
         if (data.success) location.reload();
