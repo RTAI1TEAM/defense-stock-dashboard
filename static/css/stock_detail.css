@@ -1,0 +1,9 @@
+.stock-detail-dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 25%);
+    /* 왼쪽 : 남는 공간 전부
+    오른쪽 : 최소 260px ~ 최대 22% */
+    gap: 12px;
+    align-items: start;
+    width: 100%;
+}

@@ -1,11 +1,14 @@
 <div id="invest-section">
     <div class="d-flex align-items-center mb-1">
+        {% if show_invest_back_button|default(true) %}
+
         <button onclick="goBack()" class="back-btn me-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
             </svg>
         </button>
-        <h4 class="trade-card-title">💰 투자 설정</h4>
+        {% endif %}
+        <h4 class="trade-card-title">💰 모의 투자</h4>
     </div>
 
     <!-- 알고리즘 매매 전략 선택 -->
