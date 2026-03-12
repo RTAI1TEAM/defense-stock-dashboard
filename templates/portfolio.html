@@ -53,7 +53,11 @@
                 <tbody>
                     {% for item in holdings %}
                     <tr>
-                        <td class="fw-bold">{{ item.name_kr }}</td>
+                        <td class="fw-bold">
+                        <a href="{{ url_for('stock_detail.show_stock_chart', ticker=item.ticker) }}" class="stock-link">
+                        {{ item.name_kr }}
+                        </a>
+                    </td>             
                         <td>{{ item.quantity }}주</td>
                         <td class="fw-bold">{{ "{:,.0f}".format(item.total_current) }}원</td>
                         <td>
@@ -87,7 +91,12 @@
                     <tr>
                         <td>{{ trade.traded_at.strftime('%y.%m.%d %H:%M') }}</td>
                         <td><span class="badge {{ 'bg-danger' if trade.trade_type=='BUY' else 'bg-primary' }}">{{ '매수' if trade.trade_type=='BUY' else '매도' }}</span></td>
-                        <td class="text-start fw-bold">{{ trade.name_kr }} ({{ trade.quantity }}주)</td>
+                        <td class="text-start fw-bold">
+                        <a href="{{ url_for('stock_detail.show_stock_chart', ticker=trade.ticker) }}" class="stock-link">
+                        {{ trade.name_kr }}
+                        </a>
+                        ({{ trade.quantity }}주)
+                        </td>
                         <td class="text-end">{{ "{:,.0f}".format(trade.price) }}원</td>
                         <td class="text-end fw-bold">{{ "{:,.0f}".format(trade.total_amount) }}원</td>
                     </tr>
