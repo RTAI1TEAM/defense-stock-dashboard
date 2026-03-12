@@ -560,6 +560,9 @@ body{
 }
 
 /* stock_chat */
+.stock-chat-box{
+    min-width: 0;
+}
 .stock-chat-box {
     border-radius: 16px;
 }
