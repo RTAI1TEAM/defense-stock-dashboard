@@ -4,6 +4,18 @@
 {% block title %}K-방산 전일 기준 차트{% endblock %}
 
 {% block content %}
+<style>
+    /* 순위 컬럼(첫 번째 th) 비활성화 */
+    #defenseTable th:first-child {
+        pointer-events: none !important;
+        cursor: default !important;
+    }
+    /* 마우스를 올려도 변화가 없도록 설정 */
+    #defenseTable th:first-child:hover {
+        background-color: transparent !important;
+    }
+</style>
+
 <div class="container-fluid px-2 mt-2 mb-2">
 <div class="container">
     {{ stock_rank_table('defenseTable', 'K-방산 전일 기준 목록', stocks, 999, True) }}
