@@ -52,12 +52,17 @@
         </div>
 
         <!-- 총 주문 금액 -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="text-secondary fw-bold">총 주문 금액</span>
             <span class="fw-bold text-primary" id="totalAmount">{{ "{:,.0f}".format(current_price) }} 원</span>
         </div>
 
-        <div class="d-flex gap-2">
+        <!-- 잔액 부족 경고 -->
+        <div id="balanceWarning" class="text-danger mb-3" style="display:none; font-size:13px;">
+            구매 가능 금액 내에서만 주문이 가능합니다.
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
             <button type="button" class="btn btn-success flex-fill py-3 fw-bold" onclick="handleTrade('BUY')">매수</button>
             <button type="button" class="btn btn-danger flex-fill py-3 fw-bold" onclick="handleTrade('SELL')">매도</button>
         </div>
@@ -71,9 +76,28 @@ document.getElementById('strategySelector').addEventListener('change', function(
 });
 
 const pricePerShare = {{ current_price|int }};
+const currentBalance = {{ account.current_balance|int if account else 0 }};
+const maxQuantity = Math.floor(currentBalance / pricePerShare);
+
+document.getElementById('tradeQuantity').setAttribute('max', maxQuantity);
 
 document.getElementById('tradeQuantity').addEventListener('input', function() {
-    const quantity = parseInt(this.value) || 1;
+    let quantity = parseInt(this.value) || 1;
+    const warning = document.getElementById('balanceWarning');
+
+    if (quantity > maxQuantity) {
+        quantity = maxQuantity;
+        this.value = maxQuantity;
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+
+    if (quantity < 1) {
+        quantity = 1;
+        this.value = 1;
+    }
+
     const total = pricePerShare * quantity;
     document.getElementById('totalAmount').innerText = total.toLocaleString() + ' 원';
 });
@@ -100,6 +124,7 @@ function handleTrade(type) {
 
             document.getElementById('tradeQuantity').value = 1;
             document.getElementById('totalAmount').innerText = pricePerShare.toLocaleString() + ' 원';
+            document.getElementById('balanceWarning').style.display = 'none';
 
         } else {
             alert("거래 실패: " + data.message);
