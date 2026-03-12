@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, abort
+from flask import Blueprint, render_template, request, session, jsonify, abort
 from database import get_conn
 
 stock_chat_bp = Blueprint("stock_chat", __name__)
@@ -53,39 +53,30 @@ def render_chat_box(ticker):
 @stock_chat_bp.route("/chat/create", methods=["POST"])
 def create_chat():
     if "user_id" not in session:
-        return redirect(url_for("auth_bp.login_page"))
+        return jsonify({"error": "로그인이 필요합니다."}), 401 # JSON 반환으로 변경
 
     user_id = session["user_id"]
     ticker = request.form.get("ticker", "").strip()
     message = request.form.get("message", "").strip()
 
     if not ticker or not message:
-        return redirect(request.referrer or url_for("stocks.stock_list"))
+        return jsonify({"error": "메시지를 입력해주세요."}), 400
 
     conn = get_conn()
     cur = conn.cursor()
 
-    stock_sql = """
-    SELECT id, ticker
-    FROM stocks
-    WHERE ticker = %s
-    """
+    stock_sql = "SELECT id, ticker FROM stocks WHERE ticker = %s"
     cur.execute(stock_sql, (ticker,))
     stock = cur.fetchone()
 
     if stock is None:
-        cur.close()
-        conn.close()
-        abort(404)
+        cur.close(); conn.close(); abort(404)
 
-    insert_sql = """
-    INSERT INTO stock_chats (user_id, stock_id, message)
-    VALUES (%s, %s, %s)
-    """
+    insert_sql = "INSERT INTO stock_chats (user_id, stock_id, message) VALUES (%s, %s, %s)"
     cur.execute(insert_sql, (user_id, stock["id"], message))
     conn.commit()
 
-    cur.close()
-    conn.close()
+    cur.close(); conn.close()
 
-    return redirect(request.referrer or url_for("stocks.stock_list"))
+    # 핵심: 성공 시 JSON 데이터를 반환하여 페이지 이동을 막음
+    return jsonify({"status": "success"}), 200
