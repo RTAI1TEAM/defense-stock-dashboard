@@ -126,6 +126,13 @@ function handleTrade(type) {
             const balanceElement = document.getElementById('current-balance');
             if (balanceElement && data.new_balance) {
                 balanceElement.innerText = data.new_balance;
+                // currentBalance 업데이트
+                const newBalanceNum = parseInt(data.new_balance.replace(/,/g, ''));
+                if (!isNaN(newBalanceNum)) {
+                    currentBalance = newBalanceNum;
+                    const newMaxQty = Math.floor(currentBalance / pricePerShare);
+                    document.getElementById('tradeQuantity').setAttribute('max', newMaxQty);
+                }
             }
 
             document.getElementById('tradeQuantity').value = 1;
