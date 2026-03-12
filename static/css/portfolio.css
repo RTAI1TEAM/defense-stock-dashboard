@@ -1,0 +1,9 @@
+.stock-link,
+.stock-link:link,
+.stock-link:visited,
+.stock-link:hover,
+.stock-link:active,
+.stock-link:focus {
+    color: #212529 !important;
+    text-decoration: none !important;
+}
