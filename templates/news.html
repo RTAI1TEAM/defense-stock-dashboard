@@ -84,12 +84,43 @@
         </div>
 <!-- 페이지버튼 -->
         <div class="news-pagination-wrap">
-    <ul class="pagination justify-content-center">
-        {% for p in pagination.pages %}
-        <li class="page-item {% if p == pagination.current %}active{% endif %}">
-            <a class="page-link" href="?page={{ p }}{% if current_query %}&q={{ current_query }}{% endif %}">{{ p }}</a>
-        </li>
-        {% endfor %}
-    </ul>
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center" id="newsPagination"></ul>
+    </nav>
 </div>
+
+<script>
+function renderNewsPagination() {
+    const currentPage = {{ pagination.current }};
+    const totalPages = {{ pagination.total_pages }};
+    const query = '{{ current_query }}' ? `&q={{ current_query }}` : '';
+    const ul = document.getElementById('newsPagination');
+    if (!ul) return;
+
+    let html = '';
+
+    if (currentPage > 1) {
+        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage - 1}${query}">&laquo;</a></li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
+    }
+
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, start + 4);
+    for (let p = start; p <= end; p++) {
+        const activeClass = p === currentPage ? 'active' : '';
+        html += `<li class="page-item ${activeClass}"><a class="page-link" href="?page=${p}${query}">${p}</a></li>`;
+    }
+
+    if (currentPage < totalPages) {
+        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage + 1}${query}">&raquo;</a></li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
+    }
+
+    ul.innerHTML = html;
+}
+
+renderNewsPagination();
+</script>
 {% endblock %}
