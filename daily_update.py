@@ -65,7 +65,7 @@ def run_stock_ai_batch():
 
 def run_auto_trade():
     """전략 신호 기반 자동 매매 실행 — 주가 업데이트 완료 후 실행"""
-    from auto_trade import run_auto_trade as _run
+    from routes.autotrade import run_auto_trade as _run
     _run()
 
 
