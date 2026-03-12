@@ -109,12 +109,12 @@ document.getElementById('tradeQuantity').addEventListener('input', function() {
 });
 
 function handleTrade(type) {
-    document.getElementById('tradeTypeInput').value = type;
+    document.getElementById('tradeTypeInput').value = type; // buy, sell 매수인지 매도인지 값을 설정
     
     const form = document.getElementById('tradeForm');
     const formData = new FormData(form);
 
-    fetch("{{ url_for('stock_detail.execute_trade') }}", {
+    fetch("{{ url_for('stock_detail.execute_trade') }}", {  //Ajax 비동기 전송 stock_detail.execute_trade 라우트로
         method: "POST",
         body: formData
     })

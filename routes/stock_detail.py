@@ -99,8 +99,6 @@ def get_live_analysis(stock_name):
         news_list  : 뉴스 목록 (title, link, description_clean)
         score      : AI 투자 매력도 점수 (0~100)
         ai_news    : AI 요약 문구
-        status     : 긍정 / 보통 / 부정
-        color      : Bootstrap 배지 색상 클래스
     """
     headers = {
         "X-Naver-Client-Id":     NAVER_CLIENT_ID,
@@ -160,12 +158,7 @@ def get_live_analysis(stock_name):
         score   = int(data.get("score", 50))
         ai_news = data.get("ai_news", "시장 관망 후 진입을 추천합니다.")
 
-        # 점수 구간별 화면 표시 색상 결정
-        if score >= 70:   status, color = "긍정", "bg-success"
-        elif score >= 40: status, color = "보통", "bg-warning"
-        else:             status, color = "부정", "bg-danger"
-
-        return news_list, score, ai_news, status, color
+        return news_list, score, ai_news   # API를 바탕으로 해당 종목의 뉴스 3개 크롤링 하고, AI에 판단을 맡겨서 Score와 뉴스 요약 데이터를 받음
 
     except Exception as e:
         print(f"Gemini 분석 에러: {e}")
@@ -187,13 +180,13 @@ def update_all_stocks_ai_analysis():
             stocks = cursor.fetchall()
 
             print(f"🚀 총 {len(stocks)}개 종목 AI 전수 분석 시작...")
-
+            # 반복문을 사용하여 모든 방산주에 대해 get_live_analysis() 함수를 실행하여 데이터들을 데이터베이스에 저장
             for stock in stocks:
                 stock_id   = stock['id']
                 stock_name = stock['name_kr']
 
                 try:
-                    news_list, score, ai_news, _, _ = get_live_analysis(stock_name)
+                    news_list, score, ai_news = get_live_analysis(stock_name)
 
                     # 이미 오늘 데이터가 있으면 덮어쓰고, 없으면 새로 삽입합니다
                     cursor.execute(
@@ -306,7 +299,7 @@ def get_db_or_api_stock_news(stock_id, stock_name):
     배치가 실패해 DB에 데이터가 없으면 실시간 분석(get_live_analysis)으로 대체합니다.
 
     Returns:
-        news_list, score, ai_news, status, color
+        news_list, score, ai_news
     """
     conn = get_conn()
     try:
@@ -325,12 +318,7 @@ def get_db_or_api_stock_news(stock_id, stock_name):
         score     = row['score']
         ai_news   = row['ai_summary']
 
-        # 점수 구간별 화면 표시 색상 결정 (get_live_analysis와 동일 기준)
-        if score >= 70:   status, color = "긍정", "bg-success"
-        elif score >= 40: status, color = "보통", "bg-warning"
-        else:             status, color = "부정", "bg-danger"
-
-        return news_list, score, ai_news, status, color
+        return news_list, score, ai_news
     finally:
         conn.close()
 
@@ -456,7 +444,7 @@ def show_stock_chart(ticker):
 
     stock_list = get_stock_list()
     chart_data = get_stock_chart_data(stock["id"])
-    news_list, score, ai_news, status, color_class = get_db_or_api_stock_news(
+    news_list, score, ai_news= get_db_or_api_stock_news(
         stock["id"], stock["name_kr"]
     )
 
@@ -533,8 +521,6 @@ def show_stock_chart(ticker):
         news_list=news_list,
         score=score,
         ai_news=ai_news,
-        status=status,
-        color_class=color_class,
         account=account,
         current_price=current_price,
     )
