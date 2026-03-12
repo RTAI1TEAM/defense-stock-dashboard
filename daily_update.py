@@ -58,6 +58,10 @@ def run_news_analysis():
     from routes.stock_detail import update_sector_ai_analysis
     update_sector_ai_analysis()
 
+def run_stock_ai_batch():
+    from routes.stock_detail import update_all_stocks_ai_analysis
+    update_all_stocks_ai_analysis()
+
 
 def run_auto_trade():
     """전략 신호 기반 자동 매매 실행 — 주가 업데이트 완료 후 실행"""
@@ -76,6 +80,7 @@ if __name__ == "__main__":
         "뉴스 업데이트":    step("뉴스 수집/저장 (news)", run_news_update),
         "뉴스 분석 업데이트": step("뉴스 AI 분석  (stock_news)", run_news_analysis),
         "자동 매매 실행":   step("전략 기반 자동 매매 (auto_trade)", run_auto_trade),  # ← 추가
+        "전종목 AI 분석": step("전 종목 뉴스 수집 및 AI 분석", run_stock_ai_batch),
     }
 
     log("=" * 50)
