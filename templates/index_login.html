@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Quant - 로그인</title>
   <link rel="stylesheet" href="{{url_for('static', filename='css/login.css')}}">
-
+  <style>
+    .form-group input::placeholder {
+      color: #888888 !important;
+      opacity: 1;
+    }
+  </style>
 </head>
-<body>
+<body style="background-color: #daf0f7;">
 
-  <div class="card">
+  <div class="card" style="background-color: #ffffff;">
     <div class="logo">
-      <h1>🚀 AI Quant</h1>
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AI Quant" style="width: 200px;">
     </div>
 
     {% if error %}
@@ -20,21 +25,24 @@
 
     <form action="/login" method="POST">
       <div class="form-group">
-        <input type="email" name="email" placeholder="이메일" required />
+        <input type="email" name="email" placeholder="이메일" required
+          style="background-color: #E6EEFA; color: #333333; border: none;" />
       </div>
       <div class="form-group">
-        <input type="password" name="password" placeholder="비밀번호" required />
+        <input type="password" name="password" placeholder="비밀번호" required
+          style="background-color: #E6EEFA; color: #333333; border: none;" />
       </div>
       <button type="submit" class="btn-login">[로그인]</button>
     </form>
 
     <div class="footer-text">
-      주린이를 위한 완벽한 모의투자, <br> <span style="color: #3b82f6;"> [가입하고 1,000만 원 받기]
+      <span style="color: #0d2b5e; font-weight: bold;">주린이를 위한 완벽한 모의투자,</span> <br>
+      <span style="color: #3b82f6;">[가입하고 1,000만 원 받기]</span>
     </div>
 
     <button class="btn-signup" onclick="window.location.href='/signup'">회원가입</button>
 
-    <a href="/" class="guest-link">로그인 없이 이용하기</a>
+    <a href="/" class="guest-link" style="color: #5f7d96;">로그인 없이 이용하기</a>
   </div>
 
 </body>
