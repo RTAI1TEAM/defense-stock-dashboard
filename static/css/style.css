@@ -160,16 +160,9 @@ body{
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     border: 1px solid #eef2f7;
     min-width: 0; /* 부모 사이즈에 맞춤 */
-    min-height: 450px;
-    display: flex;
-    flex-direction: column;
-    overflow: visible; /* 스크롤 안 쓰기로 했으므로 */
+
 }
 
-#ai-analysis-wrapper, #invest-form-wrapper {
-    width: 100%;
-    height: 100%;
-}
 .index-card-title {
     font-size: 1rem;
     font-weight: 800;
@@ -567,6 +560,9 @@ body{
 }
 
 /* stock_chat */
+.stock-chat-box{
+    min-width: 0;
+}
 .stock-chat-box {
     border-radius: 16px;
 }
