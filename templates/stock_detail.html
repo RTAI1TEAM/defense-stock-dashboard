@@ -12,57 +12,7 @@
                 <span class="badge bg-light text-dark border">전일 데이터 분석</span>
             </div>
 
-            <!-- 전략 / 기간 / 분석하기 (차트 바로 위) -->
-            <div class="d-flex align-items-center gap-3 mb-2" style="flex-wrap:wrap;">
-                <div class="d-flex align-items-center gap-2">
-                    <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">전략</label>
-                    <select id="strategySelect" class="form-select form-select-sm" style="width:180px;">
-                        <option value="none">전략 없음</option>
-                        <option value="golden_cross">골든크로스 (MA5/MA20)</option>
-                        <option value="breakout">전고점 돌파 (20일)</option>
-                    </select>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">기간</label>
-                    <select id="periodSelect" class="form-select form-select-sm" style="width:120px;">
-                        <option value="30">1개월</option>
-                        <option value="60">2개월</option>
-                        <option value="90" selected>3개월</option>
-                        <option value="120">4개월 (전체)</option>
-                    </select>
-                </div>
-                <button id="analyzeBtn" onclick="updateStrategyChart()"
-                    class="btn btn-sm btn-primary fw-semibold">
-                    🔍 분석하기
-                </button>
-            </div>
-
-            <!-- 한 줄 전략 설명 -->
-            <div id="strategyOneLiner" style="display:none;" class="mb-1">
-                <span id="strategyOneLinerText" class="text-muted" style="font-size:.82rem;"></span>
-            </div>
-
-            <!-- 백테스팅 결과 카드 -->
-            <div id="backtestCard" style="display:none;" class="mb-2">
-                <div class="d-flex gap-2" style="flex-wrap:wrap;">
-                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:110px;">
-                        <div class="text-muted" style="font-size:.72rem;">백테스팅 수익률</div>
-                        <div id="bt-profit" class="fw-bold" style="font-size:1.05rem;">-</div>
-                    </div>
-                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
-                        <div class="text-muted" style="font-size:.72rem;">승률</div>
-                        <div id="bt-winrate" class="fw-bold" style="font-size:1.05rem;">-</div>
-                    </div>
-                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
-                        <div class="text-muted" style="font-size:.72rem;">거래 횟수</div>
-                        <div id="bt-count" class="fw-bold" style="font-size:1.05rem;">-</div>
-                    </div>
-                    <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:150px;">
-                        <div class="text-muted" style="font-size:.72rem;">시드 1,000만원 → 최종</div>
-                        <div id="bt-final" class="fw-bold" style="font-size:1.05rem;">-</div>
-                    </div>
-                </div>
-            </div>
+{% include "components/_strategy_select.html" %}
 
             <!-- 캔들/라인 차트 -->
             <div style="width: 100%;">
