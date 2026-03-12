@@ -255,3 +255,45 @@ def change_strategy():
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         conn.close()
+
+
+@portfolio_bp.route("/api/trades")
+def get_trades_api():
+    user_id = get_user_id_from_session()
+    if not user_id:
+        return jsonify({"success": False}), 401
+
+    page = int(request.args.get('page', 1))
+    per_page = 5
+    offset = (page - 1) * per_page
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            # 거래 내역 조회
+            sql_trades = """
+                SELECT t.trade_type, t.quantity, t.price, t.total_amount, 
+                       DATE_FORMAT(t.traded_at, '%%y.%%m.%%d %%H:%%i') as traded_at, 
+                       s.name_kr, s.ticker
+                FROM trades t
+                JOIN stocks s ON t.stock_id = s.id
+                WHERE t.user_id = %s
+                ORDER BY t.traded_at DESC
+                LIMIT %s OFFSET %s
+            """
+            cursor.execute(sql_trades, (user_id, per_page, offset))
+            trades = cursor.fetchall()
+
+            # 전체 페이지 수 계산
+            cursor.execute("SELECT COUNT(*) as cnt FROM trades WHERE user_id = %s", (user_id,))
+            total_trades = cursor.fetchone()['cnt']
+            total_pages = math.ceil(total_trades / per_page) if total_trades > 0 else 1
+
+            return jsonify({
+                "success": True,
+                "trades": trades,
+                "total_pages": total_pages,
+                "current_page": page
+            })
+    finally:
+        conn.close()
