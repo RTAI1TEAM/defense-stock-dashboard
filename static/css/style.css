@@ -160,7 +160,7 @@ body{
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     border: 1px solid #eef2f7;
     min-width: 0; /* 부모 사이즈에 맞춤 */
-    min-height: 450px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: visible; /* 스크롤 안 쓰기로 했으므로 */

@@ -80,9 +80,9 @@
 
         <!-- 오른쪽 사이드바: AI분석 + 모의투자만 -->
          
-        <div id="right-sidebar" style="position: sticky; top: 20px;">
+
+        <div id="right-sidebar" class="right-column">
             <div class="analysis-panel">
-                
                 <div id="ai-analysis-wrapper">
                     <div class="index-card-header">
                         <h3 class="index-card-title">AI 종목 분석</h3>
@@ -91,16 +91,17 @@
                     <div id="ai-analysis-container">
                         {% include "components/_ai_analysis_card.html" %}
                     </div>
-                    {% include "components/invest_start_button.html" %}
                 </div>
 
                 <div id="invest-form-wrapper" style="display: none;">
                     {% include "components/_invest_form.html" %}
                 </div>
-
+                {% include "components/invest_start_button.html" %}
+            </div>
+                        <!-- AI 분석 / 모의투자 -->
             </div>
 
-            <div id="stock-chat-container"></div>
+            <div id="stock-chat-container" class="stock-chat-container"></div>
         </div>
 
             <script>
