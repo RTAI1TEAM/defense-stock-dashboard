@@ -47,30 +47,33 @@
 
 
 {% macro stock_rank_table(table_id, title, stocks, limit=5, show_desc=True) %}
-<div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
+<div class="stock-rank-card">
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <h4 style="font-weight: 800; margin: 0;">{{ title }}</h4>
+        <div>
+            <h4 class="stock-rank-title">{{ title }}</h4>
+            {% if show_desc %}
+            <div class="stock-rank-desc">
+                ※ 전일 종가 기준 데이터 (등락률: 전일 vs 전전일, 거래대금: 전일 기준)
+            </div>
+            {% endif %}
+        </div>
     </div>
 
-    {% if show_desc %}
-    <div style="font-size:13px;color:#888;margin-bottom:15px;">
-        ※ 전일 종가 기준 데이터 (등락률: 전일 vs 전전일, 거래대금: 전일 기준)
+    <div class="table-responsive">
+        <table class="table stock-rank-table align-middle mb-0" id="{{ table_id }}">
+            <thead>
+                <tr>
+                    <th onclick="sortTable('{{ table_id }}', 0)">순위</th>
+                    <th onclick="sortTable('{{ table_id }}', 1)">종목명</th>
+                    <th onclick="sortTable('{{ table_id }}', 2)">전일 종가 <span class="sort-mark">↕</span></th>
+                    <th onclick="sortTable('{{ table_id }}', 3)">전일 등락률 <span class="sort-mark">↕</span></th>
+                    <th onclick="sortTable('{{ table_id }}', 4)" class="text-end">전일 거래대금 <span class="sort-mark">↕</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ stock_items(stocks, limit, 'table') }}
+            </tbody>
+        </table>
     </div>
-    {% endif %}
-
-    <table class="table table-hover mb-0" id="{{ table_id }}">
-        <thead>
-            <tr class="text-secondary" style="font-size: 0.85rem; cursor: pointer;">
-                <th onclick="sortTable('{{ table_id }}', 0)">순위</th>
-                <th onclick="sortTable('{{ table_id }}', 1)">종목명</th>
-                <th onclick="sortTable('{{ table_id }}', 2)">전일 종가 ↕</th>
-                <th onclick="sortTable('{{ table_id }}', 3)">전일 등락률 ↕</th>
-                <th onclick="sortTable('{{ table_id }}', 4)" class="text-right">전일 거래대금 ↕</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{ stock_items(stocks, limit, 'table') }}
-        </tbody>
-    </table>
 </div>
 {% endmacro %}
