@@ -2,8 +2,8 @@
 {% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% block content %}
 
-<div class="container-fluid mt-4" style="padding: 0 40px;"> 
-    <div style="display:grid; grid-template-columns: 3.5fr 1fr; gap:30px; align-items: start;">
+<div class="container-fluid px-2 mt-2 mb-2"> 
+    <div class="main-dashboard">
         
         <!-- 왼쪽: 차트 영역 -->
         <div class="dashboard-card">
@@ -93,9 +93,9 @@
                         {% include "components/_ai_analysis_card.html" %}
                     </div>
                 </div>
+                {% include "components/invest_start_button.html" %}
             </div>
 
-                {% include "components/invest_start_button.html" %}
             </div>
             <div id="invest-form-wrapper" style="display: none;" class="mt-3">
                 {% include "components/_invest_form.html" %}
@@ -150,6 +150,8 @@
     function destroyMainChart() {
         const canvas = document.getElementById("mainEtfChart");
         if (!canvas) return;
+        // 줌 상태 초기화 (xMin0/xMax0 리셋 — 다음 차트 로드 시 새 범위로 저장됨)
+        if (canvas._resetZoomState) canvas._resetZoomState();
         const existing = Chart.getChart(canvas);
         if (existing) existing.destroy();
         if (window.chartInstances && window.chartInstances["mainEtfChart"]) {
@@ -266,8 +268,6 @@
                             }
                         }
                     },
-                    zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
-                    pan:  { enabled: true, mode: "x" }
                 },
                 scales: {
                     x: { type: "time", time: { unit: "day" }, ticks: { maxTicksLimit: 8 } },
@@ -324,6 +324,9 @@
         });
 
         if (typeof setActiveChartButtons === "function") setActiveChartButtons("mainEtfChart", type);
+
+        // 전략 차트용 줌 엔진 바인딩
+        if (typeof bindZoomEngine === "function") bindZoomEngine("mainEtfChart");
 
         if (!canvas._strategyBtnBound) {
             canvas._strategyBtnBound = true;
