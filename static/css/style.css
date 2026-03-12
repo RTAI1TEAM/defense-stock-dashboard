@@ -9,6 +9,7 @@
     font-family: 'ELAND_Choice_M', 'Apple SD Gothic Neo', sans-serif !important;
 }
 html, body {
+    height: 100%;
     /* overflow-x: hidden;
     overflow-y: hidden; */
     background-color: #f5f7fb !important;
@@ -16,9 +17,9 @@ html, body {
 body{
  -ms-overflow-style: none;
  }
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   display: none;
-}
+} */
 
 /* 네비게이션 바 */
 .navbar{
@@ -137,8 +138,10 @@ body{
     /* 왼쪽 : 남는 공간 전부
     오른쪽 : 최소 260px ~ 최대 22% */
     gap: 12px;
-    align-items: start;
+    align-items: stretch;
     width: 100%;
+    height: calc(100vh - 76px); /* navbar + 상하 여백 감안 */
+    min-height: 0;
 }
 .dashboard-card{
     align-content: center;
@@ -148,6 +151,7 @@ body{
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     border: 1px solid #eef2f7;
     min-width: 0; /* 부모 사이즈에 맞춤 */
+    min-height:0;
     height: 100%;
 }
 .chart-container {
@@ -170,8 +174,8 @@ body{
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     border: 1px solid #eef2f7;
     min-width: 0; /* 부모 사이즈에 맞춤 */
-
 }
+
 
 .index-card-title {
     font-size: 1rem;
@@ -264,6 +268,9 @@ body{
     display: grid;
     gap: 8px;
     align-content: start;
+    grid-template-rows: auto 1fr;
+    min-height: 0;
+    height: 100%;
 }
 
 .index-card-header {
@@ -272,7 +279,10 @@ body{
     margin-right: 12px;
     margin-top: 5px;
 }
-
+#ai-analysis-container{
+    flex: 1;
+    min-height: 0;
+}
 .ai-summary-box {
     display: flex;
     justify-content: space-between;
@@ -601,6 +611,7 @@ body{
 
 .stock-chat-messages::-webkit-scrollbar-track {
     background: transparent;
+}
 /*rank 정렬*/
 .rank-user-cell{
     display:flex;

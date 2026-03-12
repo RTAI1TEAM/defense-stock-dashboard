@@ -1,5 +1,53 @@
-<div class="dashboard-card">
-    <div>
-        
+<link rel="stylesheet" href="{{url_for('static', filename='css/log_card.css')}}">
+
+<div id="analysis-section" class="card border-0 trade-log-card" style="border-radius: 12px;">
+    <div class="trade-summary-box mt-2 mb-1">
+        <div class="trade-summary-text">
+            <div class="trade-summary-label">핵심 요약</div>
+            <div class="trade-summary-content">
+                {% if total_count > 0 %}
+                            어제 총 {{ total_count }}건 거래 · 매수 {{ buy_count }}건 · 매도 {{ sell_count }}건
+                        {% else %}
+                            어제 거래 기록이 없습니다
+                        {% endif %}
+            </div>
+        </div>
+        <div class="trade-log-box">
+            <div class="trade-log-label">총 거래</div>
+            <div class="trade-log-value">{{ total_count }}건</div>
+        </div>
+    </div>
+    <div class="trade-history-scroll">
+        <ul class="trade-history-list">
+            {% if yesterday_trades %}
+                {% for trade in yesterday_trades %}
+                <li class="trade-history-item">
+                    <div class="trade-bullet"></div>
+
+                    <div class="trade-item-content">
+                        <div class="trade-item-top">
+                            <span class="trade-type {{ 'buy' if trade.trade_type == 'BUY' else 'sell' }}">
+                                {{ '매수' if trade.trade_type == 'BUY' else '매도' }}
+                            </span>
+                            <span class="trade-stock">{{ trade.stock_name }}</span>
+                        </div>
+
+                        <div class="trade-item-desc">
+                            {{ "{:,}".format(trade.quantity) }}주 ·
+                            {{ "{:,.0f}".format(trade.price) }}원 ·
+                            총 {{ "{:,.0f}".format(trade.total_amount) }}원
+                        </div>
+
+                        <div class="trade-item-meta">
+                            {{ trade.strategy or '전략 없음' }} ·
+                            {{ trade.traded_at.strftime('%H:%M') if trade.traded_at else '' }}
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li class="trade-empty">어제의 매수/매도 기록이 없습니다.</li>
+            {% endif %}
+        </ul>
     </div>
 </div>

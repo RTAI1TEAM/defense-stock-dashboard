@@ -12,6 +12,7 @@ from routes.portfolio import portfolio_bp
 from routes.stock_detail import stock_detail_bp, get_defense_sector_analysis
 from routes.profile import profile_bp
 from routes.stock_chat import stock_chat_bp
+from routes.log_card import dashboard_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
@@ -24,6 +25,7 @@ app.register_blueprint(portfolio_bp)
 app.register_blueprint(stock_detail_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(stock_chat_bp)
+app.register_blueprint(dashboard_bp)
 
 
 def get_main_etf():
@@ -125,6 +127,58 @@ def get_color_class(score):
     else:
         return "bg-danger"
 
+def get_yesterday_trades():
+    yesterday_trades = []
+    buy_count = 0
+    sell_count = 0
+    total_count = 0
+    if "user_id" not in session:
+        return render_template("dashboard.html", yesterday_trades=[], buy_count=0, sell_count=0, total_count=0)
+
+    user_id = session["user_id"]
+    conn = get_conn()
+
+    try:
+        with conn.cursor() as cur:
+            # 어제 거래내역 조회
+            cur.execute("""
+                SELECT 
+                    t.id,
+                    t.trade_type,
+                    t.price,
+                    t.quantity,
+                    t.total_amount,
+                    t.strategy,
+                    t.traded_at,
+                    s.name_kr AS stock_name
+                FROM trades t
+                JOIN stocks s ON t.stock_id = s.id
+                WHERE t.user_id = %s
+                  AND DATE(t.traded_at) = CURDATE() - INTERVAL 1 DAY
+                ORDER BY t.traded_at DESC
+                LIMIT 5
+            """, (user_id,))
+            yesterday_trades = cur.fetchall()
+
+            # 어제 매수/매도 개수 요약
+            cur.execute("""
+                SELECT
+                    SUM(CASE WHEN trade_type = 'BUY' THEN 1 ELSE 0 END) AS buy_count,
+                    SUM(CASE WHEN trade_type = 'SELL' THEN 1 ELSE 0 END) AS sell_count,
+                    COUNT(*) AS total_count
+                FROM trades
+                WHERE user_id = %s
+                  AND DATE(traded_at) = CURDATE() - INTERVAL 1 DAY
+            """, (user_id,))
+            summary = cur.fetchone()
+
+        buy_count = summary["buy_count"] or 0
+        sell_count = summary["sell_count"] or 0
+        total_count = summary["total_count"] or 0
+
+    finally:
+        conn.close()
+    return yesterday_trades, buy_count, sell_count, total_count
 
 @app.template_filter('comma')
 def comma_filter(value):
@@ -158,7 +212,7 @@ def index():
     #     print("Gemini 업종 분석을 실행합니다...")
     #     update_sector_ai_analysis()
     #     score, ai_news, news_list = get_defense_sector_analysis()
-    
+    yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trades()
     # 🚀 [수정 포인트] 점수 타입 확인 및 색상 결정
     try:
         # score가 None이거나 계산 불가능한 경우를 대비
@@ -188,7 +242,11 @@ def index():
         defense_stocks=defense_stocks,
         stock_id=9999,        # 업종 종합 ID
         strategies={}, 
-        stock={'ticker': 'DEFENSE'} # 에러 방지용 가상 객체
+        stock={'ticker': 'DEFENSE'}, # 에러 방지용 가상 객체
+        yesterday_trades=yesterday_trades,
+        buy_count=buy_count,
+        sell_count=sell_count,
+        total_count=total_count
     )
 
 
