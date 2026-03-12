@@ -70,9 +70,12 @@
             <!-- 뉴스 끝 -->
              <!-- 어제 거래 내역 -->
             <div class="trade-log-panel">
-                <div class="index-card-header">
-                    <h3 class="index-card-title">전일 거래 내역</h3>
-                    <span class="index-card-subtitle">최근 매수/매도 내역</span>
+                <div class="index-card-header" style="display:flex; align-items:center; justify-content:space-between;">
+                    <div>
+                        <h3 class="index-card-title">전일 거래 내역</h3>
+                        <span class="index-card-subtitle">최근 매수/매도 내역</span>
+                    </div>
+                    <a href="/portfolio" class="view-all">View all</a>
                 </div>
                 <div id="trade-log-container">
                     {% include "components/log_card.html" %}
