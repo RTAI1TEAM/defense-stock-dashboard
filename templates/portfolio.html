@@ -143,6 +143,7 @@
                     <tr>
                         <th>일시</th><th>구분</th><th>종목(수량)</th>
                         <th class="text-end">단가</th><th class="text-end">거래금액</th>
+                        <th class="text-end">손익</th>
                     </tr>
                 </thead>
                 <tbody id="tradeTableBody">
@@ -158,9 +159,21 @@
                         </td>
                         <td class="text-end">{{ "{:,.0f}".format(trade.price) }}원</td>
                         <td class="text-end fw-bold">{{ "{:,.0f}".format(trade.total_amount) }}원</td>
+                        <td class="text-end">
+                            {% if trade.profit_amount is not none %}
+                                {% set color = '#f23645' if trade.profit_amount > 0 else '#0062ff' %}
+                                {% set sign  = '+' if trade.profit_amount > 0 else '' %}
+                                <span style="color:{{ color }}; font-weight:600;">
+                                    {{ sign }}{{ "{:,.0f}".format(trade.profit_amount) }}원<br>
+                                    <small>({{ sign }}{{ "%.1f"|format(trade.profit_rate) }}%)</small>
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>
+                    <tr><td colspan="6" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -354,25 +367,40 @@ function loadTrades(page) {
                 tbody.innerHTML = ''; // 기존 내용 삭제
 
                 if (data.trades.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>';
                 } else {
                     data.trades.forEach(trade => {
                         const badgeClass = trade.trade_type === 'BUY' ? 'bg-danger' : 'bg-primary';
-                        const typeText = trade.trade_type === 'BUY' ? '매수' : '매도';
-                        
-                        // 숫자에 콤마 추가하는 함수
-                        const formatNum = (num) => Number(num).toLocaleString();
+                        const typeText   = trade.trade_type === 'BUY' ? '매수' : '매도';
+                        const formatNum  = (num) => Number(num).toLocaleString();
+
+                        // 손익 셀: 매도일 때만 색상+수치 표시, 매수는 '-'
+                        let profitCell = '<td class="text-end"><span class="text-muted">-</span></td>';
+                        if (trade.profit_amount !== null && trade.profit_amount !== undefined) {
+                            const color  = trade.profit_amount > 0 ? '#f23645' : '#0062ff';
+                            const sign   = trade.profit_amount > 0 ? '+' : '';
+                            const amount = formatNum(Math.round(trade.profit_amount));
+                            const rate   = trade.profit_rate.toFixed(1);
+                            profitCell = `
+                                <td class="text-end">
+                                    <span style="color:${color}; font-weight:600;">
+                                        ${sign}${amount}원<br>
+                                        <small>(${sign}${rate}%)</small>
+                                    </span>
+                                </td>`;
+                        }
 
                         const row = `
                             <tr>
                                 <td>${trade.traded_at}</td>
                                 <td><span class="badge ${badgeClass}">${typeText}</span></td>
                                 <td class="text-start fw-bold">
-                                    <a href="/stock/${trade.ticker}" class="stock-link">${trade.name_kr}</a>
+                                    <a href="/stocks/${trade.ticker}" class="stock-link">${trade.name_kr}</a>
                                     (${trade.quantity}주)
                                 </td>
                                 <td class="text-end">${formatNum(trade.price)}원</td>
                                 <td class="text-end fw-bold">${formatNum(trade.total_amount)}원</td>
+                                ${profitCell}
                             </tr>
                         `;
                         tbody.insertAdjacentHTML('beforeend', row);
