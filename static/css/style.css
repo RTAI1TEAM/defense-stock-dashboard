@@ -3,6 +3,12 @@ html, body {
     overflow-y: hidden; */
     background-color: #f5f7fb !important;
 }
+body{
+ -ms-overflow-style: none;
+ }
+::-webkit-scrollbar {
+  display: none;
+}
 
 /* 네비게이션 바 */
 .navbar{
@@ -28,6 +34,12 @@ html, body {
   display: block;
   object-fit: contain;
   padding-left: 16px;
+}
+.navbar-logo {
+    height: 20px !important;
+    width: auto !important;
+    max-height: 20px !important;
+    object-fit: contain;
 }
 .navbar-menu{
   display: flex;
@@ -93,30 +105,7 @@ html, body {
   gap: 16px;
   margin-left: auto;
 }
-/* .navbar-nav{
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
 
-.navbar-nav .nav-link{
-  font-size:1rem;
-  font-weight:500;
-  color:#6b7280;
-  padding:8px 12px;
-  border-radius:8px;
-  transition:all .15s ease;
-}
-
-.navbar-nav .nav-link:hover{
-  background:#f1f5f9;
-  color:#111827;
-}
-
-.navbar-nav .nav-link.active{
-  color:#2563eb;
-  font-weight:600; 
-} */
 .navbar-profile:hover{
     transform:scale(1.05);
 }
@@ -131,7 +120,6 @@ html, body {
   font-size:15px;
 }
 
-
 /* index */
 .main-dashboard {
     display: grid;
@@ -142,11 +130,6 @@ html, body {
     align-items: start;
     width: 100%;
 }
-.chart-container {
-    position: relative;
-    width: 100%;
-    height: clamp(360px, 60vh, 520px);
-}
 .dashboard-card{
     align-content: center;
     background: #fff;
@@ -156,6 +139,11 @@ html, body {
     border: 1px solid #eef2f7;
     min-width: 0; /* 부모 사이즈에 맞춤 */
     height: 100%;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: clamp(360px, 60vh, 520px);
 }
 .compact-stock-card{
     background: #fff;
@@ -370,12 +358,7 @@ html, body {
 }
 
 
-.navbar-logo {
-    height: 20px !important;
-    width: auto !important;
-    max-height: 20px !important;
-    object-fit: contain;
-}
+
 .stock-price {
     font-size: 0.9rem;
     font-weight: 700;

@@ -4,10 +4,6 @@
 {% block content %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <div class="container py-4">
-    <!-- <header class="d-flex justify-content-between align-items-right mb-5 sticky-nav py-3"> -->
-        <!-- <h2 class="fw-bold m-0 text-dark">Defense <span class="text-primary">News</span></h2> -->
- <!-- </header> -->
-
     <section class="mb-5">
         <h3 class="fw-bold mb-4 pt-4">🔥 실시간 조회수 Top 3</h3>
         <div class="row g-4">
@@ -36,39 +32,40 @@
 <!--뉴스 리스트-->
     <section>
     <div class="p-4 d-flex justify-content-between align-items-center mb-4">
-    <h5 class="fw-bold mb-4">관련 뉴스</h5>          
+    <h5 class="fw-bold">관련 뉴스</h5>
+    <div>          
     {% from "components/search.html" import search_bar %}
-    {{search_bar(placeholder="기사를 검색하세요", current_query=current_query, action="/news")}}
+    {{search_bar(id="NewsSearch", placeholder="🔍 기사를 검색하세요")}}
+    </div>
     </div>
 
-    <div class="bg-white rounded-4 shadow-sm overflow-hidden">
-        {% for news in list_news %}
-        <a href="{{ news.source_url }}" target="_blank" class="news-item p-4 d-block text-decoration-none">
-            <div class="d-flex gap-4 align-items-start">
-                <img
-                    src="{{ news.image_url or '/static/images/news_default.png' }}"
-                    class="list-img"
-                    onerror="this.onerror=null;this.src='/static/images/news_default.jpg';"
-                    alt="뉴스 이미지"
-                >
-
-                <div class="flex-grow-1">
-                    <div class="mb-1 text-muted small">
-                        {{ news.source_name }} · {{ news.pubDate_raw }}
+    <div id="newsList">
+    {% for news in list_news %}
+    <div class="news-item"
+         data-title="{{ news.title_clean|lower }}"
+         data-summary="{{ news.description_clean|lower }}"
+         data-source="{{ news.source_name|lower }}">
+        <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark">
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        <img src="{{ news.image_url }}" class="img-fluid rounded-start" alt="뉴스 이미지">
                     </div>
-
-                    <h6 class="fw-bold mb-2 text-dark">
-                        {{ news.title_clean }}
-                    </h6>
-
-                    <p class="text-muted small m-0 line-clamp-2">
-                        {{ news.description_clean }}
-                    </p>
+                    <div class="col-md-9">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ news.title_clean }}</h5>
+                            <p class="card-text">{{ news.description_clean }}</p>
+                            <p class="card-text">
+                                <small class="text-muted">{{ news.source_name }} | {{ news.pubDate_raw }}</small>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </a>
-        {% endfor %}
     </div>
+    {% endfor %}
+</div>
 </section>
 </div>
 

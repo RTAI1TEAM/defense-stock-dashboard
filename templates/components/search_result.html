@@ -1,0 +1,17 @@
+<div id="navbarStockResults"
+     class="list-group position-absolute w-100 shadow"
+     style="z-index:999; display:none; max-height:300px; overflow-y:auto;">
+
+{% for s in stock_list %}
+
+<a class="list-group-item list-group-item-action navbar-stock-item"
+   href="/stocks/{{ s['ticker'] }}"
+   data-name="{{ s['name_kr']|lower }}"
+   data-ticker="{{ s['ticker']|lower }}">
+
+<div class="fw-bold">{{ s['name_kr'] }}</div>
+<div class="text-muted small">{{ s['ticker'] }}</div>
+
+</a>
+
+{% endfor %}
