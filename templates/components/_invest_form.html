@@ -17,13 +17,14 @@
                 {{ val.name }} (과거 수익률: {{ val.profit }}%)
             </option>
             {% endfor %}
+            <option value="수동 운용" data-profit="">수동 운용 (자동 매매 미적용)</option>
         </select>
     </div>
 
     <form id="tradeForm">
         <input type="hidden" name="stock_id" value="{{ stock.ticker }}">
         <input type="hidden" id="tradeTypeInput" name="trade_type" value="BUY">
-        <input type="hidden" id="strategyInput" name="strategy" value="5/20 골든크로스">
+        <input type="hidden" id="strategyInput" name="strategy" value="">
 
         <!-- 구매 가격 -->
         <div class="mt-1">
@@ -69,6 +70,12 @@
 </div>
 
 <script>
+document.getElementById('strategyInput').value = document.getElementById('strategySelector').value;
+
+document.getElementById('strategySelector').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    document.getElementById('strategyInput').value = selectedOption.value;
+});
 document.getElementById('strategySelector').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     document.getElementById('strategyInput').value = selectedOption.value;
