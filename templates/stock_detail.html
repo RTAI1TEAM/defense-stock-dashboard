@@ -104,11 +104,18 @@
         </div>
 
             <script>
+                function scrollChatToBottom() {
+                    const chatList = document.getElementById("chat-msg-list");
+                    if (chatList) {
+                        chatList.scrollTop = chatList.scrollHeight;
+                    }
+                }
             document.addEventListener("DOMContentLoaded", function () {
                 fetch("/stocks/{{ ticker }}/chat-box")
                     .then(response => response.text())
                     .then(html => {
                         document.getElementById("stock-chat-container").innerHTML = html;
+                        setTimeout(scrollChatToBottom, 0);
                     });
             });
             </script>
@@ -117,6 +124,7 @@
 </div>
 
 <script>
+    
     document.addEventListener('DOMContentLoaded', function () {
         const startBtn = document.getElementById('investStartBtn');
         const analysis = document.getElementById('ai-analysis-wrapper');
@@ -412,7 +420,8 @@ function refreshChatList(ticker) {
             
             if (chatList) {
                 chatList.innerHTML = newContent;
-                chatList.scrollTop = chatList.scrollHeight; // 스크롤 하단 고정
+                setTimeout(scrollChatToBottom, 0);
+                // chatList.scrollTop = chatList.scrollHeight; // 스크롤 하단 고정
             }
         })
         .catch(err => console.error("새로고침 에러:", err));

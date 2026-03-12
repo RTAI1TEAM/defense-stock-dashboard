@@ -148,6 +148,10 @@ body{
     text-decoration:none;
     padding-right:16px;
 }
+.view-all:hover{
+    text-decoration: none;
+    color:#555;
+}
 .dashboard-card{
     align-content: center;
     background: #fff;
@@ -626,39 +630,6 @@ body{
 .back-btn:hover {
     color: #000;
     transform: translateX(-3px);
-}
-
-/* stock_chat */
-.stock-chat-box{
-    min-width: 0;
-}
-.stock-chat-box {
-    border-radius: 16px;
-}
-
-.stock-chat-messages {
-    height: 260px;
-    overflow-y: auto;
-    font-size: 0.9rem;
-}
-
-.stock-chat-item:last-child {
-    border-bottom: none !important;
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-}
-
-.stock-chat-messages::-webkit-scrollbar {
-    width: 6px;
-}
-
-.stock-chat-messages::-webkit-scrollbar-thumb {
-    background: #cfd4da;
-    border-radius: 10px;
-}
-
-.stock-chat-messages::-webkit-scrollbar-track {
-    background: transparent;
 }
 
 /*rank 정렬*/
