@@ -94,7 +94,18 @@ def portfolio_view():
 
             sql_trades = """
                 SELECT t.stock_id, t.trade_type, t.quantity, t.price,
-                       t.total_amount, t.traded_at, s.name_kr, s.ticker
+                       t.total_amount, t.traded_at, s.name_kr, s.ticker,
+                       CASE
+                           WHEN t.trade_type = 'SELL' THEN (
+                               SELECT SUM(b.price * b.quantity) / NULLIF(SUM(b.quantity), 0)
+                               FROM trades b
+                               WHERE b.user_id  = t.user_id
+                                 AND b.stock_id = t.stock_id
+                                 AND b.trade_type = 'BUY'
+                                 AND b.traded_at <= t.traded_at
+                           )
+                           ELSE NULL
+                       END AS avg_buy_price
                 FROM trades t
                 JOIN stocks s ON t.stock_id = s.id
                 WHERE t.user_id = %s
@@ -103,6 +114,18 @@ def portfolio_view():
             """
             cursor.execute(sql_trades, (user_id, per_page, offset))
             trades = cursor.fetchall()
+
+            # 매도 거래에 한해 수익금/수익률 계산
+            for trade in trades:
+                if trade['trade_type'] == 'SELL' and trade.get('avg_buy_price'):
+                    avg  = float(trade['avg_buy_price'])
+                    sell = float(trade['price'])
+                    qty  = int(trade['quantity'])
+                    trade['profit_amount'] = (sell - avg) * qty
+                    trade['profit_rate']   = (sell - avg) / avg * 100
+                else:
+                    trade['profit_amount'] = None
+                    trade['profit_rate']   = None
 
             # 6. 최종 자산 합산
             initial_balance  = float(account['initial_balance']) if account else 0.0
@@ -270,11 +293,22 @@ def get_trades_api():
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            # 거래 내역 조회
+            # 거래 내역 조회 (매도 시 수익 계산용 avg_buy_price 서브쿼리 포함)
             sql_trades = """
-                SELECT t.trade_type, t.quantity, t.price, t.total_amount, 
-                       DATE_FORMAT(t.traded_at, '%%y.%%m.%%d %%H:%%i') as traded_at, 
-                       s.name_kr, s.ticker
+                SELECT t.trade_type, t.quantity, t.price, t.total_amount,
+                       DATE_FORMAT(t.traded_at, '%%y.%%m.%%d %%H:%%i') AS traded_at,
+                       s.name_kr, s.ticker,
+                       CASE
+                           WHEN t.trade_type = 'SELL' THEN (
+                               SELECT SUM(b.price * b.quantity) / NULLIF(SUM(b.quantity), 0)
+                               FROM trades b
+                               WHERE b.user_id  = t.user_id
+                                 AND b.stock_id = t.stock_id
+                                 AND b.trade_type = 'BUY'
+                                 AND b.traded_at <= t.traded_at
+                           )
+                           ELSE NULL
+                       END AS avg_buy_price
                 FROM trades t
                 JOIN stocks s ON t.stock_id = s.id
                 WHERE t.user_id = %s
@@ -282,7 +316,26 @@ def get_trades_api():
                 LIMIT %s OFFSET %s
             """
             cursor.execute(sql_trades, (user_id, per_page, offset))
-            trades = cursor.fetchall()
+            raw_trades = cursor.fetchall()
+
+            # 매도 거래에 한해 수익금/수익률 계산 후 JSON 직렬화 가능 형태로 변환
+            trades = []
+            for trade in raw_trades:
+                t = dict(trade)
+                if t['trade_type'] == 'SELL' and t.get('avg_buy_price'):
+                    avg  = float(t['avg_buy_price'])
+                    sell = float(t['price'])
+                    qty  = int(t['quantity'])
+                    t['profit_amount'] = round((sell - avg) * qty)
+                    t['profit_rate']   = round((sell - avg) / avg * 100, 1)
+                else:
+                    t['profit_amount'] = None
+                    t['profit_rate']   = None
+                t.pop('avg_buy_price', None)  # 내부 계산용이므로 응답에서 제거
+                # price, total_amount를 float으로 변환 (Decimal 직렬화 오류 방지)
+                t['price']        = float(t['price'])
+                t['total_amount'] = float(t['total_amount'])
+                trades.append(t)
 
             # 전체 페이지 수 계산
             cursor.execute("SELECT COUNT(*) as cnt FROM trades WHERE user_id = %s", (user_id,))
@@ -290,9 +343,9 @@ def get_trades_api():
             total_pages = math.ceil(total_trades / per_page) if total_trades > 0 else 1
 
             return jsonify({
-                "success": True,
-                "trades": trades,
-                "total_pages": total_pages,
+                "success":      True,
+                "trades":       trades,
+                "total_pages":  total_pages,
                 "current_page": page
             })
     finally:
