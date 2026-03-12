@@ -4,7 +4,7 @@
             <h6 class="mb-0 fw-bold">종목 토론방</h6>
         </div>
 
-        <div class="stock-chat-messages border rounded p-2 mb-2 bg-light">
+        <div id="chat-msg-list" class="stock-chat-messages border rounded p-2 mb-2 bg-light" style="height: 300px; overflow-y: auto;">
             {% if chat_messages %}
                 {% for chat in chat_messages %}
                 <div class="stock-chat-item mb-2 pb-2 border-bottom">
@@ -12,9 +12,7 @@
                         <strong class="small text-primary">{{ chat.nickname }}</strong>
                         <small class="text-muted">{{ chat.created_at }}</small>
                     </div>
-                    <div class="small text-dark mt-1">
-                        {{ chat.message }}
-                    </div>
+                    <div class="small text-dark mt-1">{{ chat.message }}</div>
                 </div>
                 {% endfor %}
             {% else %}
@@ -22,18 +20,16 @@
             {% endif %}
         </div>
 
-        <form action="{{ url_for('stock_chat.create_chat') }}" method="POST" class="mt-auto">
-            <input type="hidden" name="ticker" value="{{ ticker }}">
-
+        <div class="mt-auto">
+            <input type="hidden" id="chat-ticker" value="{{ ticker }}">
             <div class="input-group">
                 <input type="text"
-                       name="message"
+                       id="chat-input-msg"
                        class="form-control form-control-sm"
                        placeholder="채팅을 입력하세요"
-                       maxlength="300"
-                       required>
-                <button type="submit" class="btn btn-primary btn-sm">전송</button>
+                       onkeypress="if(event.keyCode==13){sendChat(); return false;}">
+                <button type="button" onclick="sendChat()" class="btn btn-primary btn-sm">전송</button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
