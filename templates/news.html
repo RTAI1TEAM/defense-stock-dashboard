@@ -59,12 +59,12 @@
                  data-summary="{{ news.description_clean|lower }}"
                  data-source="{{ news.source_name|lower }}">
                 <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark">
-                    <div class="card mb-3 shadow-sm border-0">
+                    <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                         <div class="row g-0 align-items-center">
                             <div class="col-auto"> <!-- 디폴트이미지 img 태그 css 깨져서 따로 처리행야함 --> 
                                 <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
                                      alt="뉴스 이미지"
-                                     style="width:200px; height:120px; object-fit:cover; border-radius:12px; display:block;"
+                                     style="width: 280px; height: 160px; object-fit: cover; flex-shrink: 0;"
                                      onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
                             </div>
                             <div class="col">
@@ -82,16 +82,14 @@
             </div>
             {% endfor %}
         </div>
-
+<!-- 페이지버튼 -->
         <div class="news-pagination-wrap">
-    <ul class="pagination news-pagination justify-content-center">
+    <ul class="pagination justify-content-center">
         {% for p in pagination.pages %}
         <li class="page-item {% if p == pagination.current %}active{% endif %}">
             <a class="page-link" href="?page={{ p }}{% if current_query %}&q={{ current_query }}{% endif %}">{{ p }}</a>
         </li>
         {% endfor %}
     </ul>
-</div>
-    </section>
 </div>
 {% endblock %}
