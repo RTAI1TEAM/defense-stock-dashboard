@@ -371,7 +371,7 @@ body{
 .trade-buttons{
     display:flex;
     gap:12px;
-    margin-top:15px;
+    margin-top:12px;
 }
 
 .trade-buttons button{
@@ -613,12 +613,3 @@ table td:nth-child(3),
 table th:nth-child(3){
     text-align:left;
 }
-/* a.stock-link,
-a.stock-link:link,
-a.stock-link:visited,
-a.stock-link:hover,
-a.stock-link:active,
-a.stock-link:focus {
-    color: #212529 !important;
-    text-decoration: none !important;
-} */
