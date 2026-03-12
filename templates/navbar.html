@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/stock_table.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
@@ -25,7 +26,8 @@
   </button>
 
   <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+    
+    <ul class="navbar-menu">
       <li class="nav-item {% if request.path == '/' %}active{% endif %}">
         <a class="nav-link" href="/">홈</a>
       </li>
@@ -42,33 +44,13 @@
         <a class="nav-link" href="/rank">랭킹</a>
       </li>
     </ul>
-    <div class="position-relative mx-3" style="width:260px;">
+    <div class="navbar-right">
+    <div class="position-relative ml-3" style="width:260px;">
 
-<input
-type="text"
-id="navbarStockSearch"
-class="form-control"
-placeholder="🔍주식명 혹은 종목번호 입력"
-autocomplete="off"
->
 
-<div id="navbarStockResults"
-     class="list-group position-absolute w-100 shadow"
-     style="z-index:999; display:none; max-height:300px; overflow-y:auto;">
-
-{% for s in stock_list %}
-
-<a class="list-group-item list-group-item-action navbar-stock-item"
-   href="/stocks/{{ s['ticker'] }}"
-   data-name="{{ s['name_kr']|lower }}"
-   data-ticker="{{ s['ticker']|lower }}">
-
-<div class="fw-bold">{{ s['name_kr'] }}</div>
-<div class="text-muted small">{{ s['ticker'] }}</div>
-
-</a>
-
-{% endfor %}
+{% from "components/search.html" import search_bar %}
+{{ search_bar("navbarStockSearch", "🔍주식명 혹은 종목번호 입력") }}
+{% include "components/search_result.html" %}
 
 <div id="navbarEmpty"
      class="list-group-item text-muted"
@@ -84,7 +66,7 @@ autocomplete="off"
 
     {% if "nickname" in session %}
   <a href="{{ url_for('profile_bp.show_profile') }}"
-    class="d-flex align-items-center mx-2 text-decoration-none">
+    class="navbar-profile d-flex align-items-center ml-2 mr-3 text-decoration-none">
       <div class="navbar-avatar" id="navbarAvatar">
           {{ session.get("avatar", "🧑‍💼") }}
       </div>
@@ -98,69 +80,12 @@ autocomplete="off"
 </a>
 {% endif %}
   </div>
+</div>
 </nav>
-
 {% block content %}
     기본 내용
 {% endblock %}
 
-<script>
-
-document.addEventListener("DOMContentLoaded", function(){
-
-const input = document.getElementById("navbarStockSearch");
-const results = document.getElementById("navbarStockResults");
-const items = document.querySelectorAll(".navbar-stock-item");
-const empty = document.getElementById("navbarEmpty");
-
-if(!input) return;
-
-input.addEventListener("input", function(){
-
-const keyword = this.value.trim().toLowerCase();
-
-if(keyword === ""){
-results.style.display = "none";
-return;
-}
-
-results.style.display = "block";
-
-let visible = 0;
-
-items.forEach(item => {
-
-const name = item.dataset.name;
-const ticker = item.dataset.ticker;
-
-if(name.includes(keyword) || ticker.includes(keyword)){
-
-item.style.display = "block";
-visible++;
-
-}else{
-
-item.style.display = "none";
-
-}
-
-});
-
-empty.style.display = visible === 0 ? "block" : "none";
-
-});
-
-document.addEventListener("click", function(e){
-
-if(!input.contains(e.target) && !results.contains(e.target)){
-results.style.display = "none";
-}
-
-});
-
-});
-
-</script>
 
 </body>
 </html>

@@ -4,7 +4,9 @@
 {% block title %}K-방산 전일 기준 차트{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
+<div class="container-fluid px-2 mt-2 mb-2">
+<div class="container">
     {{ stock_rank_table('defenseTable', 'K-방산 전일 기준 목록', stocks, 999, True) }}
+</div>
 </div>
 {% endblock %}

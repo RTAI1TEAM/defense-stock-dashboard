@@ -17,7 +17,7 @@ stock_detail_bp = Blueprint('stock_detail', __name__)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-MODEL_ID = "gemini-2.5-flash-lite"
+MODEL_ID = "gemini-2.5-flash"
 
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
@@ -215,6 +215,9 @@ def update_sector_ai_analysis():
                 data['ai_news'], 
                 json.dumps(news_items, ensure_ascii=False)
             ))
+            print(f"[DEBUG] news 개수: {len(news_items)}")
+            print("[DEBUG] Gemini 응답 원문:", response.text)
+            print("[DEBUG] commit 완료")
             conn.commit()
 
     except Exception as e:

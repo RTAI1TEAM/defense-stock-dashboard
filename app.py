@@ -9,7 +9,7 @@ from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
-from routes.stock_detail import stock_detail_bp, get_defense_sector_analysis, update_sector_ai_analysis
+from routes.stock_detail import stock_detail_bp, get_defense_sector_analysis
 from routes.profile import profile_bp
 from routes.stock_chat import stock_chat_bp
 
@@ -153,11 +153,11 @@ def index():
     # stock_detail.py에서 만든 9999번 데이터를 읽어오는 함수 호출
     score, ai_news, news_list = get_defense_sector_analysis()
 
-    # 조건문을 좀 더 널널하게 변경 (내용이 "데이터 분석 대기 중..."인 경우도 포함)
-    if score == 0 or not news_list or "대기 중" in ai_news:
-        print("Gemini 업종 분석을 실행합니다...")
-        update_sector_ai_analysis()
-        score, ai_news, news_list = get_defense_sector_analysis()
+    # # 조건문을 좀 더 널널하게 변경 (내용이 "데이터 분석 대기 중..."인 경우도 포함)
+    # if score == 0 or not news_list or "대기 중" in ai_news:
+    #     print("Gemini 업종 분석을 실행합니다...")
+    #     update_sector_ai_analysis()
+    #     score, ai_news, news_list = get_defense_sector_analysis()
     
     # 🚀 [수정 포인트] 점수 타입 확인 및 색상 결정
     try:
@@ -182,7 +182,7 @@ def index():
         chart_data=chart_data,
         score=score,
         ai_news=ai_news,      # 템플릿에서 요약문으로 사용
-        news_list=news_list,  # 템플릿에서 뉴스 목록으로 사용
+        news_list=news_list[:3],  # 템플릿에서 뉴스 목록으로 사용, 뉴스 목록 5개로 제한
         color_class=color_class,
         ai_strategy=ai_news,  # 기존 ai_strategy 변수명도 대응
         defense_stocks=defense_stocks,

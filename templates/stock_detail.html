@@ -6,7 +6,7 @@
     <div style="display:grid; grid-template-columns: 3.5fr 1fr; gap:30px; align-items: start;">
         
         <!-- 왼쪽: 차트 영역 -->
-        <div class="card shadow-sm border-0 p-4" style="border-radius: 15px;">
+        <div class="dashboard-card">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 {% include "components/_dropdown.html"%}
                 <span class="badge bg-light text-dark border">전일 데이터 분석</span>
@@ -79,9 +79,22 @@
         </div>
 
         <!-- 오른쪽 사이드바: AI분석 + 모의투자만 -->
+         
         <div id="right-sidebar" style="position: sticky; top: 20px;">
             <div id="ai-analysis-wrapper">
-                {% include "components/_ai_analysis_card.html" %}
+            <div class="analysis-panel">
+                <div class="index-card-header">
+                    <h3 class="index-card-title">AI 종목 분석</h3>
+                    <span class="index-card-subtitle">뉴스 기반 투자 참고</span>
+                </div>
+
+                <div id="ai-analysis-container">
+                    <div id="analysis-view">
+                        {% include "components/_ai_analysis_card.html" %}
+                    </div>
+                </div>
+            </div>
+
                 {% include "components/invest_start_button.html" %}
             </div>
             <div id="invest-form-wrapper" style="display: none;" class="mt-3">
