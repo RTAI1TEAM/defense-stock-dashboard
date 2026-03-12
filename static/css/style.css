@@ -380,7 +380,7 @@ body{
 .trade-buttons{
     display:flex;
     gap:12px;
-    margin-top:15px;
+    margin-top:12px;
 }
 
 .trade-buttons button{
@@ -466,13 +466,19 @@ body{
         grid-template-columns: 1fr;
     }
 }
+/* news */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
-.top-card { border: none; border-radius: 20px; transition: transform 0.3s; height: 100%; overflow: hidden; }
-.top-card:hover { transform: translateY(-8px); }
-.badge-rank { position: absolute; top: 15px; left: 15px; z-index: 10; padding: 5px 12px; border-radius: 30px; font-weight: bold; font-size: 0.75rem; }
-.top-img { width: 100%; height: 200px; object-fit: cover; display: block; }
-.list-img { width: 200px; height: 120px; object-fit: cover; border-radius: 12px; flex-shrink: 0;}
+.news-top-card { border: none; border-radius: 20px; transition: transform 0.3s; height: 100%; overflow: hidden; }
+.news-top-card:hover { transform: translateY(-8px); }
+.news-badge-rank { position: absolute; top: 15px; left: 15px; z-index: 10; padding: 5px 12px; border-radius: 30px; font-weight: bold; font-size: 0.75rem; }
+.news-top-img { width: 100%; height: 200px; object-fit: cover; display: block; }
+/* .list-img { width: 200px; height: 120px; object-fit: cover; border-radius: 12px; flex-shrink: 0;} */
+.list-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px 0 0 12px;
+}
 .news-item { border-bottom: 1px solid #eee; transition: background 0.2s; text-decoration: none !important; color: inherit; }
 .news-item:hover { background-color: #f1f3f5; }
 .news-meta { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; gap: 6px; }
@@ -616,12 +622,3 @@ table td:nth-child(3),
 table th:nth-child(3){
     text-align:left;
 }
-/* a.stock-link,
-a.stock-link:link,
-a.stock-link:visited,
-a.stock-link:hover,
-a.stock-link:active,
-a.stock-link:focus {
-    color: #212529 !important;
-    text-decoration: none !important;
-} */
