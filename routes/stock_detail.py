@@ -448,17 +448,24 @@ def execute_trade():
                 if float(account['current_balance']) < total_amount:
                     return jsonify({"success": False, "message": f"잔액 부족 (필요: {total_amount:,.0f}원)"})
                 cursor.execute("UPDATE mock_accounts SET current_balance = current_balance - %s WHERE id = %s", (total_amount, account['id']))
+                # strategy 컬럼 포함 — 전략별로 별도 포지션 관리
                 cursor.execute("""
-                    INSERT INTO portfolio_holdings (user_id, account_id, stock_id, quantity, avg_buy_price, total_invested)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO portfolio_holdings
+                        (user_id, account_id, stock_id, quantity, avg_buy_price, total_invested, strategy)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON DUPLICATE KEY UPDATE
-                        avg_buy_price = (total_invested + VALUES(total_invested)) / (quantity + VALUES(quantity)),
-                        quantity = quantity + VALUES(quantity),
+                        avg_buy_price  = (total_invested + VALUES(total_invested)) / (quantity + VALUES(quantity)),
+                        quantity       = quantity + VALUES(quantity),
                         total_invested = total_invested + VALUES(total_invested)
-                """, (user_id, account['id'], stock_id, quantity, price, total_amount))
+                """, (user_id, account['id'], stock_id, quantity, price, total_amount, strategy_name))
 
             elif trade_type == 'SELL':
-                cursor.execute("SELECT id, quantity FROM portfolio_holdings WHERE user_id = %s AND stock_id = %s", (user_id, stock_id))
+                # 같은 전략 포지션에서 매도
+                cursor.execute(
+                    "SELECT id, quantity FROM portfolio_holdings "
+                    "WHERE user_id = %s AND stock_id = %s AND strategy = %s",
+                    (user_id, stock_id, strategy_name)
+                )
                 holding = cursor.fetchone()
                 if not holding or holding['quantity'] < quantity:
                     return jsonify({"success": False, "message": "보유 수량이 부족합니다."})
