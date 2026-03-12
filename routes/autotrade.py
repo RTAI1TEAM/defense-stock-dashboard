@@ -20,8 +20,8 @@ from algorithm import strategy_golden_cross, strategy_breakout
 # 내부 상수
 # ─────────────────────────────────────────────
 STRATEGY_MAP = {
-    "골든크로스 전략": strategy_golden_cross,
-    "돌파매매 전략":   strategy_breakout,
+    "5/20 골든크로스":  strategy_golden_cross,
+    "20일 전고점 돌파": strategy_breakout,
 }
 HISTORY_DAYS = 60   # 신호 계산에 필요한 최소 과거 데이터 (MA20 기준 여유 있게)
 
