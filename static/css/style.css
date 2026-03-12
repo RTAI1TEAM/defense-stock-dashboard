@@ -1,3 +1,13 @@
+@font-face {
+    font-family: 'ELAND_Choice_M';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts-20-12@1.0/ELAND_Choice_M.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    font-family: 'ELAND_Choice_M', 'Apple SD Gothic Neo', sans-serif !important;
+}
 html, body {
     /* overflow-x: hidden;
     overflow-y: hidden; */
@@ -460,7 +470,7 @@ body{
     }
 }
 /* news */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts-20-12@1.0/ELAND_Choice_M.woff');
 .news-top-card { border: none; border-radius: 20px; transition: transform 0.3s; height: 100%; overflow: hidden; }
 .news-top-card:hover { transform: translateY(-8px); }
 .news-badge-rank { position: absolute; top: 15px; left: 15px; z-index: 10; padding: 5px 12px; border-radius: 30px; font-weight: bold; font-size: 0.75rem; }
