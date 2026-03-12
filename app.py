@@ -1,9 +1,12 @@
 import os
 import json
-from flask import Flask, render_template, redirect, url_for, session, request
 from datetime import datetime
+
+from flask import Flask, render_template, redirect, url_for, session, request
+
 from database import get_conn
 from finance_data import get_defense_data
+from routes.log_card import dashboard_bp
 from routes.app_login import auth_bp
 from routes.rank import rank_bp
 from routes.news import news_bp
@@ -24,7 +27,7 @@ app.register_blueprint(portfolio_bp)
 app.register_blueprint(stock_detail_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(stock_chat_bp)
-
+app.register_blueprint(dashboard_bp)
 
 def get_main_etf():
     conn = get_conn()
@@ -125,6 +128,63 @@ def get_color_class(score):
     else:
         return "bg-danger"
 
+def get_yesterday_trades():
+    if "user_id" not in session:
+        return [], 0, 0, 0
+    yesterday_trades = []
+    buy_count = 0
+    sell_count = 0
+    total_count = 0
+    user_id = session["user_id"]
+    conn = get_conn()
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    t.id,
+                    t.trade_type,
+                    t.price,
+                    t.quantity,
+                    t.total_amount,
+                    t.strategy,
+                    t.traded_at,
+                    s.name_kr AS stock_name
+                FROM trades t
+                JOIN stocks s ON t.stock_id = s.id
+                WHERE t.user_id = %s
+                  AND DATE(t.traded_at) = CURDATE() - INTERVAL 1 DAY
+                ORDER BY t.traded_at DESC
+                LIMIT 5
+                """,
+                (user_id,),
+            )
+            yesterday_trades = cur.fetchall()
+
+            cur.execute(
+                """
+                SELECT
+                    SUM(CASE WHEN trade_type = 'BUY' THEN 1 ELSE 0 END) AS buy_count,
+                    SUM(CASE WHEN trade_type = 'SELL' THEN 1 ELSE 0 END) AS sell_count,
+                    COUNT(*) AS total_count
+                FROM trades
+                WHERE user_id = %s
+                  AND DATE(traded_at) = CURDATE() - INTERVAL 1 DAY
+                """,
+                (user_id,),
+            )
+            summary = cur.fetchone()
+
+        buy_count = summary["buy_count"] or 0
+        sell_count = summary["sell_count"] or 0
+        total_count = summary["total_count"] or 0
+    finally:
+        conn.close()
+
+    return yesterday_trades, buy_count, sell_count, total_count
+
+
 
 @app.template_filter('comma')
 def comma_filter(value):
@@ -132,15 +192,11 @@ def comma_filter(value):
 
 @app.context_processor
 def inject_stock_list():
-
     conn = get_conn()
     cursor = conn.cursor()
-
     cursor.execute("SELECT ticker, name_kr FROM stocks")
     stock_list = cursor.fetchall()
-
     conn.close()
-
     return dict(stock_list=stock_list)
 
 @app.route("/")
@@ -152,6 +208,7 @@ def index():
     # 2. 업종 분석 데이터 가져오기 (수정됨!)
     # stock_detail.py에서 만든 9999번 데이터를 읽어오는 함수 호출
     score, ai_news, news_list = get_defense_sector_analysis()
+    yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trades()
 
     # # 조건문을 좀 더 널널하게 변경 (내용이 "데이터 분석 대기 중..."인 경우도 포함)
     # if score == 0 or not news_list or "대기 중" in ai_news:
@@ -170,8 +227,28 @@ def index():
 
     # 3. 방산주 리스트 (기존 유지)
     conn = get_conn()
+    account = None
+    current_price = 0
+    default_stock = {"ticker": "", "name_kr": ""}
+
     try:
         defense_stocks = get_defense_data(conn)
+        if defense_stocks:
+            default_stock = {
+                "ticker": defense_stocks[0]["ticker"],
+                "name_kr": defense_stocks[0]["name"],
+            }
+            current_price = defense_stocks[0]["price"]
+
+        user_id = session.get("user_id")
+        if user_id:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT current_balance FROM mock_accounts WHERE user_id = %s",
+                    (user_id,),
+                )
+                account = cursor.fetchone()
+
     finally:
         conn.close()
 
@@ -188,7 +265,13 @@ def index():
         defense_stocks=defense_stocks,
         stock_id=9999,        # 업종 종합 ID
         strategies={}, 
-        stock={'ticker': 'DEFENSE'} # 에러 방지용 가상 객체
+        stock=default_stock,
+        account=account,
+        current_price=current_price,
+        yesterday_trades=yesterday_trades,
+        buy_count=buy_count,
+        sell_count=sell_count,
+        total_count=total_count,
     )
 
 
