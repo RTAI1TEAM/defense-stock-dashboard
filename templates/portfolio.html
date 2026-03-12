@@ -3,6 +3,13 @@
 {% block title %}내 포트폴리오{% endblock %}
 
 {% block content %}
+
+<style>
+    thead th {
+        background-color: #f8fafc !important;
+        color: #111827 !important;
+    }
+</style>
 <div class="container mt-4 mb-5">
 
     <div class="row mb-4">
@@ -45,7 +52,7 @@
         <h5 class="fw-bold mb-3">내 보유 종목 및 AI 전략</h5>
         <div class="table-responsive">
             <table class="table align-middle text-center mb-0">
-                <thead class="table-light">
+                <thead style="background-color: #f8fafc; color: #111827;">
                     <tr>
                         <th style="width:32px;"></th>
                         <th class="text-start">종목명</th>
@@ -70,7 +77,7 @@
                         <td><span class="toggle-icon" style="font-size:0.75rem; color:#aaa;">▶</span></td>
                         <td class="fw-bold text-start">
                             <a href="{{ url_for('stock_detail.show_stock_chart', ticker=items[0].ticker) }}" class="stock-link"
-                               onclick="event.stopPropagation()">{{ stock_name }}</a>
+                                onclick="event.stopPropagation()">{{ stock_name }}</a>
                         </td>
                         <td>{{ total_qty }}주</td>
                         <td class="fw-bold">{{ "{:,.0f}".format(total_current) }}원</td>
@@ -139,7 +146,7 @@
         <h5 class="fw-bold mb-3">최근 거래 내역</h5>
         <div class="table-responsive">
             <table class="table text-center align-middle mb-0">
-                <thead class="table-light">
+                <thead style="background-color: #f8fafc; color: #111827;">
                     <tr>
                         <th>일시</th><th>구분</th><th>종목(수량)</th>
                         <th class="text-end">단가</th><th class="text-end">거래금액</th>
