@@ -67,7 +67,7 @@ def fetch_news(query):
 
     params = {
         "query": query,
-        "display": 30,
+        "display":100,
         "sort": "date"
     }
 
