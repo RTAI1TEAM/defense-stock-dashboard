@@ -223,8 +223,8 @@ def register():
                 finally:
                     conn.close()
 
-            del verification_codes[email]
-            return redirect(url_for("auth_bp.login_page"))
+                del verification_codes[email]
+                return redirect(url_for("auth_bp.login_page"))
 
         else:
             return render_template(

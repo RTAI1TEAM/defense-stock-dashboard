@@ -4,105 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Quant - 회원가입</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  <link rel="stylesheet" href="{{url_for('static', filename='css/signup.css')}}">
+  <script src="{{ url_for('static', filename='js/signup.js')}}" defer></script>
 
-    body {
-      background-color: #0f1117;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    }
-
-    .card {
-      background-color: #1c1f2e;
-      border-radius: 16px;
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
-    }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-
-    .logo h1 {
-      color: #ffffff;
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    .logo p {
-      color: #6b7280;
-      font-size: 14px;
-      margin-top: 8px;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group input {
-      width: 100%;
-      background-color: #2a2d3e;
-      border: 1px solid #3a3d4e;
-      border-radius: 8px;
-      padding: 16px 18px;
-      color: #ffffff;
-      font-size: 15px;
-      outline: none;
-      transition: border-color 0.2s;
-      font-family: inherit;
-    }
-
-    .form-group input::placeholder { color: #6b7280; }
-    .form-group input:focus { border-color: #3b82f6; }
-
-    .btn-signup {
-      width: 100%;
-      background-color: #3b82f6;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      padding: 16px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background-color 0.2s;
-      font-family: inherit;
-    }
-
-    .btn-signup:hover { background-color: #2563eb; }
-
-    .footer-text {
-      text-align: center;
-      margin-top: 20px;
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    .footer-text a {
-      color: #3b82f6;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .error-msg {
-      background-color: rgba(239, 68, 68, 0.15);
-      border: 1px solid #ef4444;
-      color: #ef4444;
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 14px;
-    }
-  </style>
 </head>
 <body>
 
@@ -152,46 +56,5 @@
     </div>
   </div>
 
-  <script>
-    {% if not show_code %}
-    document.querySelector("form").addEventListener("submit", function(e) {
-      const email = document.querySelector('input[name="email"]').value;
-      const password = document.querySelector('input[name="password"]').value;
-      const password2 = document.querySelector('input[name="password2"]').value;
-      const nickname = document.querySelector('input[name="nickname"]').value;
-
-      if (!email || !password || !password2 || !nickname) {
-        e.preventDefault();
-        alert("모든 항목을 입력해주세요!");
-        return;
-      }
-
-      if (!email.includes("@")) {
-        e.preventDefault();
-        alert("이메일 형식이 올바르지 않아요!");
-        return;
-      }
-
-      if (password.length < 8) {
-        e.preventDefault();
-        alert("비밀번호는 8자 이상이어야 해요!");
-        return;
-      }
-
-      const pwRule = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-      if (!pwRule.test(password)) {
-        e.preventDefault();
-        alert("비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 해요!");
-        return;
-      }
-
-      if (password !== password2) {
-        e.preventDefault();
-        alert("비밀번호가 일치하지 않아요!");
-        return;
-      }
-    });
-    {% endif %}
-  </script>
 </body>
 </html>
