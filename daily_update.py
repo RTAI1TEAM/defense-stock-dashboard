@@ -12,6 +12,8 @@ daily_update.py — 매일 1회 실행하는 DB 통합 업데이트 스크립트
   1. 전체 종목 주가 업데이트  (update_stock_price.py)
   2. ETF 시세 업데이트        (update_etf_price.py)
   3. 뉴스 수집 및 저장        (news_data.py)
+  4. 뉴스 AI 분석 업데이트    (routes/stock_detail.py)
+  5. 전략 기반 자동 매매 실행 (auto_trade.py)  ← 추가
 """
 
 import sys
@@ -51,9 +53,17 @@ def run_news_update():
     from news_data import update_news
     update_news()
 
+
 def run_news_analysis():
     from routes.stock_detail import update_sector_ai_analysis
     update_sector_ai_analysis()
+
+
+def run_auto_trade():
+    """전략 신호 기반 자동 매매 실행 — 주가 업데이트 완료 후 실행"""
+    from auto_trade import run_auto_trade as _run
+    _run()
+
 
 if __name__ == "__main__":
     log("=" * 50)
@@ -61,10 +71,11 @@ if __name__ == "__main__":
     log("=" * 50)
 
     results = {
-        "주가 업데이트":  step("주가 업데이트  (stock_price_history / stock_details)", run_stock_update),
-        "ETF 업데이트":   step("ETF 업데이트   (etf_price_history)", run_etf_update),
-        "뉴스 업데이트":  step("뉴스 수집/저장 (news)", run_news_update),
-        "뉴스 분석 업데이트":  step("뉴스 수집/저장 (stock_news)", run_news_analysis),
+        "주가 업데이트":    step("주가 업데이트  (stock_price_history / stock_details)", run_stock_update),
+        "ETF 업데이트":     step("ETF 업데이트   (etf_price_history)", run_etf_update),
+        "뉴스 업데이트":    step("뉴스 수집/저장 (news)", run_news_update),
+        "뉴스 분석 업데이트": step("뉴스 AI 분석  (stock_news)", run_news_analysis),
+        "자동 매매 실행":   step("전략 기반 자동 매매 (auto_trade)", run_auto_trade),  # ← 추가
     }
 
     log("=" * 50)
