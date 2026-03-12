@@ -4,8 +4,35 @@
 {% block title %}K-방산 전일 기준 차트{% endblock %}
 
 {% block content %}
+<style>
+    /* [순위 컬럼 클릭 방지 설정]
+       설명: '순위'는 데이터 정렬에 따라 바뀌는 값이 아니라 고정된 순서여야 하므로, 
+       테이블 헤더(th) 중 첫 번째 칸의 정렬 및 클릭 기능을 CSS로 비활성화합니다. 
+    */
+
+    #defenseTable th:first-child {
+        /* 1. 마우스 클릭 및 모든 이벤트를 무시하게 만듭니다 (정렬 방지 핵심) */
+        pointer-events: none !important; 
+        
+        /* 2. 마우스를 올려도 손가락 모양(pointer)이 아닌 일반 화살표로 보이게 합니다 */
+        cursor: default !important;      
+    }
+
+    /* [마우스 호버 효과 제거]
+       설명: 클릭이 안 되더라도 마우스를 올렸을 때 배경색이 변하면 사용자가 버튼으로 오해할 수 있습니다. 
+       이를 방지하기 위해 호버 시에도 배경색을 투명하게 유지합니다. 
+    */
+    #defenseTable th:first-child:hover {
+        background-color: transparent !important;
+    }
+</style>
+
 <div class="container-fluid px-2 mt-2 mb-2">
 <div class="container">
+    {# 
+       stock_rank_table 매크로를 사용하여 'K-방산' 종목 리스트를 테이블 형태로 렌더링합니다. 
+       전달된 stocks 데이터는 거래대금 순으로 이미 정렬된 상태입니다.
+    #}
     {{ stock_rank_table('defenseTable', 'K-방산 전일 기준 목록', stocks, 999, True) }}
 </div>
 </div>

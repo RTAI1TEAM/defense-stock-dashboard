@@ -211,7 +211,7 @@ def _auto_buy(cursor, conn, today_str: str) -> list[dict]:
         WHERE t.trade_type = 'BUY'
           AND t.strategy   IN ({placeholders})
           AND ph.stock_id  IS NULL   -- 현재 미보유
-        """.format(placeholders=",".join(["%s"] * len(STRATEGY_MAP))),
+        """.format(placeholders=",".join(["%s"] * len(STRATEGY_MAP) * 2)),
         [f"[자동] {k}" for k in STRATEGY_MAP.keys()]
         + list(STRATEGY_MAP.keys()),
         # strategy 컬럼이 "[자동] XXX" 형태일 수도 있어서 두 패턴 모두 포함

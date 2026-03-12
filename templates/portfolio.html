@@ -3,6 +3,13 @@
 {% block title %}내 포트폴리오{% endblock %}
 
 {% block content %}
+
+<style>
+    thead th {
+        background-color: #f8fafc !important;
+        color: #111827 !important;
+    }
+</style>
 <div class="container mt-4 mb-5">
 
     <div class="row mb-4">
@@ -45,7 +52,7 @@
         <h5 class="fw-bold mb-3">내 보유 종목 및 AI 전략</h5>
         <div class="table-responsive">
             <table class="table align-middle text-center mb-0">
-                <thead class="table-light">
+                <thead style="background-color: #f8fafc; color: #111827;">
                     <tr>
                         <th style="width:32px;"></th>
                         <th class="text-start">종목명</th>
@@ -70,7 +77,7 @@
                         <td><span class="toggle-icon" style="font-size:0.75rem; color:#aaa;">▶</span></td>
                         <td class="fw-bold text-start">
                             <a href="{{ url_for('stock_detail.show_stock_chart', ticker=items[0].ticker) }}" class="stock-link"
-                               onclick="event.stopPropagation()">{{ stock_name }}</a>
+                                onclick="event.stopPropagation()">{{ stock_name }}</a>
                         </td>
                         <td>{{ total_qty }}주</td>
                         <td class="fw-bold">{{ "{:,.0f}".format(total_current) }}원</td>
@@ -139,10 +146,11 @@
         <h5 class="fw-bold mb-3">최근 거래 내역</h5>
         <div class="table-responsive">
             <table class="table text-center align-middle mb-0">
-                <thead class="table-light">
+                <thead style="background-color: #f8fafc; color: #111827;">
                     <tr>
                         <th>일시</th><th>구분</th><th>종목(수량)</th>
                         <th class="text-end">단가</th><th class="text-end">거래금액</th>
+                        <th class="text-end">손익</th>
                     </tr>
                 </thead>
                 <tbody id="tradeTableBody">
@@ -158,9 +166,21 @@
                         </td>
                         <td class="text-end">{{ "{:,.0f}".format(trade.price) }}원</td>
                         <td class="text-end fw-bold">{{ "{:,.0f}".format(trade.total_amount) }}원</td>
+                        <td class="text-end">
+                            {% if trade.profit_amount is not none %}
+                                {% set color = '#f23645' if trade.profit_amount > 0 else '#0062ff' %}
+                                {% set sign  = '+' if trade.profit_amount > 0 else '' %}
+                                <span style="color:{{ color }}; font-weight:600;">
+                                    {{ sign }}{{ "{:,.0f}".format(trade.profit_amount) }}원<br>
+                                    <small>({{ sign }}{{ "%.1f"|format(trade.profit_rate) }}%)</small>
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>
+                    <tr><td colspan="6" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -168,12 +188,7 @@
         {% if total_pages > 1 %}
         <nav class="mt-4">
             <ul class="pagination justify-content-center" id="tradePagination">
-                {% for p in range(1, total_pages + 1) %}
-                <li class="page-item {{ 'active' if p == page }}" data-page="{{ p }}">
-                    <a class="page-link" href="javascript:void(0);" onclick="loadTrades({{ p }})">{{ p }}</a>
-                </li>
-                {% endfor %}
-            </ul>
+                </ul>
         </nav>
         {% endif %}
     </div>
@@ -238,7 +253,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const labels      = {{ pie_labels | tojson }};
     const values      = {{ pie_values | tojson }};
     const cashBalance = {{ cash_balance }};
-
+    const initialPage = {{ page | tojson }};
+    const initialTotalPages = {{ total_pages | tojson }};
+    
+    if (initialTotalPages > 1) {
+        renderPagination(initialPage, initialTotalPages);
+    }
     const allLabels = labels.length > 0 ? [...labels, '현금'] : ['현금'];
     const allValues = labels.length > 0 ? [...values, cashBalance] : [cashBalance];
     const colors    = ['#3b82f6','#f87171','#34d399','#fbbf24','#a78bfa','#93c5fd','#fca5a5'];
@@ -354,25 +374,40 @@ function loadTrades(page) {
                 tbody.innerHTML = ''; // 기존 내용 삭제
 
                 if (data.trades.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>';
                 } else {
                     data.trades.forEach(trade => {
                         const badgeClass = trade.trade_type === 'BUY' ? 'bg-danger' : 'bg-primary';
-                        const typeText = trade.trade_type === 'BUY' ? '매수' : '매도';
-                        
-                        // 숫자에 콤마 추가하는 함수
-                        const formatNum = (num) => Number(num).toLocaleString();
+                        const typeText   = trade.trade_type === 'BUY' ? '매수' : '매도';
+                        const formatNum  = (num) => Number(num).toLocaleString();
+
+                        // 손익 셀: 매도일 때만 색상+수치 표시, 매수는 '-'
+                        let profitCell = '<td class="text-end"><span class="text-muted">-</span></td>';
+                        if (trade.profit_amount !== null && trade.profit_amount !== undefined) {
+                            const color  = trade.profit_amount > 0 ? '#f23645' : '#0062ff';
+                            const sign   = trade.profit_amount > 0 ? '+' : '';
+                            const amount = formatNum(Math.round(trade.profit_amount));
+                            const rate   = trade.profit_rate.toFixed(1);
+                            profitCell = `
+                                <td class="text-end">
+                                    <span style="color:${color}; font-weight:600;">
+                                        ${sign}${amount}원<br>
+                                        <small>(${sign}${rate}%)</small>
+                                    </span>
+                                </td>`;
+                        }
 
                         const row = `
                             <tr>
                                 <td>${trade.traded_at}</td>
                                 <td><span class="badge ${badgeClass}">${typeText}</span></td>
                                 <td class="text-start fw-bold">
-                                    <a href="/stock/${trade.ticker}" class="stock-link">${trade.name_kr}</a>
+                                    <a href="/stocks/${trade.ticker}" class="stock-link">${trade.name_kr}</a>
                                     (${trade.quantity}주)
                                 </td>
                                 <td class="text-end">${formatNum(trade.price)}원</td>
                                 <td class="text-end fw-bold">${formatNum(trade.total_amount)}원</td>
+                                ${profitCell}
                             </tr>
                         `;
                         tbody.insertAdjacentHTML('beforeend', row);
@@ -391,10 +426,33 @@ function loadTrades(page) {
 
 function renderPagination(currentPage, totalPages) {
     const paginationUl = document.querySelector('#tradePagination');
-    if (!paginationUl) return;
+    if (!paginationUl || totalPages <= 1) {
+        if (paginationUl) paginationUl.innerHTML = '';
+        return;
+    }
 
     let html = '';
-    for (let p = 1; p <= totalPages; p++) {
+    
+    // 1. [이전] 화살표: 1페이지가 아닐 때만 활성화
+    const prevDisabled = (currentPage === 1) ? 'disabled' : '';
+    html += `
+        <li class="page-item ${prevDisabled}">
+            <a class="page-link" href="javascript:void(0);" onclick="loadTrades(${currentPage - 1})" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+    `;
+
+    // 2. 페이지 번호 로직 (현재 페이지 기준 앞뒤 2개씩, 최대 5개 노출)
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+
+    // 마지막 페이지 근처일 때 시작 페이지 재조정
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
         const activeClass = (p === currentPage) ? 'active' : '';
         html += `
             <li class="page-item ${activeClass}" data-page="${p}">
@@ -402,6 +460,17 @@ function renderPagination(currentPage, totalPages) {
             </li>
         `;
     }
+
+    // 3. [다음] 화살표: 마지막 페이지가 아닐 때만 활성화
+    const nextDisabled = (currentPage === totalPages) ? 'disabled' : '';
+    html += `
+        <li class="page-item ${nextDisabled}">
+            <a class="page-link" href="javascript:void(0);" onclick="loadTrades(${currentPage + 1})" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    `;
+
     paginationUl.innerHTML = html;
 }
 </script>

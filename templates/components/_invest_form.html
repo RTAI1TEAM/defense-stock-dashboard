@@ -44,6 +44,7 @@
             </div>
         </div>
         <hr style="margin-bottom: 8px;">
+
         <!-- 구매 가능 금액 -->
         <div class="d-flex justify-content-between align-items-center">
             <span class="trade-label text-secondary">구매 가능 금액</span>
@@ -61,7 +62,6 @@
             구매 가능 금액 내에서만 주문이 가능합니다.
         </div>
 
-
         <div class="trade-buttons">
             <button type="button" class="btn-buy" onclick="handleTrade('BUY')">매수</button>
             <button type="button" class="btn-sell" onclick="handleTrade('SELL')">매도</button>
@@ -73,27 +73,22 @@
 document.getElementById('strategyInput').value = document.getElementById('strategySelector').value;
 
 document.getElementById('strategySelector').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    document.getElementById('strategyInput').value = selectedOption.value;
-});
-document.getElementById('strategySelector').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    document.getElementById('strategyInput').value = selectedOption.value;
+    document.getElementById('strategyInput').value = this.options[this.selectedIndex].value;
 });
 
 const pricePerShare = {{ current_price|int }};
-const currentBalance = {{ account.current_balance|int if account else 0 }};
-const maxQuantity = Math.floor(currentBalance / pricePerShare);
+let currentBalance = {{ account.current_balance|int if account else 0 }};
+let maxQuantity = Math.floor(currentBalance / pricePerShare);
 
 document.getElementById('tradeQuantity').setAttribute('max', maxQuantity);
 
-document.getElementById('tradeQuantity').addEventListener('input', function() {
-    let quantity = parseInt(this.value) || 1;
+function updateTotal() {
+    let quantity = parseInt(document.getElementById('tradeQuantity').value) || 1;
     const warning = document.getElementById('balanceWarning');
 
     if (quantity > maxQuantity) {
         quantity = maxQuantity;
-        this.value = maxQuantity;
+        document.getElementById('tradeQuantity').value = maxQuantity;
         warning.style.display = 'block';
     } else {
         warning.style.display = 'none';
@@ -101,18 +96,18 @@ document.getElementById('tradeQuantity').addEventListener('input', function() {
 
     if (quantity < 1) {
         quantity = 1;
-        this.value = 1;
+        document.getElementById('tradeQuantity').value = 1;
     }
 
-    const total = pricePerShare * quantity;
-    document.getElementById('totalAmount').innerText = total.toLocaleString() + ' 원';
-});
+    document.getElementById('totalAmount').innerText = (pricePerShare * quantity).toLocaleString() + ' 원';
+}
+
+document.getElementById('tradeQuantity').addEventListener('input', updateTotal);
 
 function handleTrade(type) {
     document.getElementById('tradeTypeInput').value = type;
-    
-    const form = document.getElementById('tradeForm');
-    const formData = new FormData(form);
+
+    const formData = new FormData(document.getElementById('tradeForm'));
 
     fetch("{{ url_for('stock_detail.execute_trade') }}", {
         method: "POST",
@@ -122,10 +117,15 @@ function handleTrade(type) {
     .then(data => {
         if (data.success) {
             alert(data.message);
-            
-            const balanceElement = document.getElementById('current-balance');
-            if (balanceElement && data.new_balance) {
-                balanceElement.innerText = data.new_balance;
+
+            if (data.new_balance) {
+                const newBalanceNum = parseInt(data.new_balance.replace(/,/g, ''));
+                if (!isNaN(newBalanceNum)) {
+                    currentBalance = newBalanceNum;
+                    maxQuantity = Math.floor(currentBalance / pricePerShare);
+                    document.getElementById('current-balance').innerText = data.new_balance;
+                    document.getElementById('tradeQuantity').setAttribute('max', maxQuantity);
+                }
             }
 
             document.getElementById('tradeQuantity').value = 1;
