@@ -7,9 +7,18 @@
   <link rel="stylesheet" href="{{url_for('static', filename='css/signup.css')}}">
   <script src="{{ url_for('static', filename='js/signup.js')}}" defer></script>
   <style>
+    @font-face {
+        font-family: 'LeferiBaseType-BoldA';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/LeferiBaseType-BoldA.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+    }
+    * {
+        font-family: 'LeferiBaseType-BoldA', 'Apple SD Gothic Neo', sans-serif !important;
+    }
     .form-group input::placeholder {
-      color: #888888 !important;
-      opacity: 1;
+        color: #888888 !important;
+        opacity: 1;
     }
   </style>
 </head>

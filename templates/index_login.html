@@ -6,9 +6,18 @@
   <title>AI Quant - 로그인</title>
   <link rel="stylesheet" href="{{url_for('static', filename='css/login.css')}}">
   <style>
+    @font-face {
+        font-family: 'LeferiBaseType-BoldA';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/LeferiBaseType-BoldA.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+    }
+    * {
+        font-family: 'LeferiBaseType-BoldA', 'Apple SD Gothic Neo', sans-serif !important;
+    }
     .form-group input::placeholder {
-      color: #888888 !important;
-      opacity: 1;
+        color: #888888 !important;
+        opacity: 1;
     }
   </style>
 </head>
@@ -32,12 +41,12 @@
         <input type="password" name="password" placeholder="비밀번호" required
           style="background-color: #E6EEFA; color: #333333; border: none;" />
       </div>
-      <button type="submit" class="btn-login">[로그인]</button>
+      <button type="submit" class="btn-login">[ 로그인 ]</button>
     </form>
 
     <div class="footer-text">
       <span style="color: #0d2b5e; font-weight: bold;">주린이를 위한 완벽한 모의투자,</span> <br>
-      <span style="color: #3b82f6;">[가입하고 1,000만 원 받기]</span>
+      <span style="color: #3b82f6;">[ 가입하고 1,000만 원 받기 ]</span>
     </div>
 
     <button class="btn-signup" onclick="window.location.href='/signup'">회원가입</button>
