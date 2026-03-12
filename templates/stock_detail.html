@@ -81,28 +81,27 @@
         <!-- 오른쪽 사이드바: AI분석 + 모의투자만 -->
          
         <div id="right-sidebar" style="position: sticky; top: 20px;">
-            <div id="ai-analysis-wrapper">
             <div class="analysis-panel">
-                <div class="index-card-header">
-                    <h3 class="index-card-title">AI 종목 분석</h3>
-                    <span class="index-card-subtitle">뉴스 기반 투자 참고</span>
-                </div>
-
-                <div id="ai-analysis-container">
-                    <div id="analysis-view">
+                
+                <div id="ai-analysis-wrapper">
+                    <div class="index-card-header">
+                        <h3 class="index-card-title">AI 종목 분석</h3>
+                        <span class="index-card-subtitle">뉴스 기반 투자 참고</span>
+                    </div>
+                    <div id="ai-analysis-container">
                         {% include "components/_ai_analysis_card.html" %}
                     </div>
+                    {% include "components/invest_start_button.html" %}
                 </div>
-                {% include "components/invest_start_button.html" %}
-            </div>
+
+                <div id="invest-form-wrapper" style="display: none;">
+                    {% include "components/_invest_form.html" %}
+                </div>
 
             </div>
-            <div id="invest-form-wrapper" style="display: none;">
-                {% include "components/_invest_form.html" %}
-            </div>
-                        <!-- AI 분석 / 모의투자 -->
 
             <div id="stock-chat-container"></div>
+        </div>
 
             <script>
             document.addEventListener("DOMContentLoaded", function () {
