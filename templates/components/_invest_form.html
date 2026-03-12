@@ -1,17 +1,17 @@
-<div id="invest-section" class="card shadow border-0 p-4" style="border-radius: 15px;">
-    <div class="d-flex align-items-center mb-4">
+<div id="invest-section" class="dashboard-card">
+    <div class="d-flex align-items-center mb-1">
         <button onclick="goBack()" class="back-btn me-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
             </svg>
         </button>
-        <h4 class="fw-bold text-success mb-0">💰 투자 설정</h4>
+        <h4 class="trade-card-title">💰 투자 설정</h4>
     </div>
 
     <!-- 알고리즘 매매 전략 선택 -->
-    <div class="mb-3">
-        <label class="form-label fw-bold">알고리즘 매매 전략 선택</label>
-        <select class="form-select form-select-lg" id="strategySelector">
+    <div class="analysis-section">
+        <label class="algorithm-title">알고리즘 매매 전략 선택</label>
+        <select class="form-select algorithm-select" id="strategySelector">
             {% for key, val in strategies.items() %}
             <option value="{{ val.name }}" data-profit="{{ val.profit }}">
                 {{ val.name }} (과거 수익률: {{ val.profit }}%)
@@ -26,34 +26,32 @@
         <input type="hidden" id="strategyInput" name="strategy" value="5/20 골든크로스">
 
         <!-- 구매 가격 -->
-        <div class="mb-3">
-            <label class="form-label fw-bold">구매 가격</label>
+        <div class="mt-1">
+            <label class="trade-label">구매 가격</label>
             <div class="input-group">
-                <input type="number" class="form-control form-control-lg" value="{{ current_price|int }}" readonly>
+                <input type="number" class="form-control trade-form" value="{{ current_price|int }}" readonly>
                 <span class="input-group-text">원</span>
             </div>
         </div>
 
         <!-- 수량 -->
-        <div class="mb-3">
-            <label class="form-label fw-bold">수량</label>
+        <div class="mb-2">
+            <label class="trade-label">수량</label>
             <div class="input-group">
-                <input type="number" id="tradeQuantity" class="form-control form-control-lg" name="quantity" min="1" value="1" required>
+                <input type="number" id="tradeQuantity" class="form-control trade-form" name="quantity" min="1" value="1" required>
                 <span class="input-group-text">주</span>
             </div>
         </div>
-
-        <hr>
-
+        <hr style="margin-bottom: 8px;">
         <!-- 구매 가능 금액 -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="text-secondary fw-bold">구매 가능 금액</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="trade-label text-secondary">구매 가능 금액</span>
             <span class="fw-bold"><span id="current-balance">{{ "{:,.0f}".format(account.current_balance) if account else '0' }}</span> 원</span>
         </div>
 
         <!-- 총 주문 금액 -->
         <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="text-secondary fw-bold">총 주문 금액</span>
+            <span class="trade-label text-secondary">총 주문 금액</span>
             <span class="fw-bold text-primary" id="totalAmount">{{ "{:,.0f}".format(current_price) }} 원</span>
         </div>
 
@@ -62,9 +60,10 @@
             구매 가능 금액 내에서만 주문이 가능합니다.
         </div>
 
-        <div class="d-flex gap-2 mt-3">
-            <button type="button" class="btn btn-success flex-fill py-3 fw-bold" onclick="handleTrade('BUY')">매수</button>
-            <button type="button" class="btn btn-danger flex-fill py-3 fw-bold" onclick="handleTrade('SELL')">매도</button>
+
+        <div class="trade-buttons">
+            <button type="button" class="btn-buy" onclick="handleTrade('BUY')">매수</button>
+            <button type="button" class="btn-sell" onclick="handleTrade('SELL')">매도</button>
         </div>
     </form>
 </div>
