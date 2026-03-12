@@ -104,47 +104,80 @@ def get_live_analysis(stock_name):
         print(f"Gemini 분석 에러: {e}")
         return news_list, 50, "AI 분석 엔진 일시 오류", "분석 불가", "bg-secondary"
 
-def get_db_or_api_stock_news(stock_id, stock_name):
+def update_all_stocks_ai_analysis():
+    """
+    [배치 전용] 모든 종목을 순회하며 뉴스 3개 수집 및 AI 분석 결과를 DB에 저장
+    """
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            sql_check = """
-                SELECT score, ai_summary, news_data 
-                FROM stock_news 
-                WHERE stock_id = %s 
-                AND updated_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
-            """
-            cursor.execute(sql_check, (stock_id,))
-            cached = cursor.fetchone()
+            # 모든 종목 목록 확보
+            cursor.execute("SELECT id, name_kr FROM stocks")
+            stocks = cursor.fetchall()
+            
+            print(f"🚀 총 {len(stocks)}개 종목 AI 전수 분석 시작...")
 
-            if cached:
-                news_list = json.loads(cached['news_data'])
-                score = cached['score']
-                ai_news = cached['ai_summary']
-                print(f"[{stock_name}] DB 캐시 데이터 사용")
-            else:
-                print(f"[{stock_name}] API 신규 분석 실행")
-                news_list, score, ai_news, status, color = get_live_analysis(stock_name)
+            for stock in stocks:
+                stock_id = stock['id']
+                stock_name = stock['name_kr']
                 
-                sql_save = """
-                    INSERT INTO stock_news (stock_id, score, ai_summary, news_data, updated_at)
-                    VALUES (%s, %s, %s, %s, NOW())
-                    ON DUPLICATE KEY UPDATE 
-                        score = VALUES(score),
-                        ai_summary = VALUES(ai_summary),
-                        news_data = VALUES(news_data),
-                        updated_at = NOW()
-                """
-                cursor.execute(sql_save, (
-                    stock_id, score, ai_news, 
-                    json.dumps(news_list, ensure_ascii=False)
-                ))
-                conn.commit()
+                try:
+                    # [A] 실행 함수 호출 (뉴스 3개 가져오기 + Gemini 분석)
+                    news_list, score, ai_news, _, _ = get_live_analysis(stock_name)
 
+                    # 결과 DB 저장
+                    sql_save = """
+                        INSERT INTO stock_news (stock_id, score, ai_summary, news_data, updated_at)
+                        VALUES (%s, %s, %s, %s, NOW())
+                        ON DUPLICATE KEY UPDATE 
+                            score = VALUES(score), 
+                            ai_summary = VALUES(ai_summary),
+                            news_data = VALUES(news_data), 
+                            updated_at = NOW()
+                    """
+                    cursor.execute(sql_save, (
+                        stock_id, score, ai_news, json.dumps(news_list, ensure_ascii=False)
+                    ))
+                    conn.commit()
+                    print(f"✅ {stock_name} 업데이트 완료")
+                    
+                    # API 과부하 방지를 위한 휴식
+                    import time
+                    time.sleep(1) 
+
+                except Exception as e:
+                    print(f"❌ {stock_name} 분석 오류: {e}")
+                    continue
+    finally:
+        conn.close()
+
+
+
+def get_db_or_api_stock_news(stock_id, stock_name):
+    """
+    [웹용] DB에서 미리 준비된 데이터를 꺼내오기만 함
+    """
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            # daily_update가 이미 돌았으므로 시간 체크 없이 바로 조회
+            sql = "SELECT score, ai_summary, news_data FROM stock_news WHERE stock_id = %s"
+            cursor.execute(sql, (stock_id,))
+            row = cursor.fetchone()
+
+            if row:
+                news_list = json.loads(row['news_data'])
+                score = row['score']
+                ai_news = row['ai_summary']
+            else:
+                # 만약 배치가 실패해서 데이터가 아예 없다면 실시간 분석 시도
+                return get_live_analysis(stock_name)
+
+            # 상태값 판별 (화면 표시용)
             if score >= 70: status, color = "긍정", "bg-success"
             elif score >= 40: status, color = "보통", "bg-warning"
             else: status, color = "부정", "bg-danger"
-            
+
             return news_list, score, ai_news, status, color
     finally:
         conn.close()
