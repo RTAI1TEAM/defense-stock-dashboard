@@ -276,5 +276,5 @@ def register():
 
 @auth_bp.route("/logout", methods=["GET"])
 def logout():
-    session.pop("nickname", None)
+    session.clear()
     return redirect(url_for("auth_bp.login_page"))
