@@ -56,13 +56,15 @@
     <div class="card shadow-sm border-0 p-4 mb-3" style="border-radius: 20px;">
         <h6 class="fw-bold mb-3">비밀번호 변경</h6>
 
-        {% if error_password %}
-        <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
-            {{ error_password }}
+        <!-- 에러 출력 위치 -->
+        <div id="passwordErrorBox" class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem; display: none;"></div>
+        <!-- 변경 성공 안내 -->
+         <div id="passwordSuccessBox"
+         class="alert alert-success py-2"
+         style="border-radius:10px; font-size:0.9rem; display:none;">
         </div>
-        {% endif %}
 
-        <form method="post" action="/profile/change_password">
+        <form id="changePasswordForm" method="post" action="/profile/change_password">
             <div class="form-group mb-2">
                 <input type="password"
                        name="current_password"
@@ -281,6 +283,65 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     });
+        // 비밀번호 변경 AJAX
+    const changePasswordForm = document.getElementById("changePasswordForm");
+    const passwordErrorBox = document.getElementById("passwordErrorBox");
+    const passwordSuccessBox = document.getElementById("passwordSuccessBox");
+
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            if (passwordErrorBox) {
+                passwordErrorBox.style.display = "none";
+                passwordErrorBox.textContent = "";
+            }
+
+            if (passwordSuccessBox) {
+                passwordSuccessBox.style.display = "none";
+                passwordSuccessBox.textContent = "";
+            }
+
+            const formData = new FormData(changePasswordForm);
+
+            fetch("/profile/change_password", {
+                method: "POST",
+                body: formData
+            })
+            .then(async function (response) {
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "비밀번호 변경 실패");
+                }
+
+                return data;
+            })
+            .then(function (data) {
+                if (data.status === "ok") {
+                    if (passwordSuccessBox) {
+                        passwordSuccessBox.textContent = data.message;
+                        passwordSuccessBox.style.display = "block";
+                    }
+
+                    changePasswordForm.reset();
+
+                    if (data.redirect_url) {
+                        setTimeout(function () {
+                            window.location.href = data.redirect_url;
+                        }, 1000);
+                    }
+                }
+            })
+            .catch(function (error) {
+                if (passwordErrorBox) {
+                    passwordErrorBox.textContent = error.message;
+                    passwordErrorBox.style.display = "block";
+                }
+            });
+        });
+    }
 });
+
 </script>
 {% endblock %}
