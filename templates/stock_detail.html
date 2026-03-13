@@ -104,6 +104,18 @@
 
     let _lastStrategyData = null;
 
+    function resetBacktestCard() {
+        const card = document.getElementById("backtestCard");
+        if (card) card.style.display = "none";
+        const oneLiner = document.getElementById("strategyOneLinerText");
+        if (oneLiner) { oneLiner.textContent = ""; oneLiner.style.visibility = "hidden"; }
+        _lastStrategyData = null;
+        const strategy = document.getElementById("strategySelect").value;
+        if (strategy === "none" && typeof switchChart === "function") {
+            switchChart("mainEtfChart", getCurrentChartType());
+        }
+    }
+
     function destroyMainChart() {
         const canvas = document.getElementById("mainEtfChart");
         if (!canvas) return;
@@ -300,15 +312,14 @@
         const btn      = document.getElementById("analyzeBtn");
 
         if (strategy === "none") {
-            document.getElementById("strategyOneLiner").style.display = "none";
-            document.getElementById("backtestCard").style.display = "none";
-            _lastStrategyData = null;
-            if (typeof switchChart === "function") switchChart("mainEtfChart", getCurrentChartType());
+            resetBacktestCard();
             return;
         }
 
-        document.getElementById("strategyOneLiner").style.display = "";
-        document.getElementById("strategyOneLinerText").textContent = ONE_LINER[strategy] || "";
+        // 전략 설명 한 줄 표시
+        const oneLiner = document.getElementById("strategyOneLinerText");
+        if (oneLiner) { oneLiner.textContent = ONE_LINER[strategy] || ""; oneLiner.style.visibility = "visible"; }
+
         btn.textContent = "⏳ 분석 중...";
         btn.disabled    = true;
 
