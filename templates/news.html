@@ -1,11 +1,22 @@
 {% extends "navbar.html" %}
-{% block title %}Defense News - 정확한 시간 표기{% endblock %}
-    
+{% block title %}Defense News{% endblock %}
+
 {% block content %}
-<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+
+<!--뉴스 페이지 css 충돌방지-->
+<style>
+.news-pagination-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0 1rem;
+}
+/* 나머지 pagination 관련 CSS 전부 삭제 */
+</style>
+
 <div class="container py-4">
+    {% if top3_news %}
     <section class="mb-5">
-        <h3 class="fw-bold mb-4 pt-4" style="color: #0d2b5e;">🔥 실시간 조회수 Top 3</h3>
+        <h3 class="fw-bold mb-4 pt-4">🔥 실시간 조회수 Top 3</h3>
         <div class="row g-4">
             {% for news in top3_news %}
             <div class="col-md-4">
@@ -13,8 +24,9 @@
                     <div class="card news-top-card shadow-sm">
                         {% set badge_color = 'bg-danger' if loop.index == 1 else ('bg-primary' if loop.index == 2 else 'bg-dark') %}
                         <span class="news-badge-rank {{ badge_color }} text-white">TOP {{ loop.index }}</span>
-                        <img src="{{ news.image_url or '/static/images/news_default.png' }}" class="news-top-img"
-                        onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
+                        <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
+                             class="news-top-img"
+                             onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
                         <div class="card-body">
                             <h5 class="fw-bold line-clamp-2 mb-2">{{ news.title_clean }}</h5>
                             <div class="news-meta">
@@ -29,44 +41,86 @@
             {% endfor %}
         </div>
     </section>
-<!--뉴스 리스트-->
-    <section>
-    <div class="p-4 d-flex justify-content-between align-items-center mb-4">
-    <h5 class="fw-bold" style="color: #0d2b5e;">관련 뉴스</h5>
-    <div class="d-flex justify-content-center align-items-center">          
-        {% from "components/search.html" import search_bar %}
-        {{search_bar(id="NewsSearch", placeholder="   🔍  기사를 검색하세요.")}}
-    </div>
-    </div>
+    {% endif %}
 
-    <div id="newsList">
-    {% for news in list_news %}
-    <div class="news-item"
-        data-title="{{ news.title_clean|lower }}"
-        data-summary="{{ news.description_clean|lower }}"
-        data-source="{{ news.source_name|lower }}">
-        <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark">
-            <div class="card mb-3 shadow-sm border-0">
-                <div class="row g-0">
-                    <div class="col-md-3">
-                        <img src="{{ news.image_url }}" class="list-img" alt="뉴스 이미지">
-                    </div>
-                    <div class="col-md-9">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ news.title_clean }}</h5>
-                            <p class="card-text">{{ news.description_clean }}</p>
-                            <p class="card-text">
-                                <small class="text-muted">{{ news.source_name }} | {{ news.pubDate_raw }}</small>
-                            </p>
+    <section>
+        <div class="p-4 d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold">관련 뉴스</h5>
+            <div>
+                {% from "components/search.html" import search_bar %}
+                {{ search_bar(id="NewsSearch", placeholder="🔍 기사를 검색하세요") }}
+            </div>
+        </div>
+
+        <div id="newsList">
+            {% for news in list_news %}
+            <div class="news-item"
+                 data-title="{{ news.title_clean|lower }}"
+                 data-summary="{{ news.description_clean|lower }}"
+                 data-source="{{ news.source_name|lower }}">
+                <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark">
+                    <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-auto"> <!-- 디폴트이미지 img 태그 css 깨져서 따로 처리행야함 --> 
+                                <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
+                                     alt="뉴스 이미지"
+                                     style="width: 280px; height: 160px; object-fit: cover; flex-shrink: 0;"
+                                     onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
+                            </div>
+                            <div class="col">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ news.title_clean }}</h5>
+                                    <p class="card-text">{{ news.description_clean }}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">{{ news.source_name }} | {{ news.pubDate_raw }}</small>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
-        </a>
-    </div>
-    {% endfor %}
-</div>
-</section>
+            {% endfor %}
+        </div>
+<!-- 페이지버튼 -->
+        <div class="news-pagination-wrap">
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center" id="newsPagination"></ul>
+    </nav>
 </div>
 
+<script>
+function renderNewsPagination() {
+    const currentPage = {{ pagination.current }};
+    const totalPages = {{ pagination.total_pages }};
+    const query = '{{ current_query }}' ? `&q={{ current_query }}` : '';
+    const ul = document.getElementById('newsPagination');
+    if (!ul) return;
+
+    let html = '';
+
+    if (currentPage > 1) {
+        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage - 1}${query}">&laquo;</a></li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
+    }
+
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, start + 4);
+    for (let p = start; p <= end; p++) {
+        const activeClass = p === currentPage ? 'active' : '';
+        html += `<li class="page-item ${activeClass}"><a class="page-link" href="?page=${p}${query}">${p}</a></li>`;
+    }
+
+    if (currentPage < totalPages) {
+        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage + 1}${query}">&raquo;</a></li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
+    }
+
+    ul.innerHTML = html;
+}
+
+renderNewsPagination();
+</script>
 {% endblock %}
