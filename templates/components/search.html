@@ -1,5 +1,7 @@
+{# 재사용 가능한 검색창 매크로 #}
+{# 매개변수: id(input 고유 ID), placeholder(안내 문구) #}
 {% macro search_bar(id, placeholder) %}
 <input type="text" id="{{ id }}" class="form-control"
-    placeholder="{{ placeholder }}" autocomplete="off"
+    placeholder="{{ placeholder }}" autocomplete="off" {# 자동완성 비활성화 #}
     style="border-radius:16px; font-size:0.85rem; padding:6px 16px;">
 {% endmacro %}

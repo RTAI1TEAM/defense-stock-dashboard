@@ -1,30 +1,32 @@
-"""
-services/autotrade.py — 전략 기반 자동 매매 서비스
+# services/autotrade.py — 전략 기반 자동 매매 서비스
 
-daily_update.py에서 호출되며, 모든 유저의 포트폴리오를 순회하여
-설정된 전략의 신호(B/S)를 확인하고 자동으로 매수·매도를 실행합니다.
+# [역할]
+# daily_update.py에서 호출되며, 모든 유저의 포트폴리오를 순회하여
+# 설정된 전략의 신호(B:매수 / S:매도)를 확인하고 자동으로 매매를 실행합니다.
 
-지원 전략:
-  - 골든크로스 전략 : MA5 > MA20 상향돌파 → 매수 / 하향돌파 → 매도
-  - 돌파매매 전략   : 종가 > 20일 최고가 → 매수 / 종가 < MA20  → 매도
-  - 수동 운용       : 자동 매매 미적용 (건너뜀)
-"""
+# [지원 전략 및 규칙]
+# 1. 골든크로스 전략 : 단기 이평선(MA5)이 장기 이평선(MA20)을 상향 돌파 시 매수, 하향 돌파 시 매도합니다[cite: 99].
+# 2. 돌파매매 전략   : 종가가 최근 20일 최고가를 돌파 시 매수, MA20 선을 하회 시 매도합니다[cite: 100].
+# 3. 수동 운용       : 사용자가 직접 매매하는 모드로, 자동 매매 로직에서 제외됩니다.
 
 import pandas as pd
 from datetime import datetime
 from database import get_conn
 from algorithm import strategy_golden_cross, strategy_breakout
 
-
+# [전략 매핑 파트]
+# 알고리즘 모듈에 정의된 함수들을 명칭에 맞게 매핑하여 확장성을 확보합니다.
 STRATEGY_MAP = {
     "5/20 골든크로스":  strategy_golden_cross,
     "20일 전고점 돌파": strategy_breakout,
 }
-HISTORY_DAYS = 60  # MA20 기준 여유 있게 설정
+# 이동평균선(MA20) 계산을 위해 필요한 최소 과거 데이터 일수입니다.
+HISTORY_DAYS = 60  
 
 
 def _fetch_price_history(cursor, stock_id: int) -> pd.DataFrame:
-    """최근 HISTORY_DAYS일 종가 이력을 DataFrame으로 반환."""
+    # [데이터 수집 헬퍼 함수]
+    # 특정 종목의 최근 시세 이력을 조회하여 Pandas DataFrame으로 변환합니다.
     cursor.execute(
         """
         SELECT price_date AS date, close_price
@@ -46,11 +48,9 @@ def _fetch_price_history(cursor, stock_id: int) -> pd.DataFrame:
 
 
 def _get_latest_signal(df: pd.DataFrame, strategy_fn) -> tuple[str, float]:
-    """
-    전략 함수를 적용한 뒤 가장 마지막 행의 신호와 종가를 반환.
-    반환값: (signal, price)  — signal: 'B' | 'S' | ''
-    """
-    if df.empty or len(df) < 21:  # MA20 계산 최소 21행 필요
+    # [신호 판별 헬퍼 함수]
+    # 전달받은 전략 함수를 시세 데이터에 적용하여 가장 최근 발생한 신호(B/S)를 추출합니다.
+    if df.empty or len(df) < 21:  # MA20 계산을 위한 최소 데이터 개수를 검증합니다.
         return "", 0.0
 
     last = strategy_fn(df).iloc[-1]
@@ -58,12 +58,11 @@ def _get_latest_signal(df: pd.DataFrame, strategy_fn) -> tuple[str, float]:
 
 
 def _auto_sell(cursor) -> list[dict]:
-    """
-    전략이 적용된 보유 종목에서 매도 신호(S) 발생 시 전량 자동 매도.
-    실행된 거래 요약 리스트를 반환.
-    """
+    # [자동 매도 실행 로직]
+    # 전략이 설정된 보유 종목들을 검사하여 매도 신호(S) 발생 시 전량 매도 처리를 수행합니다.
     results = []
 
+    # 자동 매매 대상인 보유 종목과 해당 종목의 최신 매수 전략 정보를 조회합니다.
     cursor.execute(
         """
         SELECT
@@ -99,10 +98,12 @@ def _auto_sell(cursor) -> list[dict]:
         if strategy_fn is None:
             continue
 
+        # 최신 시세 데이터를 가져와 매도 신호 여부를 확인합니다.
         signal, _ = _get_latest_signal(_fetch_price_history(cursor, h["stock_id"]), strategy_fn)
         if signal != "S":
             continue
 
+        # [매도 처리] 잔고 업데이트, 보유 종목 삭제, 거래 내역 기록을 수행합니다.
         qty         = int(h["quantity"])
         sell_price  = float(h["current_price"])
         sell_amount = qty * sell_price
@@ -142,15 +143,12 @@ def _auto_sell(cursor) -> list[dict]:
 
 
 def _auto_buy(cursor) -> list[dict]:
-    """
-    각 유저가 과거에 전략으로 거래했던 종목에 매수 신호(B) 발생 시
-    현금의 20% 한도로 자동 매수 (이미 보유 중인 종목은 건너뜀).
-    실행된 거래 요약 리스트를 반환.
-    """
+    # [자동 매수 실행 로직]
+    # 유저가 이전에 전략으로 거래했던 종목 중 매수 신호(B)가 포착된 종목을 자동으로 매수합니다.
     results = []
     strategy_keys = list(STRATEGY_MAP.keys())
 
-    # strategy 컬럼이 "[자동] XXX" 또는 "XXX" 두 형태로 저장될 수 있어 모두 포함
+    # 이미 보유 중인 종목은 제외하고, 과거에 해당 전략으로 매수했던 종목 후보를 추출합니다.
     cursor.execute(
         """
         SELECT DISTINCT
@@ -177,21 +175,24 @@ def _auto_buy(cursor) -> list[dict]:
         if strategy_fn is None:
             continue
 
+        # 최신 시세 데이터를 분석하여 매수 신호 발생 여부를 확인합니다.
         signal, _ = _get_latest_signal(_fetch_price_history(cursor, c["stock_id"]), strategy_fn)
         if signal != "B":
             continue
 
+        # [리스크 관리] 가용 현금의 20% 한도 내에서만 매수를 진행하도록 설정되어 있습니다.
         balance   = float(c["current_balance"])
         buy_price = float(c["current_price"])
         if buy_price <= 0:
             continue
 
-        qty = int(balance * 0.20 // buy_price)  # 현금 20% 한도
+        qty = int(balance * 0.20 // buy_price)  
         if qty <= 0:
             continue
 
         total_amount = qty * buy_price
 
+        # [매수 처리] 잔액 차감, 포트폴리오 추가, 거래 내역 기록을 수행합니다.
         cursor.execute(
             "UPDATE mock_accounts SET current_balance = current_balance - %s WHERE user_id = %s",
             (total_amount, c["user_id"]),
@@ -234,21 +235,22 @@ def _auto_buy(cursor) -> list[dict]:
 
 
 def run_auto_trade():
-    """
-    daily_update.py에서 호출하는 메인 함수.
-    전체 실행 결과 요약을 출력하고 예외 발생 시 롤백합니다.
-    """
+    # [메인 실행 함수]
+    # 전체 자동 매매 프로세스를 제어하며, 트랜잭션의 완결성을 보장합니다.
     today_str = datetime.now().strftime("%Y-%m-%d")
     print(f"[자동매매] 실행 시작 — {today_str}")
 
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
+            # 매도 로직을 먼저 수행하여 가용 현금을 확보한 후 매수 로직을 진행합니다.
             sell_results = _auto_sell(cursor)
             buy_results  = _auto_buy(cursor)
 
+        # 모든 처리가 정상일 경우 DB에 최종 반영합니다.
         conn.commit()
 
+        # [실행 결과 로그 출력]
         all_results = sell_results + buy_results
         if not all_results:
             print("[자동매매] 오늘 발생한 신호 없음 — 거래 없음")
@@ -271,6 +273,7 @@ def run_auto_trade():
                     )
 
     except Exception as e:
+        # 오류 발생 시 데이터 무결성을 위해 모든 작업을 취소하고 롤백합니다.
         conn.rollback()
         print(f"[자동매매] 오류 발생, 롤백 처리: {e}")
         raise
@@ -281,4 +284,5 @@ def run_auto_trade():
 
 
 if __name__ == "__main__":
+    # 스크립트 단독 실행 시 자동 매매 함수를 호출합니다.
     run_auto_trade()
