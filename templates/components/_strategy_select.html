@@ -1,8 +1,9 @@
-<!-- 전략 / 기간 / 분석하기 (차트 바로 위) -->
-<div class="d-flex align-items-center gap-3 mb-2" style="flex-wrap:wrap;">
+<!-- 전략 / 기간 / 분석하기 + 백테스팅 결과 (한 행) -->
+<div class="d-flex align-items-center gap-3 mb-1" style="flex-wrap:wrap; min-height:38px;">
     <div class="d-flex align-items-center gap-2">
         <label class="fw-semibold text-muted mb-0" style="font-size:.85rem;">전략</label>
-        <select id="strategySelect" class="form-select form-select-sm" style="width:180px;">
+        <select id="strategySelect" class="form-select form-select-sm" style="width:180px;"
+                onchange="resetBacktestCard()">
             <option value="none">전략 없음</option>
             <option value="golden_cross">골든크로스 (MA5/MA20)</option>
             <option value="breakout">전고점 돌파 (20일)</option>
@@ -21,33 +22,31 @@
         class="btn btn-sm btn-primary fw-semibold">
         🔍 분석하기
     </button>
-</div>
 
-<div id="strategy-descript">
-    <!-- 한 줄 전략 설명 -->
-    <div id="strategyOneLiner" style="display:none;" class="mb-1">
-        <span id="strategyOneLinerText" class="text-muted" style="font-size:.82rem;"></span>
-    </div>
-
-    <!-- 백테스팅 결과 카드 -->
-    <div id="backtestCard" style="display:none;" class="mb-2">
-        <div class="d-flex gap-2" style="flex-wrap:wrap;">
-            <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:110px;">
-                <div class="text-muted" style="font-size:.72rem;">백테스팅 수익률</div>
-                <div id="bt-profit" class="fw-bold" style="font-size:1.05rem;">-</div>
-            </div>
-            <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
-                <div class="text-muted" style="font-size:.72rem;">승률</div>
-                <div id="bt-winrate" class="fw-bold" style="font-size:1.05rem;">-</div>
-            </div>
-            <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:80px;">
-                <div class="text-muted" style="font-size:.72rem;">거래 횟수</div>
-                <div id="bt-count" class="fw-bold" style="font-size:1.05rem;">-</div>
-            </div>
-            <div class="rounded-3 px-3 py-1 text-center" style="background:#f8f9fa; min-width:150px;">
-                <div class="text-muted" style="font-size:.72rem;">시드 1,000만원 → 최종</div>
-                <div id="bt-final" class="fw-bold" style="font-size:1.05rem;">-</div>
-            </div>
+    <!-- 백테스팅 결과: 분석하기 버튼 오른쪽 인라인 -->
+    <div id="backtestCard" style="display:none;">
+    <div class="d-flex align-items-center gap-2">
+        <div class="rounded-3 px-2 py-1 text-center" style="background:#f8f9fa; min-width:90px;">
+            <div class="text-muted" style="font-size:.68rem;">백테스팅 수익률</div>
+            <div id="bt-profit" class="fw-bold" style="font-size:.9rem;">-</div>
+        </div>
+        <div class="rounded-3 px-2 py-1 text-center" style="background:#f8f9fa; min-width:60px;">
+            <div class="text-muted" style="font-size:.68rem;">승률</div>
+            <div id="bt-winrate" class="fw-bold" style="font-size:.9rem;">-</div>
+        </div>
+        <div class="rounded-3 px-2 py-1 text-center" style="background:#f8f9fa; min-width:60px;">
+            <div class="text-muted" style="font-size:.68rem;">거래 횟수</div>
+            <div id="bt-count" class="fw-bold" style="font-size:.9rem;">-</div>
+        </div>
+        <div class="rounded-3 px-2 py-1 text-center" style="background:#f8f9fa; min-width:130px;">
+            <div class="text-muted" style="font-size:.68rem;">시드 1,000만원 → 최종</div>
+            <div id="bt-final" class="fw-bold" style="font-size:.9rem;">-</div>
         </div>
     </div>
+    </div>
+</div>
+
+<!-- 전략 설명 한 줄: 고정 높이로 차트 안 밀림 -->
+<div style="height:1.4rem; margin-bottom:4px;">
+    <span id="strategyOneLinerText" class="text-muted" style="font-size:.78rem; visibility:hidden;"></span>
 </div>

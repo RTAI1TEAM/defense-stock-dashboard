@@ -90,30 +90,70 @@
 </div>
 
 <script>
-function renderNewsPagination() {
-    const currentPage = {{ pagination.current }};
-    const totalPages = {{ pagination.total_pages }};
-    const query = '{{ current_query }}' ? `&q={{ current_query }}` : '';
+// 뉴스 데이터를 화면에 그리는 함수
+function renderNewsList(newsItems) {
+    const listContainer = document.getElementById('newsList');
+    listContainer.innerHTML = ''; // 초기화
+
+    if (newsItems.length === 0) {
+        listContainer.innerHTML = '<p class="text-center py-5">검색 결과가 없습니다.</p>';
+        return;
+    }
+
+    newsItems.forEach(news => {
+        const html = `
+            <div class="news-item">
+                <a href="${news.source_url}" target="_blank" class="text-decoration-none text-dark">
+                    <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-auto">
+                                <img src="${news.image_url || '/static/images/news_default.jpg'}" 
+                                     style="width: 280px; height: 160px; object-fit: cover; flex-shrink: 0;"
+                                     onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
+                            </div>
+                            <div class="col">
+                                <div class="card-body">
+                                    <h5 class="card-title">${news.title_clean}</h5>
+                                    <p class="card-text text-truncate">${news.description_clean}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">${news.source_name} | ${news.pub_date_raw || news.pubDate_raw}</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>`;
+        listContainer.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+// 페이지네이션 버튼을 그리는 함수
+function updatePagination(pagination, query) {
     const ul = document.getElementById('newsPagination');
     if (!ul) return;
 
     let html = '';
+    const qParam = query ? `&q=${query}` : '';
 
-    if (currentPage > 1) {
-        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage - 1}${query}">&laquo;</a></li>`;
+    // 이전 버튼
+    if (pagination.current > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadNews(${pagination.current - 1}, '${query}'); return false;">&laquo;</a></li>`;
     } else {
         html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
     }
 
-    const start = Math.max(1, currentPage - 2);
-    const end = Math.min(totalPages, start + 4);
-    for (let p = start; p <= end; p++) {
-        const activeClass = p === currentPage ? 'active' : '';
-        html += `<li class="page-item ${activeClass}"><a class="page-link" href="?page=${p}${query}">${p}</a></li>`;
-    }
+    // 숫자 버튼 (pagination.pages 활용)
+    pagination.pages.forEach(p => {
+        const activeClass = p === pagination.current ? 'active' : '';
+        html += `<li class="page-item ${activeClass}">
+                    <a class="page-link" href="#" onclick="loadNews(${p}, '${query}'); return false;">${p}</a>
+                 </li>`;
+    });
 
-    if (currentPage < totalPages) {
-        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage + 1}${query}">&raquo;</a></li>`;
+    // 다음 버튼
+    if (pagination.current < pagination.total_pages) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadNews(${pagination.current + 1}, '${query}'); return false;">&raquo;</a></li>`;
     } else {
         html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
     }
@@ -121,6 +161,36 @@ function renderNewsPagination() {
     ul.innerHTML = html;
 }
 
-renderNewsPagination();
+// 핵심 Fetch 함수
+async function loadNews(page, query = '') {
+    const url = `/news?page=${page}${query ? '&q=' + query : ''}`;
+    
+    try {
+        const response = await fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+
+        // 1. 뉴스 목록 교체
+        renderNewsList(data.list_news);
+        // 2. 페이지네이션 버튼 교체
+        updatePagination(data.pagination, data.current_query);
+        // 3. 브라우저 URL 변경 (새로고침 시 해당 페이지 유지용)
+        window.history.pushState({}, '', url);
+        // 4. 스크롤 상단 이동 (선택사항)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (error) {
+        console.error('뉴스 로딩 실패:', error);
+    }
+}
+
+// 초기 로딩 시 페이지네이션 초기화 (SSR 데이터 기반)
+// VS Code가 빨간 줄을 긋는 이유는 확장 프로그램이 서로 다른 언어를 한 파일에서 해석하려고 할 때 발생하는 전형적인 충돌 때문(오류는 아님)
+document.addEventListener('DOMContentLoaded', () => {
+    const initialPagination = {{ pagination|tojson }};
+    const initialQuery = '{{ current_query }}';
+    updatePagination(initialPagination, initialQuery);
+});
 </script>
 {% endblock %}
