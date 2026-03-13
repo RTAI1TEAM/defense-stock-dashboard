@@ -1,5 +1,5 @@
 """
-autotrade.py — 전략 기반 자동 매매 실행 스크립트
+services/autotrade.py — 전략 기반 자동 매매 서비스
 
 daily_update.py에서 호출되며, 모든 유저의 포트폴리오를 순회하여
 설정된 전략의 신호(B/S)를 확인하고 자동으로 매수·매도를 실행합니다.
@@ -235,7 +235,7 @@ def _auto_buy(cursor) -> list[dict]:
 
 def run_auto_trade():
     """
-    daily_update.py 에서 호출하는 메인 함수.
+    daily_update.py에서 호출하는 메인 함수.
     전체 실행 결과 요약을 출력하고 예외 발생 시 롤백합니다.
     """
     today_str = datetime.now().strftime("%Y-%m-%d")
@@ -272,7 +272,7 @@ def run_auto_trade():
 
     except Exception as e:
         conn.rollback()
-        print(f"[자동매매] ❌ 오류 발생, 롤백 처리: {e}")
+        print(f"[자동매매] 오류 발생, 롤백 처리: {e}")
         raise
     finally:
         conn.close()

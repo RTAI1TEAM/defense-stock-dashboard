@@ -4,12 +4,15 @@ services/stock_service.py — 종목 DB 조회 서비스
 [ 역할 ]
   화면에 뿌릴 종목 데이터를 DB에서 꺼내오는 함수 모음입니다.
   직접 API를 호출하지 않고 배치가 저장해 둔 결과를 읽기만 합니다.
+  (구 finance_data.py의 get_defense_data 포함)
 
 [ 사용처 ]
   routes/stock_detail.py  — 종목 상세 페이지
+  routes/stocks.py        — 종목 목록 페이지
   app.py                  — 메인 페이지 업종 분석
 """
 
+import json
 from datetime import datetime
 
 from database import get_conn
@@ -23,7 +26,6 @@ def get_defense_sector_analysis():
     Returns:
         score (int), ai_summary (str), news_list (list)
     """
-    import json
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
@@ -68,6 +70,42 @@ def get_stock_list():
         with conn.cursor() as cur:
             cur.execute("SELECT name_kr, ticker FROM stocks")
             return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def get_defense_data():
+    """
+    방산 종목 목록을 거래대금 내림차순으로 반환합니다.
+    (구 finance_data.py:get_defense_data)
+
+    Returns:
+        list of dict — {ticker, name, price, change, value(억원)}
+    """
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT s.ticker, s.name_kr, d.current_price, d.change_rate, d.trading_value
+                FROM stocks s
+                JOIN stock_details d ON s.id = d.stock_id
+                WHERE s.is_defense = 1
+                """
+            )
+            rows = cursor.fetchall()
+
+        results = [
+            {
+                "ticker": row["ticker"],
+                "name":   row["name_kr"],
+                "price":  int(float(row["current_price"])),
+                "change": float(row["change_rate"]),
+                "value":  round(int(row["trading_value"]) / 100_000_000, 1),
+            }
+            for row in rows
+        ]
+        return sorted(results, key=lambda x: x["value"], reverse=True)
     finally:
         conn.close()
 

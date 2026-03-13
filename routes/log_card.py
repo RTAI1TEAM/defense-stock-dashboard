@@ -3,19 +3,20 @@ from database import get_conn
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
-@dashboard_bp.route("/dashboard")
-def dashboard():
-    if "user_id" not in session:
-        return render_template("dashboard.html", yesterday_trades=[], buy_count=0, sell_count=0, total_count=0)
 
-    user_id = session["user_id"]
+def get_yesterday_trade_summary(user_id):
+    """
+    어제 거래 내역과 요약 통계를 반환합니다.
+    app.py의 index()와 /dashboard 라우트에서 공통으로 사용합니다.
+
+    Returns:
+        (yesterday_trades, buy_count, sell_count, total_count)
+    """
     conn = get_conn()
-
     try:
         with conn.cursor() as cur:
-            # 어제 거래내역 조회
             cur.execute("""
-                SELECT 
+                SELECT
                     t.id,
                     t.trade_type,
                     t.price,
@@ -33,7 +34,6 @@ def dashboard():
             """, (user_id,))
             yesterday_trades = cur.fetchall()
 
-            # 어제 매수/매도 개수 요약
             cur.execute("""
                 SELECT
                     SUM(CASE WHEN trade_type = 'BUY' THEN 1 ELSE 0 END) AS buy_count,
@@ -45,12 +45,22 @@ def dashboard():
             """, (user_id,))
             summary = cur.fetchone()
 
-        buy_count = summary["buy_count"] or 0
-        sell_count = summary["sell_count"] or 0
-        total_count = summary["total_count"] or 0
-
+        return (
+            yesterday_trades,
+            summary["buy_count"] or 0,
+            summary["sell_count"] or 0,
+            summary["total_count"] or 0,
+        )
     finally:
         conn.close()
+
+
+@dashboard_bp.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return render_template("components/log_card.html", yesterday_trades=[], buy_count=0, sell_count=0, total_count=0)
+
+    yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trade_summary(session["user_id"])
 
     return render_template(
         "components/log_card.html",

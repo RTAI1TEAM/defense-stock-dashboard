@@ -14,7 +14,6 @@ routes/stock_detail.py — 종목 상세 페이지 라우트
   /api/strategy/<ticker> → strategy_api()      전략 신호 및 백테스트 JSON
 """
 
-import math
 import pandas as pd
 from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify, abort
 
@@ -22,21 +21,10 @@ from database import get_conn
 from algorithm import strategy_golden_cross, strategy_breakout, run_backtest
 from services.ai_analysis import get_db_or_api_stock_news
 from services.stock_service import get_stock, get_stock_list, get_stock_chart_data
+from utils.helpers import nan_to_none
 
 
 stock_detail_bp = Blueprint('stock_detail', __name__)
-
-
-def nan_to_none(val):
-    """pandas NaN을 JSON 직렬화 가능한 None으로 변환합니다."""
-    try:
-        if val is None:
-            return None
-        if isinstance(val, float) and math.isnan(val):
-            return None
-        return val
-    except Exception:
-        return None
 
 
 @stock_detail_bp.route("/stocks/<ticker>")
@@ -228,6 +216,37 @@ def execute_trade():
                     """,
                     (user_id, account['id'], stock_id, quantity, price, total_amount, strategy_name)
                 )
+                new_balance = float(account['current_balance']) - total_amount
+
+            elif trade_type == 'SELL':
+                cursor.execute(
+                    "SELECT quantity FROM portfolio_holdings WHERE user_id = %s AND stock_id = %s AND account_id = %s",
+                    (user_id, stock_id, account['id'])
+                )
+                holding = cursor.fetchone()
+                if not holding:
+                    return jsonify({"success": False, "message": "보유하지 않은 종목입니다."})
+                if holding['quantity'] < quantity:
+                    return jsonify({"success": False, "message": f"보유 수량 부족 (보유: {holding['quantity']}주)"})
+
+                cursor.execute(
+                    "UPDATE mock_accounts SET current_balance = current_balance + %s WHERE id = %s",
+                    (total_amount, account['id'])
+                )
+                if holding['quantity'] == quantity:
+                    cursor.execute(
+                        "DELETE FROM portfolio_holdings WHERE user_id = %s AND stock_id = %s AND account_id = %s",
+                        (user_id, stock_id, account['id'])
+                    )
+                else:
+                    cursor.execute(
+                        "UPDATE portfolio_holdings SET quantity = quantity - %s WHERE user_id = %s AND stock_id = %s AND account_id = %s",
+                        (quantity, user_id, stock_id, account['id'])
+                    )
+                new_balance = float(account['current_balance']) + total_amount
+
+            else:
+                return jsonify({"success": False, "message": "잘못된 거래 유형입니다."})
 
             cursor.execute(
                 """
@@ -239,7 +258,6 @@ def execute_trade():
 
             conn.commit()
 
-            new_balance = float(account['current_balance']) - total_amount
             return jsonify({
                 "success":     True,
                 "message":     f"{stock_res['name_kr']} {quantity}주 {trade_type} 완료!",

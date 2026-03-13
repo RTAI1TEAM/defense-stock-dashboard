@@ -1,24 +1,22 @@
-import os
-import json
 from datetime import datetime
 
-from flask import Flask, render_template, redirect, url_for, session, request
+from flask import Flask, render_template, session
 
 from database import get_conn
-from finance_data import get_defense_data
-from routes.log_card import dashboard_bp
+from routes.log_card import dashboard_bp, get_yesterday_trade_summary
 from routes.app_login import auth_bp
 from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
 from routes.stock_detail import stock_detail_bp
-from services.stock_service import get_defense_sector_analysis
 from routes.profile import profile_bp
 from routes.stock_chat import stock_chat_bp
+from services.stock_service import get_defense_sector_analysis, get_stock_list, get_defense_data
+from config import SECRET_KEY
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
+app.secret_key = SECRET_KEY
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(rank_bp)
@@ -34,13 +32,7 @@ def get_main_etf():
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            sql = """
-            SELECT id, ticker, name_kr
-            FROM etfs
-            ORDER BY id
-            LIMIT 1
-            """
-            cursor.execute(sql)
+            cursor.execute("SELECT id, ticker, name_kr FROM etfs ORDER BY id LIMIT 1")
             return cursor.fetchone()
     finally:
         conn.close()
@@ -50,73 +42,27 @@ def get_etf_chart_data(etf_id):
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            sql = """
-            SELECT price_date, open_price, high_price, low_price, close_price
-            FROM etf_price_history
-            WHERE etf_id = %s
-            ORDER BY price_date
-            """
-            cursor.execute(sql, (etf_id,))
+            cursor.execute(
+                """
+                SELECT price_date, open_price, high_price, low_price, close_price
+                FROM etf_price_history
+                WHERE etf_id = %s
+                ORDER BY price_date
+                """,
+                (etf_id,)
+            )
             rows = cursor.fetchall()
 
-            candle_data = []
-            for row in rows:
-                candle_data.append({
-                    "x": int(datetime.combine(row["price_date"], datetime.min.time()).timestamp() * 1000),
-                    "o": float(row["open_price"]),
-                    "h": float(row["high_price"]),
-                    "l": float(row["low_price"]),
-                    "c": float(row["close_price"])
-                })
-
-            return candle_data
-    finally:
-        conn.close()
-
-
-def get_main_stock_analysis():
-    conn = get_conn()
-    try:
-        with conn.cursor() as cursor:
-            # 분석 데이터가 있는 종목 하나 선택
-            cursor.execute("""
-                SELECT stock_id
-                FROM news_analysis
-                WHERE stock_id IS NOT NULL
-                GROUP BY stock_id
-                ORDER BY stock_id
-                LIMIT 1
-            """)
-            stock_row = cursor.fetchone()
-
-            if not stock_row:
-                return None, [], None
-
-            stock_id = stock_row["stock_id"]
-
-            cursor.execute("""
-                SELECT 
-                    ROUND(AVG(ai_score), 1) AS avg_score
-                FROM news_analysis
-                WHERE stock_id = %s
-            """, (stock_id,))
-            score_row = cursor.fetchone()
-            avg_score = float(score_row["avg_score"]) if score_row and score_row["avg_score"] is not None else 0
-
-            cursor.execute("""
-                SELECT 
-                    ai_score,
-                    sentiment,
-                    ai_summary,
-                    keywords,
-                    created_at
-                FROM news_analysis
-                WHERE stock_id = %s
-                ORDER BY created_at DESC, id DESC
-            """, (stock_id,))
-            analysis_list = cursor.fetchall()
-
-            return stock_id, analysis_list, avg_score
+        return [
+            {
+                "x": int(datetime.combine(row["price_date"], datetime.min.time()).timestamp() * 1000),
+                "o": float(row["open_price"]),
+                "h": float(row["high_price"]),
+                "l": float(row["low_price"]),
+                "c": float(row["close_price"]),
+            }
+            for row in rows
+        ]
     finally:
         conn.close()
 
@@ -129,63 +75,6 @@ def get_color_class(score):
     else:
         return "bg-danger"
 
-def get_yesterday_trades():
-    if "user_id" not in session:
-        return [], 0, 0, 0
-    yesterday_trades = []
-    buy_count = 0
-    sell_count = 0
-    total_count = 0
-    user_id = session["user_id"]
-    conn = get_conn()
-
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT
-                    t.id,
-                    t.trade_type,
-                    t.price,
-                    t.quantity,
-                    t.total_amount,
-                    t.strategy,
-                    t.traded_at,
-                    s.name_kr AS stock_name
-                FROM trades t
-                JOIN stocks s ON t.stock_id = s.id
-                WHERE t.user_id = %s
-                  AND DATE(t.traded_at) = CURDATE() - INTERVAL 1 DAY
-                ORDER BY t.traded_at DESC
-                LIMIT 5
-                """,
-                (user_id,),
-            )
-            yesterday_trades = cur.fetchall()
-
-            cur.execute(
-                """
-                SELECT
-                    SUM(CASE WHEN trade_type = 'BUY' THEN 1 ELSE 0 END) AS buy_count,
-                    SUM(CASE WHEN trade_type = 'SELL' THEN 1 ELSE 0 END) AS sell_count,
-                    COUNT(*) AS total_count
-                FROM trades
-                WHERE user_id = %s
-                  AND DATE(traded_at) = CURDATE() - INTERVAL 1 DAY
-                """,
-                (user_id,),
-            )
-            summary = cur.fetchone()
-
-        buy_count = summary["buy_count"] or 0
-        sell_count = summary["sell_count"] or 0
-        total_count = summary["total_count"] or 0
-    finally:
-        conn.close()
-
-    return yesterday_trades, buy_count, sell_count, total_count
-
-
 
 @app.template_filter('comma')
 def comma_filter(value):
@@ -193,12 +82,10 @@ def comma_filter(value):
 
 @app.context_processor
 def inject_stock_list():
-    conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT ticker, name_kr FROM stocks")
-    stock_list = cursor.fetchall()
-    conn.close()
-    return dict(stock_list=stock_list)
+    try:
+        return dict(stock_list=get_stock_list())
+    except Exception:
+        return dict(stock_list=[])
 
 @app.route("/")
 def index():
@@ -206,66 +93,56 @@ def index():
     etf = get_main_etf()
     chart_data = get_etf_chart_data(etf["id"])
 
-    # 2. 업종 분석 데이터 가져오기 (수정됨!)
-    # stock_detail.py에서 만든 9999번 데이터를 읽어오는 함수 호출
     score, ai_news, news_list = get_defense_sector_analysis()
-    yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trades()
 
-    # # 조건문을 좀 더 널널하게 변경 (내용이 "데이터 분석 대기 중..."인 경우도 포함)
-    # if score == 0 or not news_list or "대기 중" in ai_news:
-    #     print("Gemini 업종 분석을 실행합니다...")
-    #     update_sector_ai_analysis()
-    #     score, ai_news, news_list = get_defense_sector_analysis()
-    
-    # 🚀 [수정 포인트] 점수 타입 확인 및 색상 결정
+    user_id = session.get("user_id")
+    if user_id:
+        yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trade_summary(user_id)
+    else:
+        yesterday_trades, buy_count, sell_count, total_count = [], 0, 0, 0
+
     try:
-        # score가 None이거나 계산 불가능한 경우를 대비
         final_score = int(score) if score is not None else 0
     except (ValueError, TypeError):
         final_score = 0
 
     color_class = get_color_class(final_score)
 
-    # 3. 방산주 리스트 (기존 유지)
-    conn = get_conn()
+    defense_stocks = get_defense_data()
     account = None
     current_price = 0
     default_stock = {"ticker": "", "name_kr": ""}
 
-    try:
-        defense_stocks = get_defense_data(conn)
-        if defense_stocks:
-            default_stock = {
-                "ticker": defense_stocks[0]["ticker"],
-                "name_kr": defense_stocks[0]["name"],
-            }
-            current_price = defense_stocks[0]["price"]
+    if defense_stocks:
+        default_stock = {
+            "ticker": defense_stocks[0]["ticker"],
+            "name_kr": defense_stocks[0]["name"],
+        }
+        current_price = defense_stocks[0]["price"]
 
-        user_id = session.get("user_id")
-        if user_id:
+    if user_id:
+        conn = get_conn()
+        try:
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT current_balance FROM mock_accounts WHERE user_id = %s",
                     (user_id,),
                 )
                 account = cursor.fetchone()
+        finally:
+            conn.close()
 
-    finally:
-        conn.close()
-
-    # 4. 템플릿으로 전달 (변수 이름 맞춤)
     return render_template(
         "index.html",
         etf=etf,
         chart_data=chart_data,
         score=score,
-        ai_news=ai_news,      # 템플릿에서 요약문으로 사용
-        news_list=news_list[:3],  # 템플릿에서 뉴스 목록으로 사용, 뉴스 목록 5개로 제한
+        ai_news=ai_news,
+        news_list=news_list[:3],
         color_class=color_class,
-        ai_strategy=ai_news,  # 기존 ai_strategy 변수명도 대응
         defense_stocks=defense_stocks,
-        stock_id=9999,        # 업종 종합 ID
-        strategies={}, 
+        stock_id=9999,
+        strategies={},
         stock=default_stock,
         account=account,
         current_price=current_price,

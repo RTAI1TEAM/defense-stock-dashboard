@@ -83,31 +83,17 @@ def show_news():
     search_query = request.args.get("q", "").strip()
     
     page = max(1, request.args.get("page", 1, type=int))
-<<<<<<< HEAD
-    
-    # 검색어가 있으면 검색, 없으면 전체 조회
-=======
 
     # 1. 'Top 3' 전용 데이터를 검색어 없이 따로 가져옵니다. (고정 노출용)
     # 검색 결과와 상관없이 항상 최신 3개를 보여주기 위함입니다.
     top_news_list, _ = get_news_from_db(keyword=None, page=1, per_page=3)
 
     # 2. 실제 검색 결과 또는 리스트 데이터를 가져옵니다.
->>>>>>> 2fb222410c1de1df6edd662ac95086f5d6a25cb6
     all_news, total_count = get_news_from_db(
         keyword=search_query if search_query else None,
         page=page
     )
 
-<<<<<<< HEAD
-    # AJAX 요청인지 확인
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    
-    # 한 페이지에 Top3 3개 리스트 7개 고정
-    top3_news = all_news[:3]
-    list_news = all_news[3:]
-    
-=======
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     # 3. 데이터 분리 로직
@@ -123,7 +109,6 @@ def show_news():
         else:
             top3_news = []
             list_news = all_news
->>>>>>> 2fb222410c1de1df6edd662ac95086f5d6a25cb6
 
     pagination = get_pagination(page, total_count)
 
