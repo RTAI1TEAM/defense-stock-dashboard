@@ -16,6 +16,8 @@ verification_codes = {}
 
 @auth_bp.route("/login", methods=["GET"])
 def login_page():
+    if "user_id" in session:
+        return redirect(url_for("index")) # 이미 로그인 상태면 메인으로 슈팅!
     return render_template("index_login.html")
 
 
@@ -274,5 +276,5 @@ def register():
 
 @auth_bp.route("/logout", methods=["GET"])
 def logout():
-    session.pop("nickname", None)
+    session.clear()
     return redirect(url_for("auth_bp.login_page"))
