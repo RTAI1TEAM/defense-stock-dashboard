@@ -170,7 +170,7 @@
                 <tbody id="tradeTableBody">
                     {% for trade in trades %}
                     <tr>
-                        <td>{{ trade.traded_at.strftime('%y.%m.%d %H:%M') }}</td>
+                        <td>{{ trade.traded_at }}</td>
                         <td><span class="badge {{ 'bg-danger' if trade.trade_type=='BUY' else 'bg-primary' }}">{{ '매수' if trade.trade_type=='BUY' else '매도' }}</span></td>
                         <td class="text-start fw-bold">
                             <a href="{{ url_for('stock_detail.show_stock_chart', ticker=trade.ticker) }}" class="stock-link">
