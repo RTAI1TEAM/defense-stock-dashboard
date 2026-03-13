@@ -12,13 +12,13 @@
             <div class="compact-stock-card">
                 <div class="index-card-header" style="display:flex; align-items:center; justify-content:space-between;">
                     <div>
-                        <span class="index-card-subtitle">거래대금 순</span>
+                        <span class="index-card-subtitle">등락율 순</span>
                         <h3 class="index-card-title" style="margin:0;">상승</h3>
                     </div>
                     <a href="/stocks" class="view-all">View all</a>
                 </div>
                 <div class="stock-mini-list">
-                    {{ stock_mini_card(defense_stocks, 4) }}
+                    {{ stock_mini_card(defense_stocks | sort(attribute='change', reverse=True), 4) }}
                 </div>
             </div>
             <!-- 상위 3 끝 -->
@@ -32,7 +32,7 @@
                     <!-- <a href="/stocks" style="font-size:13px;color:#888;text-decoration:none;">View all</a> -->
                 </div>
                 <div class="stock-mini-list">
-                    {{ stock_mini_card(defense_stocks | reverse | list, 4) }}
+                    {{ stock_mini_card(defense_stocks | sort(attribute='change'), 4) }}
                 </div>
             </div>
             <!-- 하위 3 끝 -->
