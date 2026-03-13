@@ -51,10 +51,18 @@
     <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius: 20px;">
         <h5 class="fw-bold mb-3">내 보유 종목 및 AI 전략</h5>
         <div class="table-responsive">
-            <table class="table align-middle text-center mb-0">
+            <table class="table align-middle text-center mb-0" style="table-layout:fixed; width:100%;">
+                <colgroup>
+                    <col style="width:40px;">
+                    <col style="width:18%;">
+                    <col style="width:12%;">
+                    <col style="width:16%;">
+                    <col style="width:12%;">
+                    <col>
+                </colgroup>
                 <thead style="background-color: #f8fafc; color: #111827;">
                     <tr>
-                        <th style="width:32px;"></th>
+                        <th></th>
                         <th class="text-start">종목명</th>
                         <th>총 보유주수</th>
                         <th>총 평가금액</th>
@@ -124,7 +132,7 @@
                                 {{ '+' if item.profit_rate > 0 }}{{ "%.2f"|format(item.profit_rate) }}%
                             </span>
                         </td>
-                        <td>
+                        <td style="white-space:nowrap;">
                             <button class="btn btn-outline-secondary btn-sm me-1"
                                     onclick="event.stopPropagation(); openStrategyModal({{ item.holding_id }}, '{{ item.strategy }}', '{{ item.name_kr }}')">전략변경</button>
                             <button class="btn btn-outline-danger btn-sm"
@@ -171,8 +179,7 @@
                                 {% set color = '#f23645' if trade.profit_amount > 0 else '#0062ff' %}
                                 {% set sign  = '+' if trade.profit_amount > 0 else '' %}
                                 <span style="color:{{ color }}; font-weight:600;">
-                                    {{ sign }}{{ "{:,.0f}".format(trade.profit_amount) }}원<br>
-                                    <small>({{ sign }}{{ "%.1f"|format(trade.profit_rate) }}%)</small>
+                                    {{ sign }}{{ "{:,.0f}".format(trade.profit_amount) }}원 ({{ sign }}{{ "%.1f"|format(trade.profit_rate) }}%)
                                 </span>
                             {% else %}
                                 <span class="text-muted">-</span>
@@ -390,9 +397,8 @@ function loadTrades(page) {
                             const rate   = trade.profit_rate.toFixed(1);
                             profitCell = `
                                 <td class="text-end">
-                                    <span style="color:${color}; font-weight:600;">
-                                        ${sign}${amount}원<br>
-                                        <small>(${sign}${rate}%)</small>
+                                    <span style="color:${color}; font-weight:600; white-space:nowrap;">
+                                        ${sign}${amount}원 (${sign}${rate}%)
                                     </span>
                                 </td>`;
                         }
