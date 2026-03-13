@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify  # jsonify 추가
 from database import get_conn
 news_bp = Blueprint('news', __name__)
 
-PER_PAGE = 10
+PER_PAGE = 13
 
 def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
     conn = get_conn()
@@ -48,13 +48,13 @@ def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
                     row["published_at"].strftime("%Y-%m-%d %H:%M")
                     if row["published_at"] else ""
                 )
-            return rows, total_count
+            return rows, total_count 
     finally:
         conn.close()
 
 
 def get_pagination(page, total_count, per_page=PER_PAGE, window=2):
-    total_pages = max(1, -(-total_count // per_page))
+    total_pages = max(1, -(-total_count // per_page)) #페이지수 계산
     # 페이지 수 버튼 항상 5개 고정
     if total_pages <= 5:
         start = 1
@@ -81,22 +81,22 @@ def get_pagination(page, total_count, per_page=PER_PAGE, window=2):
 @news_bp.route("/news")
 def show_news():
     search_query = request.args.get("q", "").strip()
+    
     page = max(1, request.args.get("page", 1, type=int))
-
+    
+    # 검색어가 있으면 검색, 없으면 전체 조회
     all_news, total_count = get_news_from_db(
         keyword=search_query if search_query else None,
         page=page
     )
 
-    # AJAX 요청인지 확인 (헤더 또는 파라미터로 구분)
+    # AJAX 요청인지 확인
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
-    if page == 1:
-        top3_news = all_news[:3]
-        list_news = all_news[3:]
-    else:
-        top3_news = []
-        list_news = all_news
+    
+    # 한 페이지에 Top3 3개 리스트 7개 고정
+    top3_news = all_news[:3]
+    list_news = all_news[3:]
+    
 
     pagination = get_pagination(page, total_count)
 
