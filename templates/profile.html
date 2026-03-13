@@ -2,8 +2,89 @@
 {% block title %}내 프로필{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{{url_for('static', filename='css/profile.css')}}">
-<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+<style>
+    .profile-avatar-trigger {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .profile-avatar-circle {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #eef4ff 0%, #e8f0fe 100%);
+        font-size: 2.4rem;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .profile-avatar-trigger:hover .profile-avatar-circle {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+    }
+
+    .profile-avatar-edit-badge {
+        position: absolute;
+        right: -4px;
+        bottom: -4px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        font-size: 0.9rem;
+    }
+
+    .avatar-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 1050;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .avatar-modal.show {
+        display: flex;
+    }
+
+    .avatar-modal-card {
+        width: 100%;
+        max-width: 420px;
+        border-radius: 24px;
+        padding: 24px;
+        background: #ffffff;
+    }
+
+    .avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .avatar-option {
+        aspect-ratio: 1 / 1;
+        border-radius: 18px;
+        background: #f8fafc;
+        font-size: 1.8rem;
+        transition: all 0.18s ease;
+        border: none;
+    }
+
+    .avatar-option:hover {
+        background: #eef4ff !important;
+        transform: translateY(-2px);
+    }
+
+    .avatar-option.selected {
+        background: #dbeafe !important;
+        box-shadow: inset 0 0 0 2px #3b82f6;
+    }
+</style>
 
 <div class="container mt-4 mb-5" style="max-width: 600px;">
 
@@ -53,19 +134,44 @@
         </form>
     </div>
 
+    <!-- 이메일 변경 -->
+    <div class="card shadow-sm border-0 p-4 mb-3" style="border-radius: 20px;">
+        <h6 class="fw-bold mb-3">이메일 변경</h6>
+
+        {% if error_email %}
+        <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
+            {{ error_email }}
+        </div>
+        {% endif %}
+
+        <form method="post" action="/profile/change_email">
+            <div class="input-group">
+                <input type="email"
+                       name="new_email"
+                       class="form-control"
+                       placeholder="새 이메일 입력"
+                       value="{{ user_info.email }}"
+                       style="border-radius:10px 0 0 10px;">
+                <button class="btn btn-primary"
+                        type="submit"
+                        style="border-radius:0 10px 10px 0; font-weight:600;">
+                    변경
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- 비밀번호 변경 -->
     <div class="card shadow-sm border-0 p-4 mb-3" style="border-radius: 20px;">
         <h6 class="fw-bold mb-3">비밀번호 변경</h6>
 
-        <!-- 에러 출력 위치 -->
-        <div id="passwordErrorBox" class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem; display: none;"></div>
-        <!-- 변경 성공 안내 -->
-         <div id="passwordSuccessBox"
-         class="alert alert-success py-2"
-         style="border-radius:10px; font-size:0.9rem; display:none;">
+        {% if error_password %}
+        <div class="alert alert-danger py-2" style="border-radius:10px; font-size:0.9rem;">
+            {{ error_password }}
         </div>
+        {% endif %}
 
-        <form id="changePasswordForm" method="post" action="/profile/change_password">
+        <form method="post" action="/profile/change_password">
             <div class="form-group mb-2">
                 <input type="password"
                        name="current_password"
@@ -184,4 +290,106 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const deleteForm = document.getElementById("deleteForm");
+    const toggleDeleteBtn = document.getElementById("toggleDeleteBtn");
+
+    if (deleteForm && toggleDeleteBtn) {
+        toggleDeleteBtn.addEventListener("click", function () {
+            const isHidden =
+                deleteForm.style.display === "none" || deleteForm.style.display === "";
+
+            deleteForm.style.display = isHidden ? "block" : "none";
+        });
+
+        const hasDeleteError = deleteForm.dataset.hasDeleteError === "true";
+        if (hasDeleteError) {
+            deleteForm.style.display = "block";
+        }
+    }
+
+    const avatarModal = document.getElementById("avatarModal");
+    const openAvatarModal = document.getElementById("openAvatarModal");
+    const closeAvatarModal = document.getElementById("closeAvatarModal");
+    const profileAvatar = document.getElementById("profileAvatar");
+    const avatarOptions = document.querySelectorAll(".avatar-option");
+
+    function openModal() {
+        if (avatarModal) {
+            avatarModal.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+    }
+
+    function closeModal() {
+        if (avatarModal) {
+            avatarModal.classList.remove("show");
+            document.body.style.overflow = "";
+        }
+    }
+
+    if (openAvatarModal) {
+        openAvatarModal.addEventListener("click", openModal);
+    }
+
+    if (closeAvatarModal) {
+        closeAvatarModal.addEventListener("click", closeModal);
+    }
+
+    if (avatarModal) {
+        avatarModal.addEventListener("click", function (e) {
+            if (e.target === avatarModal) {
+                closeModal();
+            }
+        });
+    }
+
+    avatarOptions.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            const selectedAvatar = btn.dataset.avatar;
+
+            avatarOptions.forEach(function (item) {
+                item.classList.remove("selected");
+            });
+            btn.classList.add("selected");
+
+            fetch("/profile/change_avatar", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    avatar: selectedAvatar
+                })
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("아바타 저장 실패");
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                if (data.status === "ok" && profileAvatar) {
+                    profileAvatar.textContent = selectedAvatar;
+                    
+                    //프로필아바타 변경시 navbar 적용
+                    const navbarAvatar = document.getElementById("navbarAvatar");
+                    if (navbarAvatar) {
+                    navbarAvatar.textContent = selectedAvatar;
+        }
+
+                    closeModal();
+                }
+            })
+
+            .catch(function (error) {
+                console.error(error);
+                alert("아바타 저장 중 오류가 발생했습니다.");
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

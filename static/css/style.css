@@ -8,30 +8,29 @@
 * {
     font-family: 'LeferiBaseType-BoldA', 'Apple SD Gothic Neo', sans-serif !important;
 }
-
 html, body {
+    /* overflow-x: hidden;
+    overflow-y: hidden; */
     background-color: #f5f7fb !important;
 }
-
-body {
+body{
     -ms-overflow-style: none;
-}
-
+    }
 ::-webkit-scrollbar {
     display: none;
 }
 
 /* 네비게이션 바 */
-.navbar {
-    height: 60px;
-    padding: 0 24px;
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    align-items: center;
+.navbar{
+    height:60px;
+    padding:0 24px;
+    background:#ffffff;
+    border-bottom:1px solid #e5e7eb;
+    display:flex;
+    align-items:center;
 }
 
-.navbar-brand {
+.navbar-brand{
     display: flex;
     align-items: center;
     height: auto;
@@ -39,22 +38,20 @@ body {
     margin-right: 20px;
 }
 
-.navbar-brand img {
+.navbar-brand img{
     height: 28px;
     width: auto;
     display: block;
     object-fit: contain;
     padding-left: 16px;
 }
-
 .navbar-logo {
     height: 20px !important;
     width: auto !important;
     max-height: 20px !important;
     object-fit: contain;
 }
-
-.navbar-menu {
+.navbar-menu{
     display: flex;
     align-items: stretch;
     gap: 8px;
@@ -63,13 +60,13 @@ body {
     padding: 0;
 }
 
-.navbar-menu .nav-item {
+.navbar-menu .nav-item{
     position: relative;
     display: flex;
     align-items: stretch;
 }
 
-.navbar-menu .nav-link {
+.navbar-menu .nav-link{
     display: flex;
     align-items: center;
     height: 60px;
@@ -80,13 +77,13 @@ body {
     text-decoration: none;
     transition: color .2s ease;
     position: relative;
-}
+    }
 
-.navbar-menu .nav-link:hover {
+    .navbar-menu .nav-link:hover{
     color: #111827;
 }
 
-.navbar-menu .nav-item::after {
+.navbar-menu .nav-item::after{
     content: "";
     position: absolute;
     left: 10px;
@@ -100,42 +97,110 @@ body {
     transition: transform .2s ease;
 }
 
-.navbar-menu .nav-item:hover::after {
+.navbar-menu .nav-item:hover::after{
     transform: scaleX(1);
 }
 
-.navbar-menu .nav-item.active .nav-link {
+.navbar-menu .nav-item.active .nav-link{
     color: #111827;
     font-weight: 700;
 }
 
-.navbar-menu .nav-item.active::after {
+.navbar-menu .nav-item.active::after{
     transform: scaleX(1);
 }
-
-.navbar-right {
+.navbar-right{
     display: flex;
     align-items: center;
     gap: 16px;
     margin-left: auto;
 }
 
-.navbar-profile:hover {
-    transform: scale(1.05);
+.navbar-profile:hover{
+    transform:scale(1.05);
+}
+.navbar-avatar{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:#eef2ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
 }
 
-.navbar-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: #eef2ff;
+/* index */
+.main-dashboard {
+    display: grid;
+    grid-template-columns: minmax(280px, 22%) minmax(0, 1fr) minmax(300px, 24%);
+    /* 왼쪽 : 남는 공간 전부
+    오른쪽 : 최소 260px ~ 최대 22% */
+    gap: 12px;
+    align-items: stretch;
+    width: 100%;
+    height: calc(100vh - 76px); /* navbar + 상하 여백 감안 */
+    min-height: 0;
+}
+.view-all{
+    font-size:13px;
+    color:#888;
+    text-decoration:none;
+    padding-right:16px;
+}
+.view-all:hover{
+    text-decoration: none;
+    color:#555;
+}
+.dashboard-card{
+    align-content: center;
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+    min-width: 0; /* 부모 사이즈에 맞춤 */
+    min-height: 0;
+    height: 100%;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: clamp(360px, 60vh, 520px);
+}
+.compact-stock-card{
+    background: #fff;
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+    min-width: 0;
+}
+.analysis-panel {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+    min-width: 0; /* 부모 사이즈에 맞춤 */
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
-/* 공통 stock mini */
+.index-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0;
+    color: #111827;
+}
+.index-card-subtitle {
+    font-size:0.8rem;
+    color:#888;
+}
+/* index 우측칼럼 방산주 list */
 .stock-mini-list {
     display: flex;
     flex-direction: column;
@@ -161,7 +226,6 @@ body {
     transform: translateY(-1px);
     text-decoration: none;
 }
-
 .stock-rank {
     width: 26px;
     height: 26px;
@@ -200,6 +264,236 @@ body {
     text-align: right;
 }
 
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    color: #111827;
+}
+
+.section-subtitle {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+.left-column,
+.right-column {
+    display: grid;
+    gap: 8px;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+    height: 100%;
+}
+.left-column,
+.right-column,
+#trade-log-container {
+    min-width: 0;
+}
+#trade-log-container {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.index-card-header {
+    align-items: center;
+    margin-left: 12px;
+    margin-top: 5px;
+}
+#ai-analysis-container{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+.invest-panel {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+    min-width: 0;
+}
+.trade-log-panel {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.ai-summary-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e9eef5;
+    border-left: 4px solid #3b82f6;
+    border-radius: 14px;
+    padding: 10px;
+}
+
+.ai-summary-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ai-summary-label {
+    font-size: 0.72rem;
+    color: #6b7280;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+}
+
+.ai-summary-content {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.45;
+    word-break: keep-all;
+}
+
+.ai-score-box {
+    min-width: 110px;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: white;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 6px 14px rgba(34, 197, 94, 0.18);
+}
+
+.ai-score-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.95;
+    margin-bottom: 4px;
+}
+
+.ai-score-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.ai-news-list {
+    border-top: 1px solid #eef2f7;
+    padding-top: 4px;
+}
+
+.ai-news-item {
+    border: none !important;
+    border-radius: 10px;
+    padding: 15px 10px !important;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+    background: transparent;
+}
+
+.ai-news-item:hover {
+    background: #f8fafc;
+    transform: translateX(2px);
+}
+
+.ai-news-title {
+    font-size: 0.88rem;
+    color: #1f2937;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.trade-card-title{
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
+}
+.trade-form{
+    font-size: 0.9rem;
+}
+.algorithm-title{
+    font-size: 0.9em;
+    color: #111827;
+    font-weight: 600;
+}
+.algorithm-select{
+    padding-bottom: .5rem;
+    padding-left: 1rem;
+    font-size: 0.9rem;
+}
+.trade-label{
+    margin-top: .5rem;
+    font-size: .9em;
+    font-weight: 600;
+}
+.trade-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:12px;
+}
+
+.trade-buttons button{
+    flex:1;
+    border:none;
+    border-radius:14px;
+    padding:14px 0;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.2s ease;
+}
+
+/* 매수 버튼 */
+.btn-buy{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:white;
+    box-shadow:0 4px 12px rgba(34,197,94,0.35);
+}
+
+.btn-buy:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(34,197,94,0.45);
+}
+
+/* 매도 버튼 */
+.btn-sell{
+    background:linear-gradient(135deg,#dc2626,#ef4444);
+    color:white;
+    box-shadow:0 4px 12px rgba(239,68,68,0.35);
+}
+
+.btn-sell:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(239,68,68,0.45);
+}
+
+.trade-buttons button:active{
+    transform:scale(0.97);
+}
+.compact-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+
+
 .stock-price {
     font-size: 0.9rem;
     font-weight: 700;
@@ -214,18 +508,66 @@ body {
     line-height: 1.1;
 }
 
-.positive { color: #f23645; }
-.negative { color: #0062ff; }
-.neutral  { color: #64748b; }
+.positive {
+    color: #f23645;
+}
 
-/* 공통 링크 */
-.stock-link {
-    color: inherit;
-    text-decoration: none;
+.negative {
+    color: #0062ff;
 }
-.stock-link:hover {
-    text-decoration: underline;
+
+.neutral {
+    color: #64748b;
 }
+
+@media (max-width: 1100px) {
+    .main-dashboard {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .left-column,
+    .right-column {
+        grid-template-rows: auto auto;
+        height: auto;
+
+    }
+}
+/* news */
+
+.news-top-card { border: none; border-radius: 20px; transition: transform 0.3s; height: 100%; overflow: hidden; }
+.news-top-card:hover { transform: translateY(-8px); }
+.news-badge-rank { position: absolute; top: 15px; left: 15px; z-index: 10; padding: 5px 12px; border-radius: 30px; font-weight: bold; font-size: 0.75rem; }
+.news-top-img { width: 100%; height: 200px; object-fit: cover; display: block; }
+/* .list-img { width: 200px; height: 120px; object-fit: cover; border-radius: 12px; flex-shrink: 0;} */
+.list-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px 0 0 12px;
+}
+.news-item { border-bottom: 1px solid #eee; transition: background 0.2s; text-decoration: none !important; color: inherit; }
+.news-item:hover { background-color: #f1f3f5; }
+.news-meta { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; gap: 6px; }
+.press-name { font-weight: 600; color: #495057; }
+.meta-dot { font-weight: bold; }
+.search-bar { max-width: 350px; border-radius: 50px; border: 1px solid #dee2e6; overflow: hidden; background: white; }
+.sticky-nav { position: sticky; top: 0; z-index: 1000; background: rgba(248, 249, 250, 0.9); backdrop-filter: blur(10px); }
+.line-clamp-2 { display: -webkit-box;  -webkit-box-orient: vertical; overflow: hidden; }
+
+
+/* _ai_analysis_card */
+    /* 한 줄로 자르고 넘치면 ... 표시 */
+    .news-summary {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #495057;
+        font-size: 0.95rem;
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
 
 /* dropdown */
 .stock-dropdown-menu {
@@ -276,12 +618,51 @@ body {
     display: none;
 }
 
+/* invest_form */
+.back-btn {
+    border: none;
+    background: transparent;
+    padding: 6px;
+    cursor: pointer;
+    color: #495057;
+    transition: all 0.15s ease;
+}
+.back-btn:hover {
+    color: #000;
+    transform: translateX(-3px);
+}
+
+/*rank 정렬*/
+.rank-user-cell{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    justify-content:flex-start;
+}
+
+.rank-table-avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:#eef4ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+}
+
+.rank-table-name{
+    font-weight:500;
+}
+
+/* 닉네임 열 왼쪽 정렬 */
+table td:nth-child(3),
+table th:nth-child(3){
+    text-align:left;
+}
+
 #navbarStockSearch::placeholder {
     color: #b0b7c3 !important;
     font-weight: normal !important;
 }
-
-#NewsSearch::placeholder {
-    color: #b0b7c3 !important;
-    font-weight: normal !important;
 }

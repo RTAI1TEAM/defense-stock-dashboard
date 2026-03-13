@@ -10,16 +10,7 @@
         color: #111827 !important;
     }
 </style>
-
-<!-- 포트폴리오 페이지 컨테이너 -->
-<!-- data-* 속성으로 차트/페이지 관련 데이터를 JS에 전달 -->
-<div class="container mt-4 mb-5"
-     id="portfolioPage"
-     data-pie-labels='{{ pie_labels | tojson | safe }}'
-     data-pie-values='{{ pie_values | tojson | safe }}'
-     data-cash-balance="{{ cash_balance }}"
-     data-page="{{ page }}"
-     data-total-pages="{{ total_pages }}">
+<div class="container mt-4 mb-5">
 
     <div class="row mb-4">
         <!-- 총 평가자산 카드 -->
@@ -29,18 +20,15 @@
                 <h1 style="font-weight: 900; font-size: 3rem;">{{ "{:,.0f}".format(total_assets) }}원</h1>
                 <p style="font-size: 1rem; font-weight: 600;" class="mb-3">
                     누적 수익금
-                    <!-- 수익이면 빨간색, 손실이면 파란색 -->
                     <span style="color: {{ '#f23645' if total_profit > 0 else '#0062ff' }}">
                         {{ '+' if total_profit > 0 }}{{ "{:,.0f}".format(total_profit) }}원 ({{ "%.2f"|format(total_profit_rate) }}%)
                     </span>
                 </p>
                 <div class="d-flex gap-3 mt-auto">
-                    <!-- 현금 잔고 -->
                     <div class="rounded-3 px-3 py-2 flex-fill text-center" style="background:#f0f4ff;">
                         <div class="text-muted mb-1" style="font-size:.75rem;">💰 현금 잔고</div>
                         <div class="fw-bold" style="font-size:.95rem; color:#0062ff;">{{ "{:,.0f}".format(cash_balance) }}원</div>
                     </div>
-                    <!-- 투자자산 -->
                     <div class="rounded-3 px-3 py-2 flex-fill text-center" style="background:#fff0f0;">
                         <div class="text-muted mb-1" style="font-size:.75rem;">📈 투자자산</div>
                         <div class="fw-bold" style="font-size:.95rem; color:#f23645;">{{ "{:,.0f}".format(stock_value) }}원</div>
@@ -53,7 +41,7 @@
             <div class="card shadow-sm border-0 p-4 w-100 text-center" style="border-radius: 20px;">
                 <h6 class="fw-bold text-secondary text-start mb-3">포트폴리오 비중</h6>
                 <div style="height: 220px; position: relative;">
-                    <canvas id="portfolioPieChart"></canvas> <!-- Chart.js 도넛 차트 -->
+                    <canvas id="portfolioPieChart"></canvas>
                 </div>
             </div>
         </div>
@@ -83,35 +71,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- 종목명 기준으로 보유 종목 그룹화 -->
                     {% set grouped = holdings | groupby('name_kr') %}
                     {% for stock_name, items in grouped %}
                     {% set items = items | list %}
-                    <!-- 그룹 합계 계산 -->
                     {% set total_qty     = items | sum(attribute='quantity') %}
                     {% set total_current = items | sum(attribute='total_current') %}
                     {% set total_buy     = items | sum(attribute='total_buy') %}
                     {% set avg_profit    = ((total_current - total_buy) / total_buy * 100) if total_buy > 0 else 0 %}
-                    {% set gid = 'g' ~ loop.index %} <!-- 그룹 고유 ID -->
+                    {% set gid = 'g' ~ loop.index %}
 
-                    <!-- 요약 행: 종목별 1줄 (클릭 시 상세 행 토글) -->
+                    <!-- 요약 행: 종목별 1줄 -->
                     <tr class="summary-row" style="cursor:pointer;" onclick="toggleGroup('{{ gid }}', this)">
                         <td><span class="toggle-icon" style="font-size:0.75rem; color:#aaa;">▶</span></td>
                         <td class="fw-bold text-start">
-                            <!-- 종목명 클릭 시 상세 페이지 이동 (행 토글 이벤트 버블링 차단) -->
                             <a href="{{ url_for('stock_detail.show_stock_chart', ticker=items[0].ticker) }}" class="stock-link"
                                 onclick="event.stopPropagation()">{{ stock_name }}</a>
                         </td>
                         <td>{{ total_qty }}주</td>
                         <td class="fw-bold">{{ "{:,.0f}".format(total_current) }}원</td>
                         <td>
-                            <!-- 수익률 뱃지: 수익이면 빨간색, 손실이면 파란색 -->
                             <span class="badge" style="background:rgba({{ '242,54,69' if avg_profit > 0 else '0,98,255' }},0.1); color:{{ '#f23645' if avg_profit > 0 else '#0062ff' }}">
                                 {{ '+' if avg_profit > 0 }}{{ "%.2f"|format(avg_profit) }}%
                             </span>
                         </td>
                         <td>
-                            <!-- 전략 뱃지: 수동/골든크로스/돌파 여부에 따라 색상 구분 -->
                             {% for item in items %}
                                 {% if item.strategy == '수동 운용' %}
                                     <span class="badge bg-light text-dark border me-1">🖐 {{ item.strategy }}</span>
@@ -126,7 +109,7 @@
                         </td>
                     </tr>
 
-                    <!-- 전략별 상세 행: 기본 숨김 (toggleGroup으로 토글) -->
+                    <!-- 전략별 상세 행: 기본 숨김 -->
                     {% for item in items %}
                     <tr class="detail-row detail-{{ gid }}" style="display:none; background:#f8faff;">
                         <td></td>
@@ -150,7 +133,6 @@
                             </span>
                         </td>
                         <td style="white-space:nowrap;">
-                            <!-- 전략 변경 / 매도 버튼 (행 클릭 이벤트 버블링 차단) -->
                             <button class="btn btn-outline-secondary btn-sm me-1"
                                     onclick="event.stopPropagation(); openStrategyModal({{ item.holding_id }}, '{{ item.strategy }}', '{{ item.name_kr }}')">전략변경</button>
                             <button class="btn btn-outline-danger btn-sm"
@@ -160,7 +142,6 @@
                     {% endfor %}
 
                     {% else %}
-                    <!-- 보유 종목 없을 때 -->
                     <tr><td colspan="6" class="py-5 text-muted">보유 종목이 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
@@ -183,8 +164,7 @@
                 <tbody id="tradeTableBody">
                     {% for trade in trades %}
                     <tr>
-                        <td>{{ trade.traded_at }}</td>
-                        <!-- 매수: 빨간 뱃지 / 매도: 파란 뱃지 -->
+                        <td>{{ trade.traded_at.strftime('%y.%m.%d %H:%M') }}</td>
                         <td><span class="badge {{ 'bg-danger' if trade.trade_type=='BUY' else 'bg-primary' }}">{{ '매수' if trade.trade_type=='BUY' else '매도' }}</span></td>
                         <td class="text-start fw-bold">
                             <a href="{{ url_for('stock_detail.show_stock_chart', ticker=trade.ticker) }}" class="stock-link">
@@ -195,7 +175,6 @@
                         <td class="text-end">{{ "{:,.0f}".format(trade.price) }}원</td>
                         <td class="text-end fw-bold">{{ "{:,.0f}".format(trade.total_amount) }}원</td>
                         <td class="text-end">
-                            <!-- 매도 시에만 손익 표시 (매수는 None) -->
                             {% if trade.profit_amount is not none %}
                                 {% set color = '#f23645' if trade.profit_amount > 0 else '#0062ff' %}
                                 {% set sign  = '+' if trade.profit_amount > 0 else '' %}
@@ -208,13 +187,11 @@
                         </td>
                     </tr>
                     {% else %}
-                    <!-- 거래 내역 없을 때 -->
                     <tr><td colspan="6" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        <!-- 페이지가 2페이지 이상일 때만 페이지네이션 렌더링 -->
+        </div> <!--페이지수-->
         {% if total_pages > 1 %}
         <nav class="mt-4">
             <ul class="pagination justify-content-center" id="tradePagination">
@@ -274,8 +251,233 @@
     </div>
 </div>
 
-<!-- Chart.js 데이터 라벨 플러그인 -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-<!-- 포트폴리오 JS -->
-<script src="{{ url_for('static', filename='js/portfolio.js') }}"></script>
+<script>
+// ── 파이 차트 ─────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function () {
+    Chart.register(ChartDataLabels);
+
+    const labels      = {{ pie_labels | tojson }};
+    const values      = {{ pie_values | tojson }};
+    const cashBalance = {{ cash_balance }};
+    const initialPage = {{ page | tojson }};
+    const initialTotalPages = {{ total_pages | tojson }};
+    
+    if (initialTotalPages > 1) {
+        renderPagination(initialPage, initialTotalPages);
+    }
+    const allLabels = labels.length > 0 ? [...labels, '현금'] : ['현금'];
+    const allValues = labels.length > 0 ? [...values, cashBalance] : [cashBalance];
+    const colors    = ['#3b82f6','#f87171','#34d399','#fbbf24','#a78bfa','#93c5fd','#fca5a5'];
+    const bgColors  = allLabels.map((_, i) => colors[i % colors.length]);
+    bgColors[bgColors.length - 1] = '#d1d5db';
+
+    new Chart(document.getElementById('portfolioPieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: allLabels,
+            datasets: [{ data: allValues, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: {
+            cutout: '55%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (val, ctx) => {
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const pct = (val * 100 / sum).toFixed(1);
+                        if (pct < 5) return '';
+                        return ctx.chart.data.labels[ctx.dataIndex] + '\n' + pct + '%';
+                    }
+                }
+            }
+        }
+    });
+});
+
+// ── 아코디언 토글 ─────────────────────────────────────────────
+function toggleGroup(gid, summaryRow) {
+    const rows   = document.querySelectorAll('.detail-' + gid);
+    const icon   = summaryRow.querySelector('.toggle-icon');
+    const isOpen = rows.length > 0 && rows[0].style.display !== 'none';
+    rows.forEach(r => r.style.display = isOpen ? 'none' : 'table-row');
+    icon.textContent           = isOpen ? '▶' : '▼';
+    summaryRow.style.background = isOpen ? '' : '#eef2ff';
+}
+
+// ── 모달 공통 ─────────────────────────────────────────────────
+let currentHoldingId = null;
+let currentMaxQty    = 0;
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// ── 매도 모달 ─────────────────────────────────────────────────
+function openSellModal(holdingId, maxQty, stockName, strategy) {
+    currentHoldingId = holdingId;
+    currentMaxQty    = maxQty;
+    document.getElementById('sellModalTitle').innerText = `${stockName} 매도`;
+    document.getElementById('sellModalDesc').innerText  = `전략: ${strategy} | 최대 매도 가능: ${maxQty}주`;
+    const q = document.getElementById('sellQtyInput');
+    q.value = maxQty; q.max = maxQty;
+    document.getElementById('sellModal').style.display = 'block';
+}
+
+// ── 전략 변경 모달 ────────────────────────────────────────────
+function openStrategyModal(holdingId, currentStrategy, stockName) {
+    currentHoldingId = holdingId;
+    document.getElementById('strategyModalTitle').innerText = `${stockName} 전략 변경`;
+    document.getElementById('strategyModalDesc').innerText  = `현재 적용된 전략: ${currentStrategy}`;
+    const sel = document.getElementById('strategySelectModal');
+    sel.value = Array.from(sel.options).some(o => o.value === currentStrategy)
+        ? currentStrategy : '수동 운용';
+    document.getElementById('strategyModal').style.display = 'block';
+}
+
+// ── 매도 실행 ─────────────────────────────────────────────────
+function executeSell() {
+    const sellQty = parseInt(document.getElementById('sellQtyInput').value);
+    if (isNaN(sellQty) || sellQty <= 0 || sellQty > currentMaxQty) {
+        alert("올바른 수량을 입력해 주세요."); return;
+    }
+    fetch('/api/sell_stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holding_id: currentHoldingId, sell_qty: sellQty })
+    }).then(r => r.json()).then(data => {
+        alert(data.message);
+        if (data.success) location.reload();
+        else closeModal('sellModal');
+    });
+}
+
+// ── 전략 변경 실행 ────────────────────────────────────────────
+function executeStrategyChange() {
+    const newStrategy = document.getElementById('strategySelectModal').value;
+    fetch('/api/change_strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holding_id: currentHoldingId, strategy: newStrategy })
+    }).then(r => r.json()).then(data => {
+        alert(data.message);
+        if (data.success) location.reload();
+        else closeModal('strategyModal');
+    });
+}
+
+function loadTrades(page) {
+    // 로딩 중임을 알리기 위해 테이블 투명도 조절
+    const tbody = document.querySelector('#tradeTableBody');
+    tbody.style.opacity = '0.5';
+
+    fetch(`/api/trades?page=${page}`)
+        .then(response => response.json())
+        .then(data => {
+            tbody.style.opacity = '1';
+            if (data.success) {
+                tbody.innerHTML = ''; // 기존 내용 삭제
+
+                if (data.trades.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-5 text-muted">거래 내역이 없습니다.</td></tr>';
+                } else {
+                    data.trades.forEach(trade => {
+                        const badgeClass = trade.trade_type === 'BUY' ? 'bg-danger' : 'bg-primary';
+                        const typeText   = trade.trade_type === 'BUY' ? '매수' : '매도';
+                        const formatNum  = (num) => Number(num).toLocaleString();
+
+                        // 손익 셀: 매도일 때만 색상+수치 표시, 매수는 '-'
+                        let profitCell = '<td class="text-end"><span class="text-muted">-</span></td>';
+                        if (trade.profit_amount !== null && trade.profit_amount !== undefined) {
+                            const color  = trade.profit_amount > 0 ? '#f23645' : '#0062ff';
+                            const sign   = trade.profit_amount > 0 ? '+' : '';
+                            const amount = formatNum(Math.round(trade.profit_amount));
+                            const rate   = trade.profit_rate.toFixed(1);
+                            profitCell = `
+                                <td class="text-end">
+                                    <span style="color:${color}; font-weight:600; white-space:nowrap;">
+                                        ${sign}${amount}원 (${sign}${rate}%)
+                                    </span>
+                                </td>`;
+                        }
+
+                        const row = `
+                            <tr>
+                                <td>${trade.traded_at}</td>
+                                <td><span class="badge ${badgeClass}">${typeText}</span></td>
+                                <td class="text-start fw-bold">
+                                    <a href="/stocks/${trade.ticker}" class="stock-link">${trade.name_kr}</a>
+                                    (${trade.quantity}주)
+                                </td>
+                                <td class="text-end">${formatNum(trade.price)}원</td>
+                                <td class="text-end fw-bold">${formatNum(trade.total_amount)}원</td>
+                                ${profitCell}
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                }
+
+                // 페이지네이션 버튼 새로 그리기
+                renderPagination(data.current_page, data.total_pages);
+            }
+        })
+        .catch(err => {
+            console.error("데이터 로드 실패:", err);
+            tbody.style.opacity = '1';
+        });
+}
+
+function renderPagination(currentPage, totalPages) {
+    const paginationUl = document.querySelector('#tradePagination');
+    if (!paginationUl || totalPages <= 1) {
+        if (paginationUl) paginationUl.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    
+    // 1. [이전] 화살표: 1페이지가 아닐 때만 활성화
+    const prevDisabled = (currentPage === 1) ? 'disabled' : '';
+    html += `
+        <li class="page-item ${prevDisabled}">
+            <a class="page-link" href="javascript:void(0);" onclick="loadTrades(${currentPage - 1})" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+    `;
+
+    // 2. 페이지 번호 로직 (현재 페이지 기준 앞뒤 2개씩, 최대 5개 노출)
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+
+    // 마지막 페이지 근처일 때 시작 페이지 재조정
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+        const activeClass = (p === currentPage) ? 'active' : '';
+        html += `
+            <li class="page-item ${activeClass}" data-page="${p}">
+                <a class="page-link" href="javascript:void(0);" onclick="loadTrades(${p})">${p}</a>
+            </li>
+        `;
+    }
+
+    // 3. [다음] 화살표: 마지막 페이지가 아닐 때만 활성화
+    const nextDisabled = (currentPage === totalPages) ? 'disabled' : '';
+    html += `
+        <li class="page-item ${nextDisabled}">
+            <a class="page-link" href="javascript:void(0);" onclick="loadTrades(${currentPage + 1})" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    `;
+
+    paginationUl.innerHTML = html;
+}
+</script>
 {% endblock %}

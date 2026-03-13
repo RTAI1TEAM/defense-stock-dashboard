@@ -5,13 +5,6 @@ stock_chat_bp = Blueprint("stock_chat", __name__)
 
 @stock_chat_bp.route("/stocks/<ticker>/chat-box")
 def render_chat_box(ticker):
-    """
-    [채팅창 렌더링 파트]
-    1. 티커(ticker)를 이용해 해당 종목이 존재하는지 확인해.
-    2. 'stock_chats' 테이블에서 해당 종목에 달린 메시지 최신 20개를 긁어와.
-    3. JOIN을 써서 작성자의 닉네임까지 한 번에 가져오는 센스!
-    4. 최신순으로 가져왔으니, 화면에 보여줄 때는 다시 시간순(reverse)으로 뒤집어서 전달해.
-    """
     conn = get_conn()
     cur = conn.cursor()
 
@@ -59,12 +52,6 @@ def render_chat_box(ticker):
 
 @stock_chat_bp.route("/chat/create", methods=["POST"])
 def create_chat():
-    """
-    [메시지 작성 파트]
-    1. 로그인이 안 된 유저는 401 에러와 함께 컷!
-    2. 사용자가 보낸 티커와 메시지 내용이 비어있지 않은지 검사해.
-    3. DB에 성공적으로 저장되면 새로고침 없이 화면을 업데이트할 수 있게 JSON(success)을 반환해.
-    """
     if "user_id" not in session:
         return jsonify({"error": "로그인이 필요합니다."}), 401 # JSON 반환으로 변경
 
@@ -85,7 +72,6 @@ def create_chat():
     if stock is None:
         cur.close(); conn.close(); abort(404)
 
-    # INSERT 문으로 유저 ID, 종목 ID, 메시지 내용을 저장!
     insert_sql = "INSERT INTO stock_chats (user_id, stock_id, message) VALUES (%s, %s, %s)"
     cur.execute(insert_sql, (user_id, stock["id"], message))
     conn.commit()

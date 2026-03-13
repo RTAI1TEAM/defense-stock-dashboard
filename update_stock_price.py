@@ -12,7 +12,6 @@ SERVICE_KEY = os.getenv("SERVICE_KEY")
 BASE_URL = "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo"
 
 
-# [데이터 정제 파트]
 def safe_int(value, default=0):
     """
     '1,234' 같은 문자열도 int로 안전하게 변환
@@ -29,11 +28,11 @@ def safe_int(value, default=0):
     except ValueError:
         return default
 
-# [데이터 수집 파트]
+
 def fetch_stock_prices(stock_code, num_of_rows=120):
     """
-    주식 시세정보 API를 호출합니다. 
-    ETF와 달리 거래대금(trPrc) 정보도 함께 수집하는 것이 특징입니다.
+    금융위원회_주식시세정보 API 호출 후
+    [{date, open, high, low, close, volume}] 형태로 반환
     """
     params = {
         "serviceKey": SERVICE_KEY,
@@ -94,11 +93,11 @@ def fetch_stock_prices(stock_code, num_of_rows=120):
     chart_data.sort(key=lambda x: x["date"])
     return chart_data
 
-# [DB 조회 파트]
+
 def get_all_stocks(conn):
     """
-    현재 DB(stocks 테이블)에 등록된 모든 주식의 티커(종목코드) 목록을 가져옵니다.
-    이 목록을 바탕으로 모든 종목의 시세를 차례대로 업데이트하게 됩니다.
+    DB에 저장된 종목 목록 조회
+    ticker 기준으로 API 호출
     """
     with conn.cursor() as cursor:
         cursor.execute("""
@@ -108,10 +107,11 @@ def get_all_stocks(conn):
         """)
         return cursor.fetchall()
 
-# [시세 이력 저장 파트]
+
 def upsert_stock_price_history(conn, stock_id, row):
     """
-    개별 날짜별 시세(일봉 데이터)를 stock_price_history 테이블에 저장하거나 갱신합니다.
+    stock_price_history 저장/갱신
+    (stock_id, price_date) UNIQUE 전제
     """
     sql = """
     INSERT INTO stock_price_history
@@ -136,12 +136,11 @@ def upsert_stock_price_history(conn, stock_id, row):
             row["volume"]
         ))
 
-# [최신 정보 요약 파트]
+
 def upsert_stock_details(conn, stock_id, latest_row, prev_close=None):
     """
-    가장 최신 날짜의 데이터를 바탕으로 '현재 상태'를 업데이트합니다.
-    - 현재가, 대비(change_amount), 등락률(change_rate)을 계산하여 저장합니다.
-    - 프로젝트의 대시보드나 리스트에서 실시간성 정보를 보여줄 때 사용됩니다.
+    stock_details 최신값 저장/갱신
+    stock_id UNIQUE 전제
     """
     current_price = latest_row["close"]
     open_price = latest_row["open"]
@@ -197,11 +196,10 @@ def upsert_stock_details(conn, stock_id, latest_row, prev_close=None):
             open_price
         ))
 
-# [개별 종목 처리 로직]
+
 def update_one_stock(conn, stock):
     """
-    한 종목에 대해 120일 치 시세를 가져와 이력을 저장하고, 
-    마지막 날짜 데이터를 요약 정보(details)에 반영하는 일련의 과정을 수행합니다.
+    종목 1개 업데이트
     """
     stock_id = stock["id"]
     ticker = stock["ticker"]
@@ -225,13 +223,8 @@ def update_one_stock(conn, stock):
 
     print(f"[OK] {name_kr} ({ticker}) 저장 완료 - latest: {latest_row['date']} / {latest_row['close']}")
 
-# [메인 실행 제어 파트]
+
 def update_all_stocks():
-    """
-    전체 프로세스의 컨트롤러입니다.
-    1. DB에서 모든 종목을 읽어옴 -> 2. 반복문을 돌며 종목별 업데이트 실행 
-    -> 3. 성공 시 Commit, 에러 발생 시 Rollback 처리를 수행합니다.
-    """
     conn = None
     try:
         conn = get_conn()

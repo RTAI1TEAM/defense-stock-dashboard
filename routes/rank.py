@@ -5,14 +5,11 @@ rank_bp = Blueprint('rank', __name__)
 
 @rank_bp.route("/rank")
 def rank():
-    # db 연결
     conn = get_conn()
-    # 유저 랭킹 정보 담을 리스트
     rankings = []
 
     try:
         with conn.cursor() as cursor:
-            # 총 자산 액수 순으로 유저 정보 조회하는 sql문
             sql = """
                 SELECT 
                     u.avatar,

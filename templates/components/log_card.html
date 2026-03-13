@@ -5,15 +5,11 @@
         <div class="trade-summary-text">
             <div class="trade-summary-label">핵심 요약</div>
             <div class="trade-summary-content">
-                {% if not session["nickname"] %}
-                    로그인 후 이용 가능합니다.
-                {% else %}
-                    {% if total_count > 0 %}
-                        어제 총 {{ total_count }}건 거래 · 매수 {{ buy_count }}건 · 매도 {{ sell_count }}건
-                    {% else %}
-                        어제 거래 기록이 없습니다
-                    {% endif %}
-                {% endif %}
+                {% if total_count > 0 %}
+                            어제 총 {{ total_count }}건 거래 · 매수 {{ buy_count }}건 · 매도 {{ sell_count }}건
+                        {% else %}
+                            어제 거래 기록이 없습니다
+                        {% endif %}
             </div>
         </div>
         <div class="trade-log-box">
@@ -50,11 +46,7 @@
                 </li>
                 {% endfor %}
             {% else %}
-                {% if not session["nickname"] %}
-                    <li class="trade-empty">로그인 후 이용 가능합니다.</li>
-                {% else %}
-                    <li class="trade-empty">어제의 매수/매도 기록이 없습니다.</li>
-                {% endif %}
+                <li class="trade-empty">어제의 매수/매도 기록이 없습니다.</li>
             {% endif %}
         </ul>
     </div>

@@ -24,10 +24,7 @@
         </select>
     </div>
 
-    <form id="tradeForm"
-      data-price="{{ current_price|int }}"
-      data-balance="{{ account.current_balance|int if account else 0 }}"
-      data-trade-url="{{ url_for('stock_detail.execute_trade') }}">
+    <form id="tradeForm">
         <input type="hidden" name="stock_id" value="{{ stock.ticker }}">
         <input type="hidden" id="tradeTypeInput" name="trade_type" value="BUY">
         <input type="hidden" id="strategyInput" name="strategy" value="">
@@ -69,10 +66,81 @@
         </div>
 
         <div class="trade-buttons">
-            <button style="visibility: hidden;" type="button" class="btn-sell" onclick="handleTrade('SELL')">매도</button>
             <button type="button" class="btn-buy" onclick="handleTrade('BUY')">매수</button>
         </div>
     </form>
 </div>
 
-<script src="{{ url_for('static', filename='js/_invest_form.js') }}"></script>
+<script>
+document.getElementById('strategyInput').value = document.getElementById('strategySelector').value;
+
+document.getElementById('strategySelector').addEventListener('change', function() {
+    document.getElementById('strategyInput').value = this.options[this.selectedIndex].value;
+});
+
+const pricePerShare = {{ current_price|int }};
+let currentBalance = {{ account.current_balance|int if account else 0 }};
+let maxQuantity = Math.floor(currentBalance / pricePerShare);
+
+document.getElementById('tradeQuantity').setAttribute('max', maxQuantity);
+
+function updateTotal() {
+    let quantity = parseInt(document.getElementById('tradeQuantity').value) || 1;
+    const warning = document.getElementById('balanceWarning');
+
+    if (quantity > maxQuantity) {
+        quantity = maxQuantity;
+        document.getElementById('tradeQuantity').value = maxQuantity;
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+
+    if (quantity < 1) {
+        quantity = 1;
+        document.getElementById('tradeQuantity').value = 1;
+    }
+
+    document.getElementById('totalAmount').innerText = (pricePerShare * quantity).toLocaleString() + ' 원';
+}
+
+document.getElementById('tradeQuantity').addEventListener('input', updateTotal);
+
+function handleTrade(type) {
+    document.getElementById('tradeTypeInput').value = type;
+
+    const formData = new FormData(document.getElementById('tradeForm'));
+
+    fetch("{{ url_for('stock_detail.execute_trade') }}", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+
+            if (data.new_balance) {
+                const newBalanceNum = parseInt(data.new_balance.replace(/,/g, ''));
+                if (!isNaN(newBalanceNum)) {
+                    currentBalance = newBalanceNum;
+                    maxQuantity = Math.floor(currentBalance / pricePerShare);
+                    document.getElementById('current-balance').innerText = data.new_balance;
+                    document.getElementById('tradeQuantity').setAttribute('max', maxQuantity);
+                }
+            }
+
+            document.getElementById('tradeQuantity').value = 1;
+            document.getElementById('totalAmount').innerText = pricePerShare.toLocaleString() + ' 원';
+            document.getElementById('balanceWarning').style.display = 'none';
+
+        } else {
+            alert("거래 실패: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("통신 오류가 발생했습니다.");
+    });
+}
+</script>

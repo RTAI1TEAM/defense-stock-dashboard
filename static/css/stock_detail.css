@@ -1,15 +1,14 @@
-/* 종목 상세 페이지 전용 스타일 */
-
 .stock-detail-dashboard {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(300px, 25%);
+    /* 왼쪽 : 남는 공간 전부
+    오른쪽 : 최소 260px ~ 최대 22% */
     gap: 12px;
     align-items: start;
     width: 100%;
-    height: calc(100vh - 76px);
+    height: calc(100vh - 76px); /* navbar + 상하 여백 감안 */
 }
-
-.stock-chat-container {
+.stock-chat-container{
     display: flex;
     flex-direction: column;
     background: #fff;
@@ -21,89 +20,4 @@
     min-height: 0;
     height: 100%;
     overflow: hidden;
-}
-
-.trade-card-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    margin: 0;
-}
-
-.trade-form {
-    font-size: 0.9rem;
-}
-
-.algorithm-title {
-    font-size: 0.9em;
-    color: #111827;
-    font-weight: 600;
-}
-
-.algorithm-select {
-    padding-bottom: .5rem;
-    padding-left: 1rem;
-    font-size: 0.9rem;
-}
-
-.trade-label {
-    margin-top: .5rem;
-    font-size: .9em;
-    font-weight: 600;
-}
-
-.trade-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 12px;
-}
-
-.trade-buttons button {
-    flex: 1;
-    border: none;
-    border-radius: 14px;
-    padding: 14px 0;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-buy {
-    background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: white;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
-}
-
-.btn-buy:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.45);
-}
-
-.btn-sell {
-    background: linear-gradient(135deg, #dc2626, #ef4444);
-    color: white;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
-}
-
-.btn-sell:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.45);
-}
-
-.trade-buttons button:active {
-    transform: scale(0.97);
-}
-
-.back-btn {
-    border: none;
-    background: transparent;
-    padding: 6px;
-    cursor: pointer;
-    color: #495057;
-    transition: all 0.15s ease;
-}
-
-.back-btn:hover {
-    color: #000;
-    transform: translateX(-3px);
 }

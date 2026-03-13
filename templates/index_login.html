@@ -5,34 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Quant - 로그인</title>
   <link rel="stylesheet" href="{{url_for('static', filename='css/login.css')}}">
-  
   <style>
-    /* 웹 폰트 설정: LeferiBaseType-BoldA (강조된 느낌의 폰트) */
     @font-face {
         font-family: 'LeferiBaseType-BoldA';
         src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/LeferiBaseType-BoldA.woff') format('woff');
         font-weight: normal;
         font-style: normal;
     }
-    /* 모든 요소에 해당 폰트를 우선 적용하고 가독성을 위해 산세리프 폰트 백업 */
     * {
         font-family: 'LeferiBaseType-BoldA', 'Apple SD Gothic Neo', sans-serif !important;
     }
-    /* 입력창의 가이드 텍스트(placeholder) 색상 설정 */
     .form-group input::placeholder {
         color: #888888 !important;
-        opacity: 1; /* 브라우저 기본 투명도 무시 */
+        opacity: 1;
     }
   </style>
 </head>
-<body style="background-color: #daf0f7;"> <div class="card" style="background-color: #ffffff;"> <div class="logo">
+<body style="background-color: #daf0f7;">
+
+  <div class="card" style="background-color: #ffffff;">
+    <div class="logo">
       <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AI Quant" style="width: 200px;">
     </div>
 
     {% if error %}
-    <div class="error-msg" style="color: red; margin-bottom: 10px; text-align: center;">
-        {{ error }}
-    </div>
+    <div class="error-msg">{{ error }}</div>
     {% endif %}
 
     <form action="/login" method="POST">
@@ -47,18 +44,14 @@
       <button type="submit" class="btn-login">[ 로그인 ]</button>
     </form>
 
-    <div class="footer-text" style="margin-top: 20px; text-align: center; line-height: 1.6;">
+    <div class="footer-text">
       <span style="color: #0d2b5e; font-weight: bold;">주린이를 위한 완벽한 모의투자,</span> <br>
       <span style="color: #3b82f6;">[ 가입하고 1,000만 원 받기 ]</span>
     </div>
 
-    <button class="btn-signup" onclick="window.location.href='/signup'" style="margin-top: 15px;">
-        회원가입
-    </button>
+    <button class="btn-signup" onclick="window.location.href='/signup'">회원가입</button>
 
-    <a href="/" class="guest-link" style="color: #5f7d96; display: block; margin-top: 20px; text-decoration: none; text-align: center;">
-        로그인 없이 이용하기
-    </a>
+    <a href="/" class="guest-link" style="color: #5f7d96;">로그인 없이 이용하기</a>
   </div>
 
 </body>

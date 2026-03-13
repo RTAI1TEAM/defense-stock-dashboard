@@ -5,29 +5,25 @@
         <h6 class="mb-0 fw-bold">종목 토론방</h6>
     </div>
 
-    <!-- 채팅 메시지 목록: 최신순으로 가져온 뒤 시간순으로 뒤집어서 렌더링 -->
     <div id="chat-msg-list" class="stock-chat-messages border rounded p-2 mb-2 bg-light">
         {% if chat_messages %}
             {% for chat in chat_messages %}
             <div class="stock-chat-item mb-2 pb-2 border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
-                    <strong class="small text-primary">{{ chat.nickname }}</strong> <!-- 작성자 닉네임 -->
-                    <small class="text-muted">{{ chat.created_at }}</small> <!-- 작성 시간 -->
+                    <strong class="small text-primary">{{ chat.nickname }}</strong>
+                    <small class="text-muted">{{ chat.created_at }}</small>
                 </div>
-                <div class="small text-dark mt-1">{{ chat.message }}</div> <!-- 메시지 내용 -->
+                <div class="small text-dark mt-1">{{ chat.message }}</div>
             </div>
             {% endfor %}
         {% else %}
-            <!-- 채팅이 없을 때 안내 메시지 -->
             <div class="text-muted small">아직 등록된 채팅이 없습니다.</div>
         {% endif %}
     </div>
 
     <div class="stock-chat-input mt-auto">
-        <!-- 현재 종목 티커를 hidden input으로 전달 (sendChat()에서 사용) -->
         <input type="hidden" id="chat-ticker" value="{{ ticker }}">
         <div class="input-group">
-            <!-- Enter(keyCode 13) 입력 시 sendChat() 호출 -->
             <input type="text"
                     id="chat-input-msg"
                     class="form-control form-control-sm"

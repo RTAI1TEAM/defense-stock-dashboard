@@ -105,27 +105,17 @@ def change_nickname():
 @profile_bp.post('/profile/change_password')
 def change_password():
     if "nickname" not in session:
-        return jsonify({
-            "status": "error",
-            "message": "로그인이 필요합니다.",
-            "redirect_url": url_for("auth_bp.login_page")
-        }), 401
+        return redirect(url_for("auth_bp.login_page"))
 
     current_pw = request.form.get("current_password", "")
     new_pw = request.form.get("new_password", "")
     confirm_pw = request.form.get("confirm_password", "")
 
     if new_pw != confirm_pw:
-        return jsonify({
-            "status": "error",
-            "message": "새 비밀번호가 일치하지 않습니다."
-        }), 400
+        return _render_with_error(error_password="새 비밀번호가 일치하지 않습니다.")
 
     if len(new_pw) < 8:
-        return jsonify({
-            "status": "error",
-            "message": "비밀번호는 8자 이상이어야 합니다."
-        }), 400
+        return _render_with_error(error_password="비밀번호는 8자 이상이어야 합니다.")
 
     conn = get_conn()
     try:
@@ -140,11 +130,7 @@ def change_password():
                 current_pw.encode('utf-8'),
                 user['password_hash'].encode('utf-8')
             ):
-                return jsonify({
-                    "status": "error",
-                    "message": "현재 비밀번호가 올바르지 않습니다."
-                }), 400
-
+                return _render_with_error(error_password="현재 비밀번호가 올바르지 않습니다.")
 
             hashed_pw = bcrypt.hashpw(new_pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
@@ -157,11 +143,7 @@ def change_password():
         conn.close()
 
     session.clear()
-    return jsonify({
-        "status": "ok",
-        "message": "비밀번호가 변경되었습니다. 다시 로그인해주세요.",
-        "redirect_url": url_for("auth_bp.login_page")
-    })
+    return redirect(url_for("auth_bp.login_page"))
 
 
 # ──────────────────────────────────────────────

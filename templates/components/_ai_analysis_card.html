@@ -5,9 +5,7 @@
             <div class="ai-summary-content">{{ ai_news }}</div>
         </div>
 
-        <div class="ai-score-box" style="background: linear-gradient(135deg,{% if score < 40 %} #dc2626, #ef4444
-                                                                            {% elif score < 70 %} #f59e0b, #fbbf24
-                                                                            {% else %} #16a34a, #22c55e {% endif %} );">
+        <div class="ai-score-box">
             <div class="ai-score-label">AI 투자 점수</div>
             <div class="ai-score-value">{{ score }}점</div>
         </div>
