@@ -3,37 +3,43 @@ import requests
 import pymysql
 from dotenv import load_dotenv
 
+# .env 파일에 저장된 환경변수 로드
 load_dotenv()
 
+# 공공데이터 API 인증키
 SERVICE_KEY = os.getenv("SERVICE_KEY")
 
+# DB 접속 정보
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
 
-# Flask 코드와 동일한 엔드포인트 형식
+# ETF 시세정보 API 엔드포인트(Flask 형식)
 BASE_URL = "https://apis.data.go.kr/1160100/service/GetSecuritiesProductInfoService/getETFPriceInfo"
 
 
+# ──────────────────────────────────────────────
+# 문자열/숫자 값 int 변환 함수
+# ──────────────────────────────────────────────
 def safe_int(value, default=0):
-    """
-    '1,234' 같은 문자열도 int로 안전하게 변환
-    """
     if value is None:
         return default
     if isinstance(value, (int, float)):
         return int(value)
     value = str(value).replace(",", "").strip()
-    if value == "":
+    if value == "":      # 빈 문자열이면 기본값 반환
         return default
     try:
         return int(float(value))
     except ValueError:
         return default
 
-
+# ──────────────────────────────────────────────
+# MySQL DB 연결 객체 반환
+# DictCursor: 결과를 딕셔너리 형태로 
+# ──────────────────────────────────────────────
 def get_connection():
     return pymysql.connect(
         host=DB_HOST,
@@ -46,12 +52,11 @@ def get_connection():
         autocommit=False
     )
 
-
+# ──────────────────────────────────────────────
+# 금융위원회_ETF시세정보 API 호출 후
+# [{date, open, high, low, close, volume}] 형태로 반환 
+# ──────────────────────────────────────────────
 def fetch_etf_prices(eft_code, num_of_rows=120):
-    """
-    금융위원회_ETF시세정보 API 호출 후
-    [{date, open, high, low, close, volume}] 형태로 반환
-    """
     params = {
         "serviceKey": SERVICE_KEY,
         "numOfRows": num_of_rows,
@@ -59,10 +64,11 @@ def fetch_etf_prices(eft_code, num_of_rows=120):
         "resultType": "json",
         "likeSrtnCd": eft_code
     }
-
+    #API 요청
     response = requests.get(BASE_URL, params=params, timeout=20)
     response.raise_for_status()
 
+    # JSON 데이터 파싱
     data = response.json()
 
     items = (
@@ -72,11 +78,13 @@ def fetch_etf_prices(eft_code, num_of_rows=120):
             .get("item", [])
     )
 
+    # item 리스트 형태로 통일
     if not isinstance(items, list):
         items = [items] if items else []
 
     chart_data = []
 
+    # 각 데이터 행을 화면/DB 저장용 형태로 가공
     for row in items:
         bas_dt = row.get("basDt") or row.get("BAS_DT")
         open_price = row.get("mkp") or row.get("MKP")
@@ -96,6 +104,7 @@ def fetch_etf_prices(eft_code, num_of_rows=120):
         else:
             formatted_date = bas_dt
 
+        # 숫자 필드는 safe_int로 안전하게 변환
         chart_data.append({
             "date": formatted_date,
             "open": safe_int(open_price),
@@ -105,16 +114,17 @@ def fetch_etf_prices(eft_code, num_of_rows=120):
             "volume": safe_int(volume),
         })
 
+    # 날짜 오름차순 정렬
     chart_data.sort(key=lambda x: x["date"])
-    # print(type(chart_data))
     return chart_data
 
 
+# ──────────────────────────────────────────────
+# eft_price_history 저장/갱신
+# (eft_id, price_date) UNIQUE 전제 
+# 새 데이터면 INSERT/ 이미 존재하면 ON DUPLICATE KEY UPDATE
+# ──────────────────────────────────────────────
 def update_etf_history(eft_id):
-    """
-    eft_price_history 저장/갱신
-    (eft_id, price_date) UNIQUE 전제
-    """
     conn = get_connection()
     rows = fetch_etf_prices(463250)
     sql = """
