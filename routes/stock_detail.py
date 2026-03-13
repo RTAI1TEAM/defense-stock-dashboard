@@ -630,34 +630,6 @@ def execute_trade():
                     (user_id, account['id'], stock_id, quantity, price, total_amount, strategy_name)
                 )
 
-            # ── 매도 처리 ─────────────────────────────────────
-            elif trade_type == 'SELL':
-                # 같은 전략으로 매수했던 포지션에서만 매도할 수 있습니다
-                cursor.execute(
-                    "SELECT id, quantity FROM portfolio_holdings "
-                    "WHERE user_id = %s AND stock_id = %s AND strategy = %s",
-                    (user_id, stock_id, strategy_name)
-                )
-                holding = cursor.fetchone()
-                if not holding or holding['quantity'] < quantity:
-                    return jsonify({"success": False, "message": "보유 수량이 부족합니다."})
-
-                cursor.execute(
-                    "UPDATE mock_accounts SET current_balance = current_balance + %s WHERE id = %s",
-                    (total_amount, account['id'])
-                )
-                cursor.execute(
-                    "UPDATE portfolio_holdings "
-                    "SET quantity = quantity - %s, total_invested = total_invested - (%s * avg_buy_price) "
-                    "WHERE id = %s",
-                    (quantity, quantity, holding['id'])
-                )
-                # 잔여 수량이 0 이하면 포지션 행 자체를 삭제합니다
-                cursor.execute(
-                    "DELETE FROM portfolio_holdings WHERE id = %s AND quantity <= 0",
-                    (holding['id'],)
-                )
-
             # ── 거래 내역 기록 ────────────────────────────────
             cursor.execute(
                 """
@@ -670,9 +642,7 @@ def execute_trade():
             conn.commit()
 
             # 거래 후 남은 잔액 계산 (화면 즉시 갱신용)
-            new_balance = float(account['current_balance']) + (
-                total_amount if trade_type == 'SELL' else -total_amount
-            )
+            new_balance = float(account['current_balance']) - total_amount
             return jsonify({
                 "success":     True,
                 "message":     f"{stock_res['name_kr']} {quantity}주 {trade_type} 완료!",
