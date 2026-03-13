@@ -80,8 +80,14 @@
       </span>
 </a>
 {% else %}
-<a href="{{ url_for('auth_bp.login_page') }}" class="mx-2">
-    로그인
+<a href="{{ url_for('auth_bp.login_page') }}" 
+  class="navbar-profile d-flex align-items-center ml-2 mr-3 text-decoration-none">
+    <div class="navbar-avatar" id="navbarAvatar">
+          {{ session.get("avatar", "🧑‍💼") }}
+      </div>
+      <span class="ms-2 fw-semibold text-dark" id="navbarNickname">
+          로그인
+      </span>
 </a>
 {% endif %}
   </div>
@@ -90,7 +96,6 @@
 {% block content %}
     기본 내용
 {% endblock %}
-
 
 </body>
 </html>
