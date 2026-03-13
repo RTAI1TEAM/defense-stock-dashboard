@@ -55,11 +55,11 @@ def run_news_update():
 
 
 def run_news_analysis():
-    from routes.stock_detail import update_sector_ai_analysis
+    from services.ai_analysis import update_sector_ai_analysis
     update_sector_ai_analysis()
 
 def run_stock_ai_batch():
-    from routes.stock_detail import update_all_stocks_ai_analysis
+    from services.ai_analysis import update_all_stocks_ai_analysis
     update_all_stocks_ai_analysis()
 
 

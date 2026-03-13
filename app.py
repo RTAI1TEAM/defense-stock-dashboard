@@ -12,7 +12,8 @@ from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
-from routes.stock_detail import stock_detail_bp, get_defense_sector_analysis
+from routes.stock_detail import stock_detail_bp
+from services.stock_service import get_defense_sector_analysis
 from routes.profile import profile_bp
 from routes.stock_chat import stock_chat_bp
 
