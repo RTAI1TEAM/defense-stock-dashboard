@@ -28,12 +28,40 @@
         font-weight: normal !important;
     }
     </style>
+    <style>
+  /* ... 기존 placeholder 스타일 ... */
+
+  /* 모바일 환경(992px 미만)에서 메뉴가 펼쳐질 때의 스타일 */
+  @media (max-width: 991.98px) {
+    .navbar-collapse {
+      background-color: #ffffff; /* 배경을 하얗게 채워서 뒤쪽 내용이 안 보이게 함 */
+      border-radius: 8px;       /* 박스 모서리 둥글게 */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* 그림자를 주어 공중에 뜬 박스 느낌 부여 */
+      padding: 15px;            /* 내부 여백 */
+      margin-top: 10px;         /* 상단 바와 살짝 띄움 */
+      position: absolute;       /* 다른 요소 위에 띄우기 */
+      top: 56px;                /* 네비바 높이만큼 내려서 배치 */
+      left: 10px;
+      right: 10px;
+      z-index: 9999;            /* 가장 앞에 뜨도록 설정 */
+    }
+    
+    .navbar-menu {
+      flex-direction: column;   /* 메뉴 항목을 세로로 정렬 */
+      padding-left: 0;
+    }
+    
+    .nav-item {
+      margin: 5px 0;            /* 메뉴 간격 조절 */
+    }
+  }
+</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
   <a class="navbar-brand" href="/">
     <img src="{{ url_for('static', filename='images/logo.png') }}" height="32"></a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
