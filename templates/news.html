@@ -1,17 +1,8 @@
-{% extends "navbar.html" %}
+{% extends "navbar.html" %} <!--navbar 부트스트랩 템플릿 적용-->
 {% block title %}Defense News{% endblock %}
 
 {% block content %}
 
-<!--뉴스 페이지 css 충돌방지-->
-<style>
-.news-pagination-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0 1rem;
-}
-/* 나머지 pagination 관련 CSS 전부 삭제 */
-</style>
 
 <div class="container py-4">
     {% if top3_news %}
@@ -21,7 +12,7 @@
             {% for news in top3_news %}
             <div class="col-md-4">
                 <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark h-100 d-block">
-                    <div class="card news-top-card shadow-sm">
+                    <div class="card shadow-sm">
                         {% set badge_color = 'bg-danger' if loop.index == 1 else ('bg-primary' if loop.index == 2 else 'bg-dark') %}
                         <span class="news-badge-rank {{ badge_color }} text-white">TOP {{ loop.index }}</span>
                         <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
@@ -88,39 +79,23 @@
         <ul class="pagination justify-content-center" id="newsPagination"></ul>
     </nav>
 </div>
+<!-- 페이지버튼 부트스트랩 -->
 
-<script>
-function renderNewsPagination() {
-    const currentPage = {{ pagination.current }};
-    const totalPages = {{ pagination.total_pages }};
-    const query = '{{ current_query }}' ? `&q={{ current_query }}` : '';
-    const ul = document.getElementById('newsPagination');
-    if (!ul) return;
-
-    let html = '';
-
-    if (currentPage > 1) {
-        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage - 1}${query}">&laquo;</a></li>`;
-    } else {
-        html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
-    }
-
-    const start = Math.max(1, currentPage - 2);
-    const end = Math.min(totalPages, start + 4);
-    for (let p = start; p <= end; p++) {
-        const activeClass = p === currentPage ? 'active' : '';
-        html += `<li class="page-item ${activeClass}"><a class="page-link" href="?page=${p}${query}">${p}</a></li>`;
-    }
-
-    if (currentPage < totalPages) {
-        html += `<li class="page-item"><a class="page-link" href="?page=${currentPage + 1}${query}">&raquo;</a></li>`;
-    } else {
-        html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
-    }
-
-    ul.innerHTML = html;
-}
-
-renderNewsPagination();
-</script>
+        <div class="news-pagination-wrap">
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if pagination.current == 1 %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ pagination.current - 1 }}{% if current_query %}&q={{ current_query }}{% endif %}">&laquo;</a>
+            </li>
+            {% for p in pagination.pages %}
+            <li class="page-item {% if p == pagination.current %}active{% endif %}">
+                <a class="page-link" href="?page={{ p }}{% if current_query %}&q={{ current_query }}{% endif %}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if pagination.current == pagination.total_pages %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ pagination.current + 1 }}{% if current_query %}&q={{ current_query }}{% endif %}">&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+</div>
 {% endblock %}
