@@ -3,20 +3,23 @@
 
 {% block content %}
 <div class="container py-4">
-    {# 상단 Top 3 섹션 (이 부분은 초기 로딩 시에만 렌더링되도록 유지합니다) #}
+    <!-- 상단 Top 3 섹션 (이 부분은 초기 로딩 시에만 렌더링되도록 유지)-->
     {% if top3_news and pagination.current == 1 %}
     <section class="mb-5">
+        <!-- Top3 뉴스 칼럼 제목 -->
         <h3 class="fw-bold mb-4 pt-4">🔥 실시간 조회수 Top 3</h3>
         <div class="row g-4">
             {% for news in top3_news %}
             <div class="col-md-4">
                 <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark h-100 d-block">
                     <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden;">
+                        <!-- 순위에 따라 배지 색상 변경 -->
                         {% set badge_color = 'bg-danger' if loop.index == 1 else ('bg-primary' if loop.index == 2 else 'bg-dark') %}
                         <span class="news-badge-rank {{ badge_color }} text-white">TOP {{ loop.index }}</span>
                         <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
                              class="news-top-img" style="height: 200px; object-fit: cover;"
                              onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
+                        <!-- 뉴스 카드 내용 -->
                         <div class="card-body">
                             <h5 class="fw-bold line-clamp-2 mb-2">{{ news.title_clean }}</h5>
                             <div class="news-meta text-muted small">
@@ -30,17 +33,18 @@
         </div>
     </section>
     {% endif %}
-
+    <!-- 뉴스 목록 영역 -->
     <section>
         <div class="p-4 d-flex justify-content-between align-items-center">
             <h5 class="fw-bold">관련 뉴스</h5>
+            <!-- 뉴스 검색창 -->
             <div>
                 {% from "components/search.html" import search_bar %}
                 {{ search_bar(id="NewsSearch", placeholder="🔍 기사를 검색하세요") }}
             </div>
         </div>
 
-        {# 자바스크립트가 뉴스 목록을 갈아끼울 영역 #}
+        <!-- 뉴스 목록 -->
         <div id="newsList">
             {% for news in list_news %}
             <div class="news-item">
@@ -48,6 +52,7 @@
                     <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                         <div class="row g-0 align-items-center">
                             <div class="col-auto">
+                                <!-- 뉴스 썸네일이 없으면 디폴트 값으로 -->
                                 <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
                                      style="width: 280px; height: 160px; object-fit: cover; flex-shrink: 0;"
                                      onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
@@ -68,22 +73,23 @@
             {% endfor %}
         </div>
 
-        {# 자바스크립트가 페이지네이션 버튼을 갈아끼울 영역 #}
+        <!-- 페이지 -->
         <div class="news-pagination-wrap mt-5">
             <nav>
-                <ul class="pagination justify-content-center" id="newsPagination">
-                    {# 초기 로딩 시에는 서버에서 렌더링한 버튼을 JS가 덮어씁니다 #}
-                </ul>
+                <!-- js로 변경될 페이지 선택 버튼 -->
+                <ul class="pagination justify-content-center" id="newsPagination"></ul>
             </nav>
         </div>
     </section>
 </div>
 
+<!-- js에 초기 설정 데이터를 넘겨주는 용도의 숨겨진 div 
+ pagination정보와 현재 쿼리 정보를 넘겨줌 -->
 <div id="newsConfig" 
      data-pagination='{{ pagination|tojson }}' 
      data-query='{{ current_query }}'
      style="display: none;">
 </div>
-
+<!-- 뉴스 페이지 동작을 담당하는 js 파일 -->
 <script src="{{ url_for('static', filename='js/news.js') }}"></script>
 {% endblock %}

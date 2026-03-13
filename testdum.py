@@ -11,8 +11,7 @@
 import bcrypt # 비밀번호 암호화를 위한 라이브러리
 from database import get_conn
 
-# [테스트 유저 정의 파트]
-# 실제 가입하기 귀찮으니까 미리 만들어둘 유저 목록이야. 닉네임이랑 아이콘(아바타)이 아주 귀엽지? [cite: 170, 173]
+# 테스트 유저
 TEST_USERS = [
     {"nickname": "수익왕",      "avatar": "👑"},
     {"nickname": "방산왕",      "avatar": "🦊"},
@@ -26,17 +25,13 @@ TEST_USERS = [
     {"nickname": "주린이",      "avatar": "🐸"},
 ]
 
-INITIAL_BALANCE = 10_000_000  # 모든 유저에게 공평하게 주는 시드머니 1,000만원! [cite: 23, 38, 149]
-PASSWORD        = "Test1234!" # 로그인할 때 공통으로 쓸 비밀번호야.
-
+INITIAL_BALANCE = 10_000_000  # 모든 유저에게 주는 시드머니 1,000만원
+PASSWORD        = "Test1234!" # 더미 유저 공통 비밀번호
 
 def delete_existing(cursor):
-    """
-    [데이터 초기화 파트]
-    스크립트를 다시 실행할 때 데이터가 꼬이지 않도록 
-    기존에 생성했던 테스트용 유저, 계좌, 거래 내역 등을 싹 다 밀어버려. (깔끔!)
-    """
-    """기존 더미 데이터 삭제 (test_N@test.com 패턴)"""
+    # 데이터 초기화 파트
+    # 스크립트를 다시 실행할 때 데이터가 꼬이지 않도록 
+    # 기존에 생성했던 테스트용 유저, 계좌, 거래 내역 등을 전부 삭제함
     cursor.execute("""
         DELETE t FROM trades t
         INNER JOIN users u ON t.user_id = u.id
@@ -57,12 +52,10 @@ def delete_existing(cursor):
 
 
 def create_test_dummy():
-    """
-    [더미 생성 메인 로직]
-    1. 비밀번호를 보안을 위해 bcrypt로 암호화해. 
-    2. TEST_USERS 목록을 돌면서 'users' 테이블에 정보를 집어넣어. [cite: 151, 389]
-    3. 유저마다 'mock_accounts' 테이블에 1,000만원 잔고를 가진 계좌를 하나씩 만들어줘. [cite: 151, 310]
-    """
+    # 더미 생성
+    # 1. 비밀번호를 보안을 위해 bcrypt로 암호화
+    # 2. TEST_USERS 목록을 돌면서 'users' 테이블에 정보 추가
+    # 3. 유저마다 'mock_accounts' 테이블에 1,000만원 잔고를 가진 계좌 생성
     conn = None
     try:
         conn = get_conn()
