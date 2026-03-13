@@ -1,14 +1,4 @@
-.top-card {   
-    border: none; 
-    border-radius: 20px; 
-    transition: transform 0.3s; 
-    height: 100%; 
-    overflow: hidden;
-    position: relative;
-}
-
-
-.badge-rank { 
+.news-badge-rank { 
     position: absolute; 
     top: 15px; 
     left: 15px; 
@@ -17,6 +7,15 @@
     border-radius: 30px; 
     font-weight: bold; 
     font-size: 0.75rem; 
+}
+
+.top-card {   
+    border: none; 
+    border-radius: 20px; 
+    transition: transform 0.3s; 
+    height: 100%; 
+    overflow: hidden;
+    position: relative;
 }
 
 .top-img { 
