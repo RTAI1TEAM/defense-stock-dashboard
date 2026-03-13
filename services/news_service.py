@@ -1,10 +1,11 @@
-# services/news_service.py — 뉴스 수집 및 처리 서비스
+"""
+services/news_service.py — 뉴스 수집 및 처리 서비스
 
-# 기능: 
-# 1. 네이버 뉴스 검색 API를 호출하여 데이터 수집
-# 2. 뉴스 원문 페이지에서 크롤링을 통해 대표 이미지(썸네일) 추출
-# 3. 전처리 후 MySQL 데이터베이스에 저장 및 업데이트
-
+기능: 
+1. 네이버 뉴스 검색 API를 호출하여 데이터 수집
+2. 뉴스 원문 페이지에서 크롤링을 통해 대표 이미지(썸네일) 추출
+3. 전처리 후 MySQL 데이터베이스에 저장 및 업데이트
+"""
 
 import requests
 from email.utils import parsedate_to_datetime
@@ -22,8 +23,9 @@ _session = requests.Session()
 
 
 def extract_image_from_html(url):
-    # 뉴스 원문 URL에 접속하여 og:image 태그를 찾아 대표 이미지 URL을 반환합니다.
-
+    """
+    뉴스 원문 URL에 접속하여 og:image 태그를 찾아 대표 이미지 URL을 반환합니다.
+    """
     try:
         # 뉴스 본문 페이지 요청 (10초 타임아웃 설정)
         resp = _session.get(url, timeout=10)
@@ -43,8 +45,9 @@ def extract_image_from_html(url):
 
 
 def fetch_news(query):
-    # 네이버 뉴스 검색 API를 호출하여 뉴스 아이템 리스트를 가져옵니다.
-
+    """
+    네이버 뉴스 검색 API를 호출하여 뉴스 아이템 리스트를 가져옵니다.
+    """
     headers = {
         "X-Naver-Client-Id":     NAVER_CLIENT_ID,
         "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
@@ -59,9 +62,10 @@ def fetch_news(query):
 
 
 def save_news(conn, item):
-    # 수집한 뉴스 항목을 전처리한 후 DB(news 테이블)에 저장합니다.
-    # URL(source_url)을 Unique Key로 사용하여 중복 시 내용을 업데이트합니다.
-    
+    """
+    수집한 뉴스 항목을 전처리한 후 DB(news 테이블)에 저장합니다.
+    URL(source_url)을 Unique Key로 사용하여 중복 시 내용을 업데이트합니다.
+    """
     # 1. HTML 태그 제거 및 텍스트 정제
     title      = strip_html(item.get("title"))
     summary    = strip_html(item.get("description"))
@@ -99,7 +103,9 @@ def save_news(conn, item):
 
 
 def update_news():
-    # 주요 방산 종목 키워드로 뉴스를 수집하는 메인 실행 함수입니다.
+    """
+    주요 방산 종목 키워드로 뉴스를 수집하는 메인 실행 함수입니다.
+    """
     conn = None
     try:
         conn = get_conn()

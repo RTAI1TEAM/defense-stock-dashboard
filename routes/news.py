@@ -8,11 +8,13 @@ news_bp = Blueprint('news', __name__)
 PER_PAGE = 13
 
 def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
-    # 데이터베이스에서 뉴스 목록을 가져오는 함수
-    # :param keyword: 검색어 (제목, 요약, 출처에서 검색)
-    # :param page: 현재 페이지 번호
-    # :param per_page: 페이지당 아이템 수
-    # :return: (뉴스 목록 리스트, 전체 뉴스 개수)
+    """
+    데이터베이스에서 뉴스 목록을 가져오는 함수
+    :param keyword: 검색어 (제목, 요약, 출처에서 검색)
+    :param page: 현재 페이지 번호
+    :param per_page: 페이지당 아이템 수
+    :return: (뉴스 목록 리스트, 전체 뉴스 개수)
+    """
     conn = get_conn()
     offset = (page - 1) * per_page  # SQL 시작 지점 계산
     
@@ -74,13 +76,13 @@ def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
 
 
 def get_pagination(page, total_count, per_page=PER_PAGE):
-    
-    # 페이지네이션 버튼 로직 계산 함수 (현재 페이지를 기준으로 앞뒤 버튼 생성)
-    # :param page: 현재 페이지
-    # :param total_count: 전체 아이템 개수
-    # :param per_page: 페이지당 개수
-    # :return: 페이지네이션 정보 딕셔너리
-    
+    """
+    페이지네이션 버튼 로직 계산 함수 (현재 페이지를 기준으로 앞뒤 버튼 생성)
+    :param page: 현재 페이지
+    :param total_count: 전체 아이템 개수
+    :param per_page: 페이지당 개수
+    :return: 페이지네이션 정보 딕셔너리
+    """
     # 전체 페이지 수 계산 (올림 처리)
     total_pages = max(1, -(-total_count // per_page)) 
     
