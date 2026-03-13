@@ -205,6 +205,21 @@
         datasets.push({ type:"line", label:"매수(B)", data: buyPoints,  borderColor:"#e15759", backgroundColor:"#e15759", pointRadius:buyRadii,  pointHoverRadius:buyRadii,  showLine:false, order:1, parsing:false });
         datasets.push({ type:"line", label:"매도(S)", data: sellPoints, borderColor:"#4e79a7", backgroundColor:"#4e79a7", pointRadius:sellRadii, pointHoverRadius:sellRadii, showLine:false, order:1, parsing:false });
 
+        // 캔들 모드: 실제 고가/저가 기준으로 y축 범위 계산 (꼬리 잘림 방지)
+        let yScaleOpts = { beginAtZero: false };
+        if (type === "candle") {
+            const candleDs = datasets.find(d => d._candleRaw && d._candleRaw.length);
+            if (candleDs) {
+                const highs = candleDs._candleRaw.map(c => c.h).filter(v => v != null);
+                const lows  = candleDs._candleRaw.map(c => c.l).filter(v => v != null);
+                if (highs.length && lows.length) {
+                    const range = Math.max(...highs) - Math.min(...lows);
+                    yScaleOpts.max = Math.max(...highs) + range * 0.03;
+                    yScaleOpts.min = Math.min(...lows)  - range * 0.03;
+                }
+            }
+        }
+
         window.chartInstances = window.chartInstances || {};
         window.chartInstances["mainEtfChart"] = new Chart(canvas.getContext("2d"), {
             type: "line",
@@ -240,7 +255,7 @@
                 },
                 scales: {
                     x: { type: "time", time: { unit: "day" }, ticks: { maxTicksLimit: 8 } },
-                    y: { beginAtZero: false }
+                    y: yScaleOpts
                 }
             },
             plugins: [
