@@ -4,14 +4,25 @@ from database import get_conn
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
-PER_PAGE = 5
+PER_PAGE = 5 # 거래 내역은 한 페이지에 5개씩만 끊어서 보여주자 (페이징 처리)
 
 
 def _get_user_id():
+    """
+    [세션 관리 유틸리티]
+    현재 브라우저 세션에서 유저 ID를 꺼내오는 함수야.
+    로그인 상태라면 ID 숫자가 나올 거고, 아니면 None을 뱉어서 체크하기 편하게 해줘.
+    """
     return session.get('user_id')
 
 
 def _require_login_page():
+    """
+    [로그인 유도 응답]
+    권한이 없는 유저가 포트폴리오에 접근하면 실행되는 함수야.
+    단순히 에러를 띄우는 게 아니라, 브라우저에 자바스크립트를 직접 쏴서
+    '로그인 필요' 알림창을 띄우고 로그인 페이지로 자동 이동(Redirect)시켜주는 친절한 녀석이지!
+    """
     return Response(
         '<script>alert("로그인이 필요한 페이지입니다."); location.href="/login";</script>',
         mimetype='text/html'
@@ -19,7 +30,12 @@ def _require_login_page():
 
 
 def _calc_trade_profit(trade):
-    """매도 거래의 수익금/수익률 반환. 매수이거나 avg_buy_price 없으면 (None, None)."""
+    """
+    [거래 수익 계산 파트]
+    - 매도(SELL) 거래일 때만 계산기 두드려!
+    - (팔 가격 - 산 평균 단가) * 수량 = 수익금
+    - 수익률까지 계산해서 소수점 첫째 자리까지 반환해줘.
+    """
     if trade['trade_type'] == 'SELL' and trade.get('avg_buy_price'):
         avg  = float(trade['avg_buy_price'])
         sell = float(trade['price'])
@@ -29,7 +45,11 @@ def _calc_trade_profit(trade):
 
 
 def _fetch_trades(cursor, user_id, per_page, offset):
-    """거래 내역 조회 (매도 시 평균 매수가 서브쿼리 포함)."""
+    """
+    [거래 내역 조회 파트]
+    - 서브쿼리를 사용해서 '내가 이 주식을 팔았을 때 당시의 평균 매수가'를 동적으로 계산해와.
+    - 덕분에 나중에 거래 내역에서 건별 수익률을 바로 볼 수 있지!
+    """
     cursor.execute("""
         SELECT t.trade_type, t.quantity, t.price, t.total_amount,
                DATE_FORMAT(t.traded_at, '%%y.%%m.%%d %%H:%%i') AS traded_at,
@@ -56,6 +76,13 @@ def _fetch_trades(cursor, user_id, per_page, offset):
 
 @portfolio_bp.route("/portfolio")
 def portfolio_view():
+    """
+    [내 자산 대시보드 파트]
+    1. 계좌 정보, 보유 종목(holdings), 거래 내역(trades)을 싹 다 긁어와.
+    2. 보유 종목마다 (현재가 * 수량)을 계산해서 '평가 금액'과 '수익률'을 뽑아내.
+    3. 도넛 차트를 그릴 수 있게 종목별 비중(pie_dict)도 정리해줘.
+    4. 현금 + 주식 가치를 더해 '총 자산'을 완성해서 화면에 뿌려줘!
+    """
     user_id = _get_user_id()
     if user_id is None:
         return _require_login_page()
@@ -133,6 +160,12 @@ def portfolio_view():
 
 @portfolio_bp.route("/api/sell_stock", methods=["POST"])
 def sell_stock():
+    """
+    [수동 매도 처리 파트]
+    1. 유저가 '팔기' 버튼 누르면 호출돼.
+    2. 현재가(current_price)를 가져와서 내 잔고(current_balance)를 늘려줘.
+    3. 'trades' 테이블에 매도 기록을 남기고, 'portfolio_holdings'에서 수량을 줄이거나 삭제해.
+    """
     user_id = _get_user_id()
     if user_id is None:
         return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
@@ -200,6 +233,11 @@ def sell_stock():
 
 @portfolio_bp.route("/api/change_strategy", methods=["POST"])
 def change_strategy():
+    """
+    [투자 전략 변경 파트]
+    - 내가 보유한 주식의 전략(예: 돌파매매 -> 골든크로스)을 실시간으로 바꿀 수 있어.
+    - 중복 전략 방지 로직이 들어있어서 데이터 꼬임을 막아줘.
+    """
     user_id = _get_user_id()
     if user_id is None:
         return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
@@ -245,17 +283,25 @@ def change_strategy():
 
 @portfolio_bp.route("/api/trades")
 def get_trades_api():
+    """
+    [거래 내역 전용 API 엔드포인트]
+    프론트엔드에서 '무한 스크롤'이나 '페이지 번호'를 누를 때 데이터를 보내주는 API야.
+    1. 요청된 페이지 번호에 맞춰서 거래 내역(trades)을 DB에서 잘라와.
+    2. 데이터 중에서 숫자형 데이터(가격, 총액)는 JSON으로 보내기 좋게 float형으로 정제해.
+    3. '전체 페이지 수'와 '현재 페이지' 정보를 함께 담아서 프론트엔드가 UI를 그리게 도와줘.
+    """
     user_id = _get_user_id()
     if not user_id:
-        return jsonify({"success": False}), 401
+        return jsonify({"success": False}), 401 # 로그인 안 됐으면 실패 응답!
 
-    page   = int(request.args.get('page', 1))
+    page   = int(request.args.get('page', 1)) # 몇 번째 페이지가 필요한지 확인
     offset = (page - 1) * PER_PAGE
 
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
             trades = []
+            # _fetch_trades 함수를 재사용해서 데이터를 가져오는 효율적인 설계!
             for trade in _fetch_trades(cursor, user_id, PER_PAGE, offset):
                 t = dict(trade)
                 t['profit_amount'], t['profit_rate'] = _calc_trade_profit(t)
@@ -264,6 +310,7 @@ def get_trades_api():
                 t['total_amount'] = float(t['total_amount'])
                 trades.append(t)
 
+            # 전체 거래가 몇 개인지 알아야 하단 페이지네이션(1, 2, 3...)을 만들 수 있어.
             cursor.execute("SELECT COUNT(*) as cnt FROM trades WHERE user_id = %s", (user_id,))
             total_trades = cursor.fetchone()['cnt']
             total_pages  = math.ceil(total_trades / PER_PAGE) if total_trades > 0 else 1
