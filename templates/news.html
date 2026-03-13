@@ -13,7 +13,7 @@
                 <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark h-100 d-block">
                     <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden;">
                         {% set badge_color = 'bg-danger' if loop.index == 1 else ('bg-primary' if loop.index == 2 else 'bg-dark') %}
-                        <span class="news-badge-rank {{ badge_color }} text-white" style="position: absolute; top: 10px; left: 10px; padding: 5px 10px; border-radius: 5px; font-weight: bold; z-index: 10;">TOP {{ loop.index }}</span>
+                        <span class="news-badge-rank {{ badge_color }} text-white">TOP {{ loop.index }}</span>
                         <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
                              class="news-top-img" style="height: 200px; object-fit: cover;"
                              onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
