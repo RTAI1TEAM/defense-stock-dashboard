@@ -1,11 +1,22 @@
+<!--
+차트 전환 매크로 정의
+매개변수:
+- chart_id: 캔버스 ID (페이지 내 유일해야 함)
+- title/subtitle: 차트 상단 제목 및 부제목
+- chart_data: 서버에서 전달받은 차트 데이터 (JSON 변환용)
+- line_label/candle_label: 차트 타입별 범례 이름
+- height: 차트 높이 설정
+-->
+
 {% macro chart_toggle(chart_id, title, subtitle, chart_data, line_label='ETF 종가', candle_label='ETF 가격', height='400px') %}
 <div class="chart-card" style="background:#fff; border-radius:16px; padding:20px;">
+    
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
         <div>
             {% if title %}
             <h2 class="section-title">{{ title }}</h2>
             {% endif %}
-            {%if subtitle %}
+            {% if subtitle %}
             <p class="section-subtitle">최근 ETF 종가 흐름</p>
             {% endif %}
         </div>
@@ -32,15 +43,22 @@
 </div>
 
 <script>
+/**
+ * 페이지 로드 시 차트 데이터 초기화 및 기본 차트 출력
+ */
 document.addEventListener("DOMContentLoaded", function () {
+    // 전역 변수 window.chartRawData에 차트 설정값 저장 (JS 파일에서 접근 가능하도록)
     window.chartRawData = window.chartRawData || {};
     window.chartRawData["{{ chart_id }}"] = {
-        raw: {{ chart_data | tojson }},
+        raw: {{ chart_data | tojson }}, // 서버 데이터를 JSON 형식으로 안전하게 변환
         lineLabel: "{{ line_label }}",
         candleLabel: "{{ candle_label }}"
     };
 
-    switchChart("{{ chart_id }}", "candle");
+    // 초기 실행 시 'candle' 타입으로 차트 렌더링 시작
+    if (typeof switchChart === "function") {
+        switchChart("{{ chart_id }}", "candle");
+    }
 });
 </script>
 {% endmacro %}

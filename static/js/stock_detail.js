@@ -1,13 +1,11 @@
 /**
- * 주식 상세 페이지 통합 스크립트
- * 설명: 채팅 시스템, UI 전환, Chart.js를 이용한 주식 전략 시뮬레이션 시각화 포함
+ * 주식 상세 페이지 통합 스크립트입니다.
+ * 이 파일은 채팅 UI 제어, 투자 폼 전환, 그리고 전략별 차트 시각화를 담당합니다.
  */
 
-// 1. 채팅 관련 및 페이지 초기화 로직
+// [1. 채팅 관련 및 페이지 초기화 로직]
 
-/**
- * 채팅 메시지 목록을 가장 아래로 스크롤하여 최신 메시지를 보여줌
- */
+// 채팅 메시지 목록의 스크롤을 가장 아래로 이동시켜 최신 메시지를 사용자에게 보여주는 함수입니다.
 function scrollChatToBottom() {
     const chatList = document.getElementById("chat-msg-list");
     if (chatList) {
@@ -15,24 +13,24 @@ function scrollChatToBottom() {
     }
 }
 
-/**
- * 문서 로드 완료 시 초기화 작업 수행
- */
+// 페이지의 HTML 구조가 완전히 로드된 후 실행되는 초기화 블록입니다.
 document.addEventListener("DOMContentLoaded", function () {
-    // 채팅 박스 초기 데이터 로드: 서버에서 HTML 조각을 가져와 컨테이너에 삽입
+    // 페이지 로드 직후 해당 종목의 채팅 박스 내용을 서버에서 비동기적으로 가져옵니다.
     fetch("/stocks/" + STOCK_CONFIG.ticker + "/chat-box")
         .then(response => response.text())
         .then(html => {
+            // 받아온 HTML을 채팅 컨테이너 영역에 삽입합니다.
             document.getElementById("stock-chat-container").innerHTML = html;
-            setTimeout(scrollChatToBottom, 0); // DOM 렌더링 후 스크롤 하단 이동
+            // 메시지가 로드된 후 스크롤 위치를 최하단으로 조정합니다.
+            setTimeout(scrollChatToBottom, 0);
         });
 
-    // 투자 폼 전환 로직: AI 분석 화면과 투자 입력 폼 사이의 UI 스위칭
+    // 화면 우측의 'AI 분석' 영역과 '모의투자 입력 폼'을 서로 전환하는 로직입니다.
     const startBtn = document.getElementById('investStartBtn');
     const analysis = document.getElementById('ai-analysis-wrapper');
     const invest   = document.getElementById('invest-form-wrapper');
     
-    // '투자 시작' 버튼 클릭 시 분석 영역 숨기고 폼 영역 표시
+    // '모의투자 시작하기' 버튼 클릭 시 분석 카드를 숨기고 투자 폼을 보여줍니다.
     if (startBtn && analysis && invest) {
         startBtn.addEventListener('click', function () {
             analysis.style.display = 'none';
@@ -40,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    // 이전으로 돌아가기(goBack) 전역 함수 정의
+    // 투자 폼에서 '취소' 또는 '뒤로가기'를 눌렀을 때 다시 AI 분석 카드로 돌아가는 전역 함수입니다.
     window.goBack = function () {
         if (analysis && invest) {
             invest.style.display   = 'none';
@@ -49,21 +47,21 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 });
 
-// 2. 전략 및 차트 분석 로직
+// [2. 전략 및 차트 분석 로직]
 
+// 서버에서 전달받은 종목의 고유 티커 정보를 상수로 저장합니다.
 const TICKER = STOCK_CONFIG.stockTicker;
 
-// 화면에 보여줄 전략별 한 줄 요약 텍스트 정의
+// 각 투자 전략의 핵심 매매 공식을 사용자에게 한 줄로 설명하기 위한 정의문입니다.
 const ONE_LINER = {
     golden_cross: "📈 MA5(단기)가 MA20(장기)을 상향 돌파 시 매수 🔴B / 하향 돌파 시 매도 🔵S",
     breakout:     "🚀 종가가 20일 최고가(저항선) 돌파 시 매수 🔴B / MA20(지지선) 아래 이탈 시 매도 🔵S"
 };
 
-let _lastStrategyData = null; // 마지막으로 성공한 분석 데이터를 보관 (차트 타입 변경 시 사용)
+// 마지막으로 수신한 백테스트 및 전략 데이터를 저장하여 화면 갱신 시 활용합니다.
+let _lastStrategyData = null;
 
-/**
- * 전략 분석 결과를 초기화하고 일반 차트로 되돌림
- */
+// 전략 선택을 취소했을 때 백테스트 결과 카드를 숨기고 차트를 기본 상태로 되돌리는 함수입니다.
 function resetBacktestCard() {
     const card = document.getElementById("backtestCard");
     if (card) card.style.display = "none";
@@ -71,69 +69,64 @@ function resetBacktestCard() {
     if (oneLiner) { oneLiner.textContent = ""; oneLiner.style.visibility = "hidden"; }
     _lastStrategyData = null;
     const strategy = document.getElementById("strategySelect").value;
-    // 전략이 '없음'일 경우 기본 차트 렌더링 함수 호출
+    // '전략 없음' 선택 시 차트를 기본 종가 차트로 다시 그립니다.
     if (strategy === "none" && typeof switchChart === "function") {
         switchChart("mainEtfChart", getCurrentChartType());
     }
 }
 
-/**
- * 기존에 렌더링된 Chart.js 인스턴스를 파괴하여 메모리 누수 방지 및 재렌더링 준비
- */
+// 새로운 차트를 렌더링하기 전, 기존에 생성된 Chart.js 인스턴스를 파괴하여 메모리 누수를 방지합니다.
 function destroyMainChart() {
     const canvas = document.getElementById("mainEtfChart");
     if (!canvas) return;
-    // 줌 상태 초기화 (xMin0/xMax0 리셋 — 다음 차트 로드 시 새 범위로 저장됨)
+    // 차트의 줌(Zoom) 상태를 초기화합니다.
     if (canvas._resetZoomState) canvas._resetZoomState();
     const existing = Chart.getChart(canvas);
     if (existing) existing.destroy();
+    // 전역 객체에 저장된 인스턴스 기록을 삭제합니다.
     if (window.chartInstances && window.chartInstances["mainEtfChart"]) {
         try { window.chartInstances["mainEtfChart"].destroy(); } catch(e) {}
         delete window.chartInstances["mainEtfChart"];
     }
 }
 
-/**
- * 현재 UI에서 선택된 차트 종류(캔들/라인)를 반환
- */
+// 현재 화면에 표시 중인 차트의 종류가 '캔들'인지 '라인'인지 확인하여 반환합니다.
 function getCurrentChartType() {
     const candleBtn = document.getElementById("mainEtfChart-btn-candle");
     return candleBtn && candleBtn.classList.contains("btn-primary") ? "candle" : "line";
 }
 
-/**
- * 백테스트 통계 결과(수익률, 승률 등)를 카드 UI에 업데이트
- */
+// 서버에서 계산된 백테스트 결과 데이터를 우측 카드 UI에 반영하는 함수입니다.
 function updateBacktestCard(data) {
     document.getElementById("backtestCard").style.display = "";
     const profit = data.total_profit;
     const profitEl = document.getElementById("bt-profit");
-    // 수익률 색상 및 텍스트 설정
+    
+    // 수익률이 양수이면 빨간색, 음수이면 파란색으로 표시합니다.
     profitEl.textContent  = (profit >= 0 ? "+" : "") + profit + "%";
     profitEl.style.color  = profit >= 0 ? "#2e7d32" : "#c62828";
     document.getElementById("bt-winrate").textContent = data.win_rate + "%";
     document.getElementById("bt-count").textContent   = data.trade_count + "회";
     
-    // 1,000만원 투자 기준 예상 최종 금액 계산
+    // 가상 시드머니 1,000만원을 기준으로 최종 예상 자산을 계산하여 보여줍니다.
     const finalAmount = Math.round(10_000_000 * (1 + profit / 100));
     const finalEl = document.getElementById("bt-final");
     finalEl.textContent = finalAmount.toLocaleString() + "원";
     finalEl.style.color = profit >= 0 ? "#2e7d32" : "#c62828";
 }
 
-/**
- * 분석 데이터를 바탕으로 메인 차트에 전략 지표와 매매 지점 렌더링
- */
+// [핵심 기능] 전략 지표와 매수/매도 마커를 메인 차트 위에 렌더링하는 함수입니다.
 function renderStrategyOnMain(data) {
     const type   = getCurrentChartType();
     const canvas = document.getElementById("mainEtfChart");
     if (!canvas) return;
 
-    destroyMainChart(); // 기존 차트 제거
+    destroyMainChart(); // 기존 차트를 초기화합니다.
 
+    // 날짜 데이터를 시계열 차트에서 인식 가능한 타임스탬프로 변환합니다.
     const tsLabels = data.labels.map(d => new Date(d).getTime());
 
-    // 매수 및 매도 데이터 포인트 매핑
+    // 전략에 따른 매수(BUY) 및 매도(SELL) 좌표를 설정합니다.
     const buyPoints  = data.labels.map((d, i) => {
         const t = data.backtest.find(x => x.date === d && x.type === 'BUY');
         return { x: tsLabels[i], y: t ? t.price : NaN };
@@ -145,7 +138,7 @@ function renderStrategyOnMain(data) {
 
     const datasets = [];
 
-    // 배경 차트 데이터 세트 설정 (캔들 또는 라인)
+    // 사용자의 선택에 따라 캔들 데이터 또는 종가 라인 데이터를 데이터셋에 추가합니다.
     if (type === "candle") {
         const rawAll   = (window.chartRawData && window.chartRawData["mainEtfChart"])
             ? window.chartRawData["mainEtfChart"].raw : [];
@@ -170,7 +163,7 @@ function renderStrategyOnMain(data) {
         });
     }
 
-    // 선택된 전략에 따라 보조 지표(MA5, MA20, 최고가 등) 추가
+    // 선택된 전략에 맞는 보조지표(이평선, 전고점선 등)를 데이터셋에 추가합니다.
     if (data.strategy === "golden_cross") {
         datasets.push({ type:"line", label:"MA5",  data: tsLabels.map((ts,i) => ({ x:ts, y: data.ma_short[i] != null ? data.ma_short[i] : NaN })), borderColor:"#f28e2b", borderWidth:1.5, borderDash:[4,3], fill:false, tension:0.15, pointRadius:0, spanGaps:true, parsing:false, order:3 });
         datasets.push({ type:"line", label:"MA20", data: tsLabels.map((ts,i) => ({ x:ts, y: data.ma_long[i]  != null ? data.ma_long[i]  : NaN })), borderColor:"#59a14f", borderWidth:1.5, borderDash:[4,3], fill:false, tension:0.15, pointRadius:0, spanGaps:true, parsing:false, order:4 });
@@ -179,13 +172,13 @@ function renderStrategyOnMain(data) {
         datasets.push({ type:"line", label:"MA20",         data: tsLabels.map((ts,i) => ({ x:ts, y: data.ma20[i]   != null ? data.ma20[i]   : NaN })), borderColor:"#59a14f", borderWidth:1.5, borderDash:[4,3], fill:false, tension:0.15, pointRadius:0, spanGaps:true, parsing:false, order:4 });
     }
 
-    // 매수(B)/매도(S) 포인트 지점 데이터 세트 추가
+    // 매수 및 매도 지점에 표시될 동그란 마커들을 추가합니다.
     const buyRadii  = buyPoints.map(p  => isNaN(p.y) ? 0 : 10);
     const sellRadii = sellPoints.map(p => isNaN(p.y) ? 0 : 10);
     datasets.push({ type:"line", label:"매수(B)", data: buyPoints,  borderColor:"#e15759", backgroundColor:"#e15759", pointRadius:buyRadii,  pointHoverRadius:buyRadii,  showLine:false, order:1, parsing:false });
     datasets.push({ type:"line", label:"매도(S)", data: sellPoints, borderColor:"#4e79a7", backgroundColor:"#4e79a7", pointRadius:sellRadii, pointHoverRadius:sellRadii, showLine:false, order:1, parsing:false });
 
-    // 캔들 모드: 실제 고가/저가 기준으로 y축 범위 계산 (꼬리 잘림 방지)
+    // 차트의 Y축 범위를 데이터에 맞춰 동적으로 계산합니다.
     let yScaleOpts = { beginAtZero: false };
     if (type === "candle") {
         const candleDs = datasets.find(d => d._candleRaw && d._candleRaw.length);
@@ -200,7 +193,7 @@ function renderStrategyOnMain(data) {
         }
     }
 
-    // Chart.js 인스턴스 생성 및 설정
+    // Chart.js 인스턴스를 생성하여 캔버스에 렌더링합니다.
     window.chartInstances = window.chartInstances || {};
     window.chartInstances["mainEtfChart"] = new Chart(canvas.getContext("2d"), {
         type: "line",
@@ -240,8 +233,8 @@ function renderStrategyOnMain(data) {
             }
         },
         plugins: [
-            // [플러그인 1] 캔들을 캔버스에 직접 그리는 로직
             {
+                // [플러그인] 캔들 차트를 캔버스 위에 직접 그리는 로직입니다.
                 id: "inlineCandle",
                 afterDatasetsDraw(chart) {
                     chart.data.datasets.forEach(ds => {
@@ -268,8 +261,8 @@ function renderStrategyOnMain(data) {
                     });
                 }
             },
-            // [플러그인 2] 매수/매도 포인트 원형 안에 'B'/'S' 텍스트를 그림
             {
+                // [플러그인] 매매 포인트 위에 B(Buy)와 S(Sell) 라벨을 텍스트로 표시합니다.
                 id: "bsLabels",
                 afterDatasetsDraw(chart) {
                     const ctx2 = chart.ctx;
@@ -290,12 +283,13 @@ function renderStrategyOnMain(data) {
         ]
     });
 
+    // 차트 형태 전환 버튼의 활성화 상태를 업데이트합니다.
     if (typeof setActiveChartButtons === "function") setActiveChartButtons("mainEtfChart", type);
 
-    // 전략 차트용 줌 엔진 바인딩
+    // 차트의 줌(Zoom) 엔진을 활성화합니다.
     if (typeof bindZoomEngine === "function") bindZoomEngine("mainEtfChart");
 
-    // 버튼 이벤트 리스너 중복 방지 및 캔들/라인 전환 처리
+    // 버튼 클릭 시 현재 보고 있는 전략 데이터를 바탕으로 차트를 다시 그리도록 이벤트를 바인딩합니다.
     if (!canvas._strategyBtnBound) {
         canvas._strategyBtnBound = true;
         const candleBtn = document.getElementById("mainEtfChart-btn-candle");
@@ -305,33 +299,34 @@ function renderStrategyOnMain(data) {
     }
 }
 
-/**
- * [API 호출] 사용자가 선택한 전략 및 기간으로 백테스트 요청 및 결과 업데이트
- */
+// 사용자가 전략이나 분석 기간을 변경했을 때 서버에 데이터를 요청하여 차트를 업데이트하는 함수입니다.
 function updateStrategyChart() {
     const strategy = document.getElementById("strategySelect").value;
     const days     = document.getElementById("periodSelect").value;
     const btn      = document.getElementById("analyzeBtn");
 
+    // 전략을 선택하지 않았을 경우 초기화합니다.
     if (strategy === "none") {
         resetBacktestCard();
         return;
     }
 
-    // 전략 설명 한 줄 표시
+    // 선택한 전략에 대한 설명을 화면에 표시합니다.
     const oneLiner = document.getElementById("strategyOneLinerText");
     if (oneLiner) { oneLiner.textContent = ONE_LINER[strategy] || ""; oneLiner.style.visibility = "visible"; }
 
+    // 분석 중 버튼 상태를 변경하여 중복 클릭을 방지합니다.
     btn.textContent = "⏳ 분석 중...";
     btn.disabled    = true;
 
-    // 전략 데이터를 가져오는 서버 통신
+    // 서버의 전략 API를 통해 백테스트 결과를 가져옵니다.
     fetch(`/api/strategy/${TICKER}?strategy=${strategy}&days=${days}`)
         .then(r => r.json())
         .then(data => {
             btn.textContent = "🔍 분석하기";
             btn.disabled    = false;
             if (!data.success) { alert("전략 계산 오류: " + data.message); return; }
+            // 데이터를 저장하고 차트와 결과 카드를 업데이트합니다.
             _lastStrategyData = data;
             renderStrategyOnMain(data); // 차트에 전략 렌더링
             updateBacktestCard(data);    // 통계 카드 갱신
@@ -343,23 +338,21 @@ function updateStrategyChart() {
         });
 }
 
-// 3. 채팅 전송 및 새로고침 함수
+// [3. 채팅 전송 및 새로고침 함수]
 
-/**
- * 1. 채팅 전송 함수: 입력된 메시지를 비동기(POST)로 전송
- */
+// 사용자가 입력한 메시지를 서버로 전송하고 채팅 목록을 갱신하는 함수입니다.
 function sendChat() {
     const ticker = STOCK_CONFIG.ticker;
     const msgInput = document.getElementById('chat-input-msg');
     const message = msgInput.value.trim();
 
-    if (!message) return;
+    if (!message) return; // 메시지가 비어있으면 전송하지 않습니다.
 
     const formData = new FormData();
     formData.append('ticker', ticker);
     formData.append('message', message);
 
-    // 백엔드의 /chat/create 경로로 비동기 전송
+    // 메시지를 DB에 저장하기 위해 백엔드로 전송합니다.
     fetch(STOCK_CONFIG.chatCreateUrl, {
         method: 'POST',
         body: formData
@@ -367,8 +360,8 @@ function sendChat() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "success") {
-            msgInput.value = ''; // 입력창 비우기
-            refreshChatList(ticker); // 채팅 목록만 새로고침
+            msgInput.value = ''; // 입력창을 비웁니다.
+            refreshChatList(ticker); // 채팅 목록만 부분적으로 새로고침합니다.
         } else {
             alert(data.error || "전송 실패");
         }
@@ -376,22 +369,21 @@ function sendChat() {
     .catch(err => console.error("전송 에러:", err));
 }
 
-/**
- * 2. 채팅 목록 새로고침 함수: 서버에서 전체 채팅 HTML을 받아 메시지 목록 영역만 교체
- */
+// 페이지 전체 새로고침 없이 채팅 메시지 영역만 최신 데이터로 교체하는 함수입니다.
 function refreshChatList(ticker) {
     fetch(`/stocks/${ticker}/chat-box`)
         .then(res => res.text())
         .then(html => {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            // 새로 받아온 HTML에서 메시지 리스트(#chat-msg-list) 내용만 추출하여 교체
+            // 새로 받아온 HTML에서 메시지 리스트 부분만 추출하여 교체합니다.
             const newContent = doc.getElementById('chat-msg-list').innerHTML;
             const chatList = document.getElementById('chat-msg-list');
             
             if (chatList) {
                 chatList.innerHTML = newContent;
-                setTimeout(scrollChatToBottom, 0); // 새 메시지 추가 후 하단 이동
+                // 새로운 메시지가 추가되었으므로 다시 하단으로 스크롤합니다.
+                setTimeout(scrollChatToBottom, 0);
             }
         })
         .catch(err => console.error("새로고침 에러:", err));

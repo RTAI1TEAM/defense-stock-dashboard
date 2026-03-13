@@ -1,14 +1,13 @@
-from flask import Blueprint, redirect, render_template, request, session, url_for
-from database import get_conn
-from dotenv import load_dotenv
 import bcrypt
 import random
 import smtplib
-import os
 import time
 from email.mime.text import MIMEText
 
-load_dotenv()
+from flask import Blueprint, redirect, render_template, request, session, url_for
+
+from database import get_conn
+from config import MAIL_EMAIL, MAIL_PASSWORD
 
 # Blueprint 등록 - URL prefix 없이 auth 관련 라우트를 모듈화
 auth_bp = Blueprint("auth_bp", __name__)
@@ -78,12 +77,8 @@ def signup():
 # ──────────────────────────────────────────────
 def send_verification_email(email, code):
     try:
-        # 환경 변수에서 발신자 정보 로드
-        sender = os.getenv('MAIL_EMAIL')
-        password = os.getenv('MAIL_PASSWORD')
-
-        print(f"발신자: {sender}")
-        print(f"인증번호: {code}")
+        sender   = MAIL_EMAIL
+        password = MAIL_PASSWORD
 
         # 인증 이메일 HTML 템플릿 (인라인 스타일 적용)
         html = f"""

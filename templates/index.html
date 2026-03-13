@@ -1,3 +1,9 @@
+<!-- [파일 역할] AI 퀀트 시스템의 핵심 정보를 한눈에 보여주는 메인 대시보드 페이지 템플릿
+- 기본 레이아웃 확장 및 차트/종목 카드 매크로 임포트
+- 좌측(상승/하락 종목), 중앙(ETF 차트), 우측(AI 분석/거래 내역) 3칼럼 구조 구성
+- Jinja2 템플릿 엔진을 활용한 데이터 바인딩 및 외부 컴포넌트 포함 -->
+
+<!-- 1. 기본 레이아웃 확장 및 재사용 매크로 정의 -->
 {% extends "navbar.html" %}
 {% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% from "components/stock_table_macros.html" import stock_mini_card, stock_rank_table %}
@@ -5,10 +11,15 @@
 
 {% block content %}
 
+<!-- ──────────────────────────────────────────────
+메인 대시보드 레이아웃 구성 영역
+────────────────────────────────────────────── -->
+
 <div class="container-fluid px-2 mt-2 mb-2">
     <div class="main-dashboard">
+        <!-- 2. 왼쪽 칼럼: 시장 테마별 등락 현황 (상승/하락 TOP 4) -->
         <div class="left-column">
-            <!-- 상위 3 -->
+            <!-- 상승 종목 요약 -->
             <div class="compact-stock-card">
                 <div class="index-card-header" style="display:flex; align-items:center; justify-content:space-between;">
                     <div>
@@ -21,8 +32,9 @@
                     {{ stock_mini_card(defense_stocks | sort(attribute='change', reverse=True), 4) }}
                 </div>
             </div>
-            <!-- 상위 3 끝 -->
-            <!-- 하위 3 -->
+            <!-- 상승 섹션 끝 -->
+
+            <!-- 하락 종목 요약 -->
             <div class="compact-stock-card">
                 <div class="index-card-header" style="display:flex; align-items:center; justify-content:space-between;">
                     <div>
@@ -33,11 +45,11 @@
                     {{ stock_mini_card(defense_stocks | sort(attribute='change'), 4) }}
                 </div>
             </div>
-            <!-- 하위 3 끝 -->
+            <!-- 하락 섹션 끝 -->
         </div>
-        <!-- left 칼럼 끝 -->
+        <!-- 왼쪽 칼럼 끝 -->
 
-        <!-- 중앙 차트 -->
+        <!-- 3. 중앙 칼럼: 주요 지수(ETF) 시각화 및 차트 토글 영역 -->
         <div class="dashboard-card">
             {{ chart_toggle(
                 "mainEtfChart",
@@ -49,10 +61,11 @@
                 "480px"
             ) }}
         </div>
-        <!-- 중앙 차트 끝 -->
-        <!-- 오른쪽 -->
+        <!-- 중앙 칼럼 끝 -->
+
+        <!-- 4. 오른쪽 칼럼: AI 분석 정보 및 사용자 활동 로그 -->
         <div class="right-column">
-            <!-- AI 뉴스 분석 -->
+            <!-- AI 뉴스 분석 패널 (컴포넌트 인클루드) -->
             <div class="analysis-panel news-panel">
                 <div class="index-card-header" style="display:flex; align-items:center; justify-content:space-between;">
                     <div>
@@ -65,8 +78,9 @@
                     {% include "components/_ai_analysis_card.html" %}
                 </div>
             </div>
-            <!-- 뉴스 끝 -->
-            <!-- 어제 거래 내역 -->
+            <!-- 뉴스 영역 끝 -->
+
+            <!-- 최근 거래 내역 패널 (컴포넌트 인클루드) -->
             <div class="trade-log-panel">
                 <div class="index-card-header" style="display:flex; align-items:center; justify-content:space-between;">
                     <div>
@@ -79,7 +93,7 @@
                     {% include "components/log_card.html" %}
                 </div>
             </div>
-            <!-- 전일 거래 내역 -->
+            <!-- 전일 거래 내역 끝 -->
         </div>
     </div>
 </div>

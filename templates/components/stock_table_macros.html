@@ -1,10 +1,16 @@
+{# [1. stock_items 매크로] #}
+{# 실제 종목 데이터(stocks)를 반복하며 화면에 개별 항목을 그려주는 핵심 로직입니다. #}
+{# mode 파라미터에 따라 'mini'(간격이 좁은 항목) 또는 'table'(표의 행) 형태로 출력합니다. #}
 {% macro stock_items(stocks, limit=5, mode='mini') %}
     {% for stock in stocks[:limit] %}
+        {# --- 미니 모드: 홈 화면이나 대시보드 사이드바에 주로 사용됩니다. --- #}
         {% if mode == 'mini' %}
         <a class="stock-mini-item"
             href="{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}">
+            {# 종목의 순위를 숫자로 표시합니다. #}
             <div class="stock-rank">{{ loop.index }}</div>
 
+            {# 종목명과 거래대금 정보를 표시합니다. #}
             <div class="stock-info">
                 <p class="stock-name">{{ stock.name }}</p>
                 <div style="font-size:12px;color:#999;">
@@ -12,23 +18,30 @@
                 </div>
             </div>
 
+            {# 가격과 전일 대비 등락률을 표시합니다. #}
             <div class="stock-change">
             <div class="stock-price">{{ "{:,.0f}".format(stock.price) }}원</div>
+            {# 등락률이 양수/음수/보통인지에 따라 색상을 다르게 적용합니다. #}
             <div class="stock-rate {{ 'positive' if stock.change > 0 else 'negative' if stock.change < 0 else 'neutral' }}">
                 {{ '+' if stock.change > 0 else '' }}{{ stock.change }}%
             </div>
             </div>
         </a>
 
+        {# --- 테이블 모드: 랭킹 페이지의 상세 표에서 사용됩니다. --- #}
         {% elif mode == 'table' %}
         <tr style="cursor: pointer;"
             onclick="window.location.href='{{ url_for('stock_detail.show_stock_chart', ticker=stock.ticker) }}';">
+            {# 순위와 종목명을 굵게 강조하여 표시합니다. #}
             <td class="font-weight-bold">{{ loop.index }}</td>
             <td><strong>{{ stock.name }}</strong></td>
+            {# 가격에 콤마 필터를 적용하여 천 단위 구분을 합니다. #}
             <td>{{ stock.price | comma }}원</td>
+            {# 등락률에 따라 빨간색(#f23645) 또는 파란색(#0062ff) 글자색을 적용합니다. #}
             <td style="color: {{ '#f23645' if stock.change > 0 else '#0062ff' if stock.change < 0 else '#6c757d' }}">
                 {{ '+' if stock.change > 0 else '' }}{{ stock.change }}%
             </td>
+            {# 거래대금은 우측 정렬하여 깔끔하게 보여줍니다. #}
             <td class="text-right text-muted">{{ stock.value }}억원</td>
         </tr>
         {% endif %}
@@ -36,21 +49,27 @@
 {% endmacro %}
 
 
+{# [2. stock_mini_card 매크로] #}
+{# 위에서 만든 stock_items를 'mini' 모드로 호출하여 카드 상자 안에 담아주는 래퍼(Wrapper)입니다. #}
 {% macro stock_mini_card(stocks, limit=5) %}
 <div class="card border-0 p-2" style="border-radius: 20px;">
-
     <div class="stock-mini-list">
+        {# 재사용성을 극대화하기 위해 내부에서 stock_items 매크로를 호출합니다. #}
         {{ stock_items(stocks, limit, 'mini') }}
     </div>
 </div>
 {% endmacro %}
 
 
+{# [3. stock_rank_table 매크로] #}
+{# 랭킹 페이지의 메인 표를 생성합니다. 제목, 도움말 문구, 정렬 가능한 헤더를 포함합니다. #}
 {% macro stock_rank_table(table_id, title, stocks, limit=5, show_desc=True) %}
 <div class="stock-rank-card">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
+            {# 테이블의 제목(예: 실시간 인기 종목)을 표시합니다. #}
             <h4 class="stock-rank-title">{{ title }}</h4>
+            {# show_desc가 true일 경우에만 하단 데이터 기준 설명을 표시합니다. #}
             {% if show_desc %}
             <div class="stock-rank-desc">
                 ※ 전일 종가 기준 데이터 (등락률: 전일 vs 전전일, 거래대금: 전일 기준)
@@ -59,10 +78,12 @@
         </div>
     </div>
 
+    {# 부트스트랩 반응형 테이블 클래스를 적용합니다. #}
     <div class="table-responsive">
         <table class="table stock-rank-table align-middle mb-0" id="{{ table_id }}">
             <thead>
                 <tr>
+                    {# 각 헤더 클릭 시 자바스크립트 sortTable 함수가 실행되도록 설정합니다. #}
                     <th onclick="sortTable('{{ table_id }}', 0)">순위</th>
                     <th onclick="sortTable('{{ table_id }}', 1)">종목명</th>
                     <th onclick="sortTable('{{ table_id }}', 2)">전일 종가 <span class="sort-mark">↕</span></th>
@@ -71,6 +92,7 @@
                 </tr>
             </thead>
             <tbody>
+                {# 본문 영역에서는 stock_items 매크로를 'table' 모드로 호출하여 행 데이터를 채웁니다. #}
                 {{ stock_items(stocks, limit, 'table') }}
             </tbody>
         </table>

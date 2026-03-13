@@ -13,31 +13,17 @@ services/ai_analysis.py — AI 분석 서비스
       └─ get_db_or_api_stock_news()     : 종목 AI 분석 결과 조회 (DB 우선, 없으면 실시간)
 """
 
-import os
-import re
-import html
 import json
 import time
 import requests
 from google import genai
-from dotenv import load_dotenv
 
 from database import get_conn
-
-load_dotenv()
-
-GEMINI_API_KEY      = os.getenv("GEMINI_API_KEY")
-NAVER_CLIENT_ID     = os.getenv("NAVER_CLIENT_ID")
-NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
+from utils.helpers import strip_html
+from config import GEMINI_API_KEY, NAVER_CLIENT_ID, NAVER_CLIENT_SECRET
 
 MODEL_ID = "gemini-2.5-flash"
 client   = genai.Client(api_key=GEMINI_API_KEY)
-
-
-def strip_html(text):
-    """뉴스 제목/내용에 섞인 HTML 태그를 제거합니다."""
-    text = re.sub(r"<[^>]+>", "", text or "")
-    return html.unescape(text).strip()
 
 
 def get_live_analysis(stock_name):
@@ -221,9 +207,6 @@ def update_sector_ai_analysis():
             )
             data = json.loads(response.text.strip())
 
-            print(f"[DEBUG] news 개수: {len(news_items)}")
-            print("[DEBUG] Gemini 응답 원문:", response.text)
-
             cursor.execute(
                 """
                 INSERT INTO stock_news (stock_id, score, ai_summary, news_data, updated_at)
@@ -237,7 +220,7 @@ def update_sector_ai_analysis():
                 (data['score'], data['ai_news'], json.dumps(news_items, ensure_ascii=False))
             )
             conn.commit()
-            print("[DEBUG] commit 완료")
+            print("[업종분석] 업데이트 완료")
 
     except Exception as e:
         print(f"업종 분석 중 오류: {e}")
