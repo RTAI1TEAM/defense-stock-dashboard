@@ -1,29 +1,26 @@
-{% extends "navbar.html" %} <!--navbar 부트스트랩 템플릿 적용-->
+{% extends "navbar.html" %}
 {% block title %}Defense News{% endblock %}
 
 {% block content %}
-
-
 <div class="container py-4">
-    {% if top3_news %}
+    {# 상단 Top 3 섹션 (이 부분은 초기 로딩 시에만 렌더링되도록 유지합니다) #}
+    {% if top3_news and pagination.current == 1 %}
     <section class="mb-5">
         <h3 class="fw-bold mb-4 pt-4">🔥 실시간 조회수 Top 3</h3>
         <div class="row g-4">
             {% for news in top3_news %}
             <div class="col-md-4">
                 <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark h-100 d-block">
-                    <div class="card shadow-sm">
+                    <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden;">
                         {% set badge_color = 'bg-danger' if loop.index == 1 else ('bg-primary' if loop.index == 2 else 'bg-dark') %}
-                        <span class="news-badge-rank {{ badge_color }} text-white">TOP {{ loop.index }}</span>
+                        <span class="news-badge-rank {{ badge_color }} text-white" style="position: absolute; top: 10px; left: 10px; padding: 5px 10px; border-radius: 5px; font-weight: bold; z-index: 10;">TOP {{ loop.index }}</span>
                         <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
-                             class="news-top-img"
+                             class="news-top-img" style="height: 200px; object-fit: cover;"
                              onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
                         <div class="card-body">
                             <h5 class="fw-bold line-clamp-2 mb-2">{{ news.title_clean }}</h5>
-                            <div class="news-meta">
-                                <span class="press-name">{{ news.source_name }}</span>
-                                <span class="meta-dot">·</span>
-                                <span>{{ news.pubDate_raw }}</span>
+                            <div class="news-meta text-muted small">
+                                <span>{{ news.source_name }}</span> · <span>{{ news.pubDate_raw }}</span>
                             </div>
                         </div>
                     </div>
@@ -43,25 +40,22 @@
             </div>
         </div>
 
+        {# 자바스크립트가 뉴스 목록을 갈아끼울 영역 #}
         <div id="newsList">
             {% for news in list_news %}
-            <div class="news-item"
-                 data-title="{{ news.title_clean|lower }}"
-                 data-summary="{{ news.description_clean|lower }}"
-                 data-source="{{ news.source_name|lower }}">
+            <div class="news-item">
                 <a href="{{ news.source_url }}" target="_blank" class="text-decoration-none text-dark">
                     <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                         <div class="row g-0 align-items-center">
-                            <div class="col-auto"> <!-- 디폴트이미지 img 태그 css 깨져서 따로 처리행야함 --> 
+                            <div class="col-auto">
                                 <img src="{{ news.image_url or '/static/images/news_default.jpg' }}" 
-                                     alt="뉴스 이미지"
                                      style="width: 280px; height: 160px; object-fit: cover; flex-shrink: 0;"
                                      onerror="this.onerror=null;this.src='/static/images/news_default.jpg';">
                             </div>
                             <div class="col">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ news.title_clean }}</h5>
-                                    <p class="card-text">{{ news.description_clean }}</p>
+                                    <h5 class="card-title fw-bold">{{ news.title_clean }}</h5>
+                                    <p class="card-text text-truncate" style="max-width: 600px;">{{ news.description_clean }}</p>
                                     <p class="card-text">
                                         <small class="text-muted">{{ news.source_name }} | {{ news.pubDate_raw }}</small>
                                     </p>
@@ -73,30 +67,23 @@
             </div>
             {% endfor %}
         </div>
-<!-- 페이지버튼 -->
-        <div class="news-pagination-wrap">
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center" id="newsPagination"></ul>
-    </nav>
-</div>
-<!-- 페이지버튼 부트스트랩 -->
 
-        <div class="news-pagination-wrap">
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-            <li class="page-item {% if pagination.current == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ pagination.current - 1 }}{% if current_query %}&q={{ current_query }}{% endif %}">&laquo;</a>
-            </li>
-            {% for p in pagination.pages %}
-            <li class="page-item {% if p == pagination.current %}active{% endif %}">
-                <a class="page-link" href="?page={{ p }}{% if current_query %}&q={{ current_query }}{% endif %}">{{ p }}</a>
-            </li>
-            {% endfor %}
-            <li class="page-item {% if pagination.current == pagination.total_pages %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ pagination.current + 1 }}{% if current_query %}&q={{ current_query }}{% endif %}">&raquo;</a>
-            </li>
-        </ul>
-    </nav>
+        {# 자바스크립트가 페이지네이션 버튼을 갈아끼울 영역 #}
+        <div class="news-pagination-wrap mt-5">
+            <nav>
+                <ul class="pagination justify-content-center" id="newsPagination">
+                    {# 초기 로딩 시에는 서버에서 렌더링한 버튼을 JS가 덮어씁니다 #}
+                </ul>
+            </nav>
+        </div>
+    </section>
 </div>
 
+<div id="newsConfig" 
+     data-pagination='{{ pagination|tojson }}' 
+     data-query='{{ current_query }}'
+     style="display: none;">
+</div>
+
+<script src="{{ url_for('static', filename='js/news.js') }}"></script>
 {% endblock %}
