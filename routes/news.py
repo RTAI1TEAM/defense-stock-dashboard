@@ -1,22 +1,38 @@
-from flask import Blueprint, render_template, request, jsonify  # jsonify 추가
+from flask import Blueprint, render_template, request, jsonify
 from database import get_conn
+
+# 뉴스 관련 기능을 담당하는 Blueprint 생성
 news_bp = Blueprint('news', __name__)
 
+# 한 페이지당 보여줄 뉴스 개수 설정
 PER_PAGE = 13
 
 def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
+    """
+    데이터베이스에서 뉴스 목록을 가져오는 함수
+    :param keyword: 검색어 (제목, 요약, 출처에서 검색)
+    :param page: 현재 페이지 번호
+    :param per_page: 페이지당 아이템 수
+    :return: (뉴스 목록 리스트, 전체 뉴스 개수)
+    """
     conn = get_conn()
-    offset = (page - 1) * per_page
+    offset = (page - 1) * per_page  # SQL 시작 지점 계산
+    
     try:
         with conn.cursor() as cursor:
             if keyword:
+                # 검색어가 있을 경우: LIKE 연산자를 사용한 필터링 조회
                 like_keyword = f"%{keyword}%"
+                
+                # 1. 검색 조건에 맞는 전체 개수 파악 (페이징 계산용)
                 count_sql = """
                     SELECT COUNT(*) as total FROM news
                     WHERE title LIKE %s OR summary LIKE %s OR source LIKE %s
                 """
                 cursor.execute(count_sql, (like_keyword, like_keyword, like_keyword))
                 total_count = cursor.fetchone()["total"]
+                
+                # 2. 검색 조건에 맞는 실제 데이터 조회 (최신순 정렬 및 페이징)
                 sql = """
                     SELECT id, title, summary, source, source_url,
                            thumbnail_url, published_at, view_count
@@ -27,8 +43,12 @@ def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
                 """
                 cursor.execute(sql, (like_keyword, like_keyword, like_keyword, per_page, offset))
             else:
+                # 검색어가 없을 경우: 전체 뉴스 조회
+                # 1. 전체 개수 파악
                 cursor.execute("SELECT COUNT(*) as total FROM news")
                 total_count = cursor.fetchone()["total"]
+                
+                # 2. 전체 데이터 조회 (최신순 정렬 및 페이징)
                 sql = """
                     SELECT id, title, summary, source, source_url,
                            thumbnail_url, published_at, view_count
@@ -38,6 +58,7 @@ def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
                 """
                 cursor.execute(sql, (per_page, offset))
 
+            # 조회된 데이터 가공 (템플릿에서 사용하기 편하도록 키 이름 매핑 및 날짜 포맷팅)
             rows = cursor.fetchall()
             for row in rows:
                 row["title_clean"] = row["title"] or ""
@@ -50,22 +71,36 @@ def get_news_from_db(keyword=None, page=1, per_page=PER_PAGE):
                 )
             return rows, total_count 
     finally:
+        # DB 연결 종료 (Context Manager를 사용하더라도 conn.close()는 명시적으로 처리)
         conn.close()
 
 
-def get_pagination(page, total_count, per_page=PER_PAGE, window=2):
-    total_pages = max(1, -(-total_count // per_page)) #페이지수 계산
-    # 페이지 수 버튼 항상 5개 고정
+def get_pagination(page, total_count, per_page=PER_PAGE):
+    """
+    페이지네이션 버튼 로직 계산 함수 (현재 페이지를 기준으로 앞뒤 버튼 생성)
+    :param page: 현재 페이지
+    :param total_count: 전체 아이템 개수
+    :param per_page: 페이지당 개수
+    :return: 페이지네이션 정보 딕셔너리
+    """
+    # 전체 페이지 수 계산 (올림 처리)
+    total_pages = max(1, -(-total_count // per_page)) 
+    
+    # 하단 페이지 번호 버튼 생성 로직 (항상 5개 고정)
     if total_pages <= 5:
+        # 전체 페이지가 5개 이하이면 1부터 끝까지 표시
         start = 1
         end = total_pages
     elif page <= 3:
+        # 현재 페이지가 앞쪽이면 1~5 표시
         start = 1
         end = 5
     elif page >= total_pages - 2:
+        # 현재 페이지가 뒤쪽이면 마지막 5개 페이지 표시
         start = total_pages - 4
         end = total_pages
     else:
+        # 현재 페이지가 중간이면 앞뒤로 2개씩 표시
         start = page - 2
         end = page + 2
 
@@ -81,49 +116,36 @@ def get_pagination(page, total_count, per_page=PER_PAGE, window=2):
 @news_bp.route("/news")
 def show_news():
     search_query = request.args.get("q", "").strip()
-    
     page = max(1, request.args.get("page", 1, type=int))
+    
+    # 1. [상단 고정용] 검색/페이지와 상관없이 무조건 최신 뉴스 3개만 가져옴
+    # get_news_from_db를 수정하거나 별도 쿼리를 작성해야 함
+    top3_news, _ = get_news_from_db(keyword=None, page=1, per_page=3)
 
-    # 1. 'Top 3' 전용 데이터를 검색어 없이 따로 가져옵니다. (고정 노출용)
-    # 검색 결과와 상관없이 항상 최신 3개를 보여주기 위함입니다.
-    top_news_list, _ = get_news_from_db(keyword=None, page=1, per_page=3)
-
-    # 2. 실제 검색 결과 또는 리스트 데이터를 가져옵니다.
-    all_news, total_count = get_news_from_db(
+    # 2. [하단 리스트용] 검색어와 페이지 번호에 맞는 데이터를 가져옴
+    list_news, total_count = get_news_from_db(
         keyword=search_query if search_query else None,
-        page=page
+        page=page,
+        per_page=PER_PAGE # 여기서는 13개를 꽉 채워서 가져옴
     )
 
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
-    # 3. 데이터 분리 로직
-    if search_query:
-        # 검색 시: Top 3는 위에서 가져온 고정 데이터, 리스트는 검색 결과 전체
-        top3_news = top_news_list 
-        list_news = all_news
-    else:
-        # 일반 로딩 시: 1페이지일 때만 상위 3개를 떼어냄
-        if page == 1:
-            top3_news = all_news[:3]
-            list_news = all_news[3:]
-        else:
-            top3_news = []
-            list_news = all_news
-
     pagination = get_pagination(page, total_count)
 
+    # AJAX 응답 시
     if is_ajax:
-        # AJAX 응답 시에도 필요한 데이터를 정확히 내려줌
         return jsonify({
             "list_news": list_news,
+            "top3_news": top3_news, # 새로고침이 아니더라도 상단 데이터를 계속 내려줌
             "pagination": pagination,
             "current_query": search_query
         })
 
+    # 일반 렌더링 시
     return render_template(
         "news.html",
-        top3_news=top3_news,
-        list_news=list_news,
+        top3_news=top3_news,     # 항상 최신 3개
+        list_news=list_news,     # 검색 결과 혹은 페이징 결과
         total_count=total_count,
         current_query=search_query,
         pagination=pagination,
