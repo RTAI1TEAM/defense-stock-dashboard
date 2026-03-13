@@ -1,4 +1,7 @@
 {% extends "navbar.html" %}
+{% block title %}
+    {{ stock.name_kr }} 종목 세부사항
+{% endblock %}
 {% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% block content %}
 <link rel="stylesheet" href="{{url_for('static', filename='css/stock_detail.css')}}">
