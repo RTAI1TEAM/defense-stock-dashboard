@@ -115,42 +115,37 @@ def get_pagination(page, total_count, per_page=PER_PAGE):
 
 @news_bp.route("/news")
 def show_news():
-    """
-    뉴스 목록 페이지 접속 핸들러
-    """
-    # URL 파라미터로부터 검색어(q)와 페이지 번호(page)를 가져옴
     search_query = request.args.get("q", "").strip()
     page = max(1, request.args.get("page", 1, type=int))
     
-    # DB에서 데이터 조회
-    all_news, total_count = get_news_from_db(
+    # 1. [상단 고정용] 검색/페이지와 상관없이 무조건 최신 뉴스 3개만 가져옴
+    # get_news_from_db를 수정하거나 별도 쿼리를 작성해야 함
+    top3_news, _ = get_news_from_db(keyword=None, page=1, per_page=3)
+
+    # 2. [하단 리스트용] 검색어와 페이지 번호에 맞는 데이터를 가져옴
+    list_news, total_count = get_news_from_db(
         keyword=search_query if search_query else None,
-        page=page
+        page=page,
+        per_page=PER_PAGE # 여기서는 13개를 꽉 채워서 가져옴
     )
 
-    # 요청이 AJAX(비동기)인지 확인 (Header의 X-Requested-With 확인)
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    
-    # 화면 구성을 위한 데이터 분리: 상단 Top3 뉴스와 나머지 리스트 뉴스
-    top3_news = all_news[:3]
-    list_news = all_news[3:]
-
-    # 페이지네이션 정보 계산
     pagination = get_pagination(page, total_count)
 
-    # AJAX 요청일 경우 (예: 페이지 번호 클릭 시 전체 리프레시 없이 뉴스 목록만 교체)
+    # AJAX 응답 시
     if is_ajax:
         return jsonify({
             "list_news": list_news,
+            "top3_news": top3_news, # 새로고침이 아니더라도 상단 데이터를 계속 내려줌
             "pagination": pagination,
             "current_query": search_query
         })
 
-    # 브라우저 직접 접속(일반 요청) 시 기존 HTML 템플릿 반환
+    # 일반 렌더링 시
     return render_template(
         "news.html",
-        top3_news=top3_news,
-        list_news=list_news,
+        top3_news=top3_news,     # 항상 최신 3개
+        list_news=list_news,     # 검색 결과 혹은 페이징 결과
         total_count=total_count,
         current_query=search_query,
         pagination=pagination,
