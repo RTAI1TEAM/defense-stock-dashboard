@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify  # jsonify 추가
 from database import get_conn
-
 news_bp = Blueprint('news', __name__)
 
 PER_PAGE = 10
@@ -89,6 +88,9 @@ def show_news():
         page=page
     )
 
+    # AJAX 요청인지 확인 (헤더 또는 파라미터로 구분)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if page == 1:
         top3_news = all_news[:3]
         list_news = all_news[3:]
@@ -98,7 +100,15 @@ def show_news():
 
     pagination = get_pagination(page, total_count)
 
+    # AJAX 요청일 경우 뉴스 데이터와 페이지 정보만 JSON으로 반환
+    if is_ajax:
+        return jsonify({
+            "list_news": list_news,
+            "pagination": pagination,
+            "current_query": search_query
+        })
 
+    # 일반 접속 시 기존대로 페이지 렌더링
     return render_template(
         "news.html",
         top3_news=top3_news,
