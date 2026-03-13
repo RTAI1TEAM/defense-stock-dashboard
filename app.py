@@ -1,11 +1,10 @@
-"""
-app.py — Flask 애플리케이션 메인 실행 파일
+# app.py — Flask 애플리케이션 메인 실행 파일
 
-기능:
-1. 애플리케이션 초기화 및 블루프린트(Route) 등록
-2. 메인 대시보드 페이지(/) 데이터 집계 (ETF 차트, AI 분석, 거래 요약)
-3. 템플릿 필터 및 컨텍스트 프로세서 설정
-"""
+# 기능:
+# 1. 애플리케이션 초기화 및 블루프린트(Route) 등록
+# 2. 메인 대시보드 페이지(/) 데이터 집계 (ETF 차트, AI 분석, 거래 요약)
+# 3. 템플릿 필터 및 컨텍스트 프로세서 설정
+
 
 from datetime import datetime
 from flask import Flask, render_template, session
@@ -39,7 +38,7 @@ app.register_blueprint(stock_chat_bp)   # 종목 토론방
 app.register_blueprint(dashboard_bp)    # 대시보드 로그카드
 
 def get_main_etf():
-    """DB에서 메인으로 표시할 첫 번째 ETF 정보를 가져옵니다."""
+    # DB에서 메인으로 표시할 첫 번째 ETF 정보를 가져옵니다.
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
@@ -50,11 +49,10 @@ def get_main_etf():
 
 
 def get_etf_chart_data(etf_id):
-    """
-    특정 ETF의 가격 히스토리를 가져와 차트 라이브러리(Chart.js) 형식으로 변환합니다.
-    - x: 타임스탬프 (ms)
-    - o, h, l, c: 시가, 고가, 저가, 종가
-    """
+    # 특정 ETF의 가격 히스토리를 가져와 차트 라이브러리(Chart.js) 형식으로 변환합니다.
+    # - x: 타임스탬프 (ms)
+    # - o, h, l, c: 시가, 고가, 저가, 종가
+    
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
@@ -85,7 +83,7 @@ def get_etf_chart_data(etf_id):
 
 
 def get_color_class(score):
-    """AI 분석 점수에 따라 UI에 표시할 부트스트랩 배경 색상 클래스를 반환합니다."""
+    # AI 분석 점수에 따라 UI에 표시할 부트스트랩 배경 색상 클래스를 반환합니다.
     if score >= 70:
         return "bg-success"  # 초록색 (긍정)
     elif score >= 40:
@@ -96,12 +94,12 @@ def get_color_class(score):
 
 @app.template_filter('comma')
 def comma_filter(value):
-    """숫자에 천 단위 콤마를 찍어주는 템플릿 필터 (예: 1,000)"""
+    # 숫자에 천 단위 콤마를 찍어주는 템플릿 필터 (예: 1,000)
     return format(int(value), ',')
 
 @app.context_processor
 def inject_stock_list():
-    """모든 템플릿에서 'stock_list' 변수를 사용할 수 있도록 주입합니다 (네비게이션 바 검색용 등)."""
+    # 모든 템플릿에서 'stock_list' 변수를 사용할 수 있도록 주입합니다 (네비게이션 바 검색용 등).
     try:
         return dict(stock_list=get_stock_list())
     except Exception:
@@ -109,7 +107,7 @@ def inject_stock_list():
 
 @app.route("/")
 def index():
-    """메인 페이지 로직: 대시보드에 필요한 모든 데이터를 집계하여 index.html로 전달합니다."""
+    # 메인 페이지 로직: 대시보드에 필요한 모든 데이터를 집계하여 index.html로 전달합니다.
     
     # 1. 메인 ETF 및 차트 데이터 수집
     etf = get_main_etf()
