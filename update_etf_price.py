@@ -3,9 +3,9 @@ import requests
 import pymysql
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv() # .env 파일에서 환경 변수(DB 접속 정보, API 키)를 로드합니다.
 
-SERVICE_KEY = os.getenv("SERVICE_KEY")
+SERVICE_KEY = os.getenv("SERVICE_KEY") # 공공데이터 API 인증키
 
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
@@ -13,13 +13,17 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
 
+# [API 엔드포인트]
+# 금융위원회 ETF 시세정보 API 주소입니다.
 # Flask 코드와 동일한 엔드포인트 형식
 BASE_URL = "https://apis.data.go.kr/1160100/service/GetSecuritiesProductInfoService/getETFPriceInfo"
 
 
 def safe_int(value, default=0):
     """
-    '1,234' 같은 문자열도 int로 안전하게 변환
+    [데이터 정제 파트]
+    API에서 제공하는 '1,234' 같은 콤마 포함 문자열이나 빈 값을 
+    안전하게 정수(int) 형태로 변환하여 데이터 오류를 방지합니다.
     """
     if value is None:
         return default
@@ -35,6 +39,10 @@ def safe_int(value, default=0):
 
 
 def get_connection():
+    """
+    [DB 연결 파트]
+    PyMySQL을 사용해 데이터베이스에 접속 설정을 생성합니다.
+    """
     return pymysql.connect(
         host=DB_HOST,
         user=DB_USER,
@@ -49,8 +57,10 @@ def get_connection():
 
 def fetch_etf_prices(eft_code, num_of_rows=120):
     """
-    금융위원회_ETF시세정보 API 호출 후
-    [{date, open, high, low, close, volume}] 형태로 반환
+    [데이터 수집 및 가공 파트]
+    1. requests를 통해 공공데이터 API에 ETF 시세를 요청합니다.
+    2. 응답받은 JSON 데이터에서 날짜, 시가, 고가, 저가, 종가, 거래량을 추출합니다.
+    3. 'YYYYMMDD' 형식을 'YYYY-MM-DD'로 변환하여 리스트로 반환합니다.
     """
     params = {
         "serviceKey": SERVICE_KEY,
@@ -112,8 +122,10 @@ def fetch_etf_prices(eft_code, num_of_rows=120):
 
 def update_etf_history(eft_id):
     """
-    eft_price_history 저장/갱신
-    (eft_id, price_date) UNIQUE 전제
+    [DB 반영 파트]
+    1. fetch_etf_prices에서 가져온 데이터를 루프 돌며 DB에 삽입합니다.
+    2. 'ON DUPLICATE KEY UPDATE' 구문을 사용하여, 
+       이미 해당 날짜의 데이터가 있으면 새로운 값으로 업데이트(갱신)합니다.
     """
     conn = get_connection()
     rows = fetch_etf_prices(463250)
