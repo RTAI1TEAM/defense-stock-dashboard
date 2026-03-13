@@ -3,27 +3,8 @@ document.addEventListener("DOMContentLoaded", function(){
     const results = document.getElementById("navbarStockResults");
     const items = document.querySelectorAll(".navbar-stock-item");
     const empty = document.getElementById("navbarEmpty");
-    const searchInput = document.getElementById("NewsSearch");
     const newsItems = document.querySelectorAll(".news-item");
 
-    if(searchInput){
-        searchInput.addEventListener("input", function () {
-            const keyword = this.value.trim().toLowerCase();
-
-            newsItems.forEach(item => {
-                const title = item.dataset.title || "";
-                const summary = item.dataset.summary || "";
-                const source = item.dataset.source || "";
-
-                const matched =
-                    title.includes(keyword) ||
-                    summary.includes(keyword) ||
-                    source.includes(keyword);
-
-                item.style.display = matched || keyword === "" ? "" : "none";
-            });
-        });
-    };
 
     if(input){    
         input.addEventListener("input", function(){
