@@ -114,4 +114,15 @@ async function fetchNewsPage(page, query = '') {
 document.addEventListener('DOMContentLoaded', () => {
     const config = JSON.parse(newsConfig.dataset.pagination);
     updatePaginationUI(config, INITIAL_QUERY);
+
+    const searchInput = document.getElementById("NewsSearch");
+    if (searchInput) {
+        searchInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault(); // 페이지 새로고침 방지
+                const query = e.target.value.trim();
+                fetchNewsPage(1, query); // 1페이지부터 검색 결과 출력
+            }
+        });
+    }
 });
