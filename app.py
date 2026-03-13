@@ -1,272 +1,176 @@
-import os
-import json
-from datetime import datetime
+# app.py — Flask 애플리케이션 메인 실행 파일
 
-from flask import Flask, render_template, redirect, url_for, session, request
+# 기능:
+# 1. 애플리케이션 초기화 및 블루프린트(Route) 등록
+# 2. 메인 대시보드 페이지(/) 데이터 집계 (ETF 차트, AI 분석, 거래 요약)
+# 3. 템플릿 필터 및 컨텍스트 프로세서 설정
+
+
+from datetime import datetime
+from flask import Flask, render_template, session
 
 from database import get_conn
-from finance_data import get_defense_data
-from routes.log_card import dashboard_bp
+from routes.log_card import dashboard_bp, get_yesterday_trade_summary
 from routes.app_login import auth_bp
 from routes.rank import rank_bp
 from routes.news import news_bp
 from routes.stocks import stocks_bp
 from routes.portfolio import portfolio_bp
-from routes.stock_detail import stock_detail_bp, get_defense_sector_analysis
+from routes.stock_detail import stock_detail_bp
 from routes.profile import profile_bp
 from routes.stock_chat import stock_chat_bp
+from services.stock_service import get_defense_sector_analysis, get_stock_list, get_defense_data
+from config import SECRET_KEY
 
+# 1. Flask 앱 초기화 및 설정
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "aiquant2024")
+app.secret_key = SECRET_KEY  # 세션 암호화 등을 위한 비밀키
 
-app.register_blueprint(auth_bp)
-app.register_blueprint(rank_bp)
-app.register_blueprint(news_bp)
-app.register_blueprint(stocks_bp)
-app.register_blueprint(portfolio_bp)
-app.register_blueprint(stock_detail_bp)
-app.register_blueprint(profile_bp)
-app.register_blueprint(stock_chat_bp)
-app.register_blueprint(dashboard_bp)
+# 2. 블루프린트 등록 (기능별 라우트 분리)
+app.register_blueprint(auth_bp)         # 로그인/회원가입
+app.register_blueprint(rank_bp)         # 랭킹 시스템
+app.register_blueprint(news_bp)         # 뉴스 모아보기
+app.register_blueprint(stocks_bp)       # 주식 목록
+app.register_blueprint(portfolio_bp)    # 내 포트폴리오
+app.register_blueprint(stock_detail_bp) # 종목 상세 및 주문
+app.register_blueprint(profile_bp)      # 프로필 관리
+app.register_blueprint(stock_chat_bp)   # 종목 토론방
+app.register_blueprint(dashboard_bp)    # 대시보드 로그카드
 
 def get_main_etf():
+    # DB에서 메인으로 표시할 첫 번째 ETF 정보를 가져옵니다.
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            sql = """
-            SELECT id, ticker, name_kr
-            FROM etfs
-            ORDER BY id
-            LIMIT 1
-            """
-            cursor.execute(sql)
+            cursor.execute("SELECT id, ticker, name_kr FROM etfs ORDER BY id LIMIT 1")
             return cursor.fetchone()
     finally:
         conn.close()
 
 
 def get_etf_chart_data(etf_id):
+    # 특정 ETF의 가격 히스토리를 가져와 차트 라이브러리(Chart.js) 형식으로 변환합니다.
+    # - x: 타임스탬프 (ms)
+    # - o, h, l, c: 시가, 고가, 저가, 종가
+    
     conn = get_conn()
     try:
         with conn.cursor() as cursor:
-            sql = """
-            SELECT price_date, open_price, high_price, low_price, close_price
-            FROM etf_price_history
-            WHERE etf_id = %s
-            ORDER BY price_date
-            """
-            cursor.execute(sql, (etf_id,))
+            cursor.execute(
+                """
+                SELECT price_date, open_price, high_price, low_price, close_price
+                FROM etf_price_history
+                WHERE etf_id = %s
+                ORDER BY price_date
+                """,
+                (etf_id,)
+            )
             rows = cursor.fetchall()
 
-            candle_data = []
-            for row in rows:
-                candle_data.append({
-                    "x": int(datetime.combine(row["price_date"], datetime.min.time()).timestamp() * 1000),
-                    "o": float(row["open_price"]),
-                    "h": float(row["high_price"]),
-                    "l": float(row["low_price"]),
-                    "c": float(row["close_price"])
-                })
-
-            return candle_data
-    finally:
-        conn.close()
-
-
-def get_main_stock_analysis():
-    conn = get_conn()
-    try:
-        with conn.cursor() as cursor:
-            # 분석 데이터가 있는 종목 하나 선택
-            cursor.execute("""
-                SELECT stock_id
-                FROM news_analysis
-                WHERE stock_id IS NOT NULL
-                GROUP BY stock_id
-                ORDER BY stock_id
-                LIMIT 1
-            """)
-            stock_row = cursor.fetchone()
-
-            if not stock_row:
-                return None, [], None
-
-            stock_id = stock_row["stock_id"]
-
-            cursor.execute("""
-                SELECT 
-                    ROUND(AVG(ai_score), 1) AS avg_score
-                FROM news_analysis
-                WHERE stock_id = %s
-            """, (stock_id,))
-            score_row = cursor.fetchone()
-            avg_score = float(score_row["avg_score"]) if score_row and score_row["avg_score"] is not None else 0
-
-            cursor.execute("""
-                SELECT 
-                    ai_score,
-                    sentiment,
-                    ai_summary,
-                    keywords,
-                    created_at
-                FROM news_analysis
-                WHERE stock_id = %s
-                ORDER BY created_at DESC, id DESC
-            """, (stock_id,))
-            analysis_list = cursor.fetchall()
-
-            return stock_id, analysis_list, avg_score
+        # 데이터 가공: 날짜를 밀리초 단위 타임스탬프로 변환
+        return [
+            {
+                "x": int(datetime.combine(row["price_date"], datetime.min.time()).timestamp() * 1000),
+                "o": float(row["open_price"]),
+                "h": float(row["high_price"]),
+                "l": float(row["low_price"]),
+                "c": float(row["close_price"]),
+            }
+            for row in rows
+        ]
     finally:
         conn.close()
 
 
 def get_color_class(score):
+    # AI 분석 점수에 따라 UI에 표시할 부트스트랩 배경 색상 클래스를 반환합니다.
     if score >= 70:
-        return "bg-success"
+        return "bg-success"  # 초록색 (긍정)
     elif score >= 40:
-        return "bg-warning"
+        return "bg-warning"  # 노란색 (중립)
     else:
-        return "bg-danger"
-
-def get_yesterday_trades():
-    if "user_id" not in session:
-        return [], 0, 0, 0
-    yesterday_trades = []
-    buy_count = 0
-    sell_count = 0
-    total_count = 0
-    user_id = session["user_id"]
-    conn = get_conn()
-
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT
-                    t.id,
-                    t.trade_type,
-                    t.price,
-                    t.quantity,
-                    t.total_amount,
-                    t.strategy,
-                    t.traded_at,
-                    s.name_kr AS stock_name
-                FROM trades t
-                JOIN stocks s ON t.stock_id = s.id
-                WHERE t.user_id = %s
-                  AND DATE(t.traded_at) = CURDATE() - INTERVAL 1 DAY
-                ORDER BY t.traded_at DESC
-                LIMIT 5
-                """,
-                (user_id,),
-            )
-            yesterday_trades = cur.fetchall()
-
-            cur.execute(
-                """
-                SELECT
-                    SUM(CASE WHEN trade_type = 'BUY' THEN 1 ELSE 0 END) AS buy_count,
-                    SUM(CASE WHEN trade_type = 'SELL' THEN 1 ELSE 0 END) AS sell_count,
-                    COUNT(*) AS total_count
-                FROM trades
-                WHERE user_id = %s
-                  AND DATE(traded_at) = CURDATE() - INTERVAL 1 DAY
-                """,
-                (user_id,),
-            )
-            summary = cur.fetchone()
-
-        buy_count = summary["buy_count"] or 0
-        sell_count = summary["sell_count"] or 0
-        total_count = summary["total_count"] or 0
-    finally:
-        conn.close()
-
-    return yesterday_trades, buy_count, sell_count, total_count
-
+        return "bg-danger"   # 빨간색 (부정)
 
 
 @app.template_filter('comma')
 def comma_filter(value):
+    # 숫자에 천 단위 콤마를 찍어주는 템플릿 필터 (예: 1,000)
     return format(int(value), ',')
 
 @app.context_processor
 def inject_stock_list():
-    conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT ticker, name_kr FROM stocks")
-    stock_list = cursor.fetchall()
-    conn.close()
-    return dict(stock_list=stock_list)
+    # 모든 템플릿에서 'stock_list' 변수를 사용할 수 있도록 주입합니다 (네비게이션 바 검색용 등).
+    try:
+        return dict(stock_list=get_stock_list())
+    except Exception:
+        return dict(stock_list=[])
 
 @app.route("/")
 def index():
-    # 1. ETF 데이터 (기존 유지)
+    # 메인 페이지 로직: 대시보드에 필요한 모든 데이터를 집계하여 index.html로 전달합니다.
+    
+    # 1. 메인 ETF 및 차트 데이터 수집
     etf = get_main_etf()
     chart_data = get_etf_chart_data(etf["id"])
 
-    # 2. 업종 분석 데이터 가져오기 (수정됨!)
-    # stock_detail.py에서 만든 9999번 데이터를 읽어오는 함수 호출
+    # 2. 방산 섹터 AI 분석 결과 (점수, 코멘트, 관련 뉴스) 가져오기
     score, ai_news, news_list = get_defense_sector_analysis()
-    yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trades()
 
-    # # 조건문을 좀 더 널널하게 변경 (내용이 "데이터 분석 대기 중..."인 경우도 포함)
-    # if score == 0 or not news_list or "대기 중" in ai_news:
-    #     print("Gemini 업종 분석을 실행합니다...")
-    #     update_sector_ai_analysis()
-    #     score, ai_news, news_list = get_defense_sector_analysis()
-    
-    # 🚀 [수정 포인트] 점수 타입 확인 및 색상 결정
+    # 3. 로그인 사용자 정보 확인 및 어제자 거래 요약 추출
+    user_id = session.get("user_id")
+    if user_id:
+        # log_card 서비스에서 요약 통계 가져오기
+        yesterday_trades, buy_count, sell_count, total_count = get_yesterday_trade_summary(user_id)
+    else:
+        yesterday_trades, buy_count, sell_count, total_count = [], 0, 0, 0
+
+    # AI 점수 정수화 및 UI 컬러 결정
     try:
-        # score가 None이거나 계산 불가능한 경우를 대비
         final_score = int(score) if score is not None else 0
     except (ValueError, TypeError):
         final_score = 0
-
     color_class = get_color_class(final_score)
 
-    # 3. 방산주 리스트 (기존 유지)
-    conn = get_conn()
+    # 4. 방산 종목 실시간 시세 및 기본 종목 설정
+    defense_stocks = get_defense_data()
     account = None
     current_price = 0
     default_stock = {"ticker": "", "name_kr": ""}
 
-    try:
-        defense_stocks = get_defense_data(conn)
-        if defense_stocks:
-            default_stock = {
-                "ticker": defense_stocks[0]["ticker"],
-                "name_kr": defense_stocks[0]["name"],
-            }
-            current_price = defense_stocks[0]["price"]
+    if defense_stocks:
+        default_stock = {
+            "ticker": defense_stocks[0]["ticker"],
+            "name_kr": defense_stocks[0]["name"],
+        }
+        current_price = defense_stocks[0]["price"]
 
-        user_id = session.get("user_id")
-        if user_id:
+    # 5. 로그인 사용자일 경우 현재 가용 잔고 조회
+    if user_id:
+        conn = get_conn()
+        try:
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT current_balance FROM mock_accounts WHERE user_id = %s",
                     (user_id,),
                 )
                 account = cursor.fetchone()
+        finally:
+            conn.close()
 
-    finally:
-        conn.close()
-
-    # 4. 템플릿으로 전달 (변수 이름 맞춤)
+    # 6. 최종 렌더링
     return render_template(
         "index.html",
         etf=etf,
         chart_data=chart_data,
         score=score,
-        ai_news=ai_news,      # 템플릿에서 요약문으로 사용
-        news_list=news_list[:3],  # 템플릿에서 뉴스 목록으로 사용, 뉴스 목록 5개로 제한
+        ai_news=ai_news,
+        news_list=news_list[:3], # 최신 뉴스 3개만 표시
         color_class=color_class,
-        ai_strategy=ai_news,  # 기존 ai_strategy 변수명도 대응
         defense_stocks=defense_stocks,
-        stock_id=9999,        # 업종 종합 ID
-        strategies={}, 
-        stock=default_stock,
-        account=account,
+        stock_id=9999,           # 대시보드용 임시 ID
+        strategies={},           # 향후 확장용 전략 데이터
+        stock=default_stock,     # 기본 표시 종목
+        account=account,         # 계좌 잔고
         current_price=current_price,
         yesterday_trades=yesterday_trades,
         buy_count=buy_count,
@@ -276,4 +180,5 @@ def index():
 
 
 if __name__ == "__main__":
+    # 개발 서버 실행 (debug=True 설정 시 코드 수정 시 자동 재시작)
     app.run(debug=True)
