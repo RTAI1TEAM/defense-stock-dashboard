@@ -1,12 +1,22 @@
+<!-- [파일 역할] 종목 선택 드롭다운 컴포넌트
+- 현재 보고 있는 종목명과 티커를 버튼 형태로 표시
+- 드롭다운 내부에서 종목명 또는 코드로 실시간 검색 가능
+- 검색 결과에 따라 전체 종목 리스트를 필터링하고, 선택 시 해당 종목 상세 페이지로 이동 -->
+
+<!-- 드롭다운 검색/필터 기능을 처리하는 외부 JS 파일 불러오기 -->
 <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
 
+<!-- 종목 선택 드롭다운 전체 영역 -->
 <div class="dropdown">
+
+  <!-- 현재 선택된 종목명과 티커 버튼 -->
   <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
     {{ stock.name_kr }} <span class="text-muted ms-1">{{ stock.ticker }}</span>
   </button>
-
+<!-- 상단 검색 영역 -->
   <div class="dropdown-menu stock-dropdown-menu">
     <div class="stock-dropdown-header">
+      <!-- 종목명 또는 코드로 검색하는 입력창 -->
       <input
         type="text"
         id="stockSearchInput"
@@ -15,7 +25,7 @@
         autocomplete="off"
       >
     </div>
-
+    <!-- 종목 목록 표시 -->
     <div class="stock-dropdown-list" id="stockDropdownList">
       {% for s in stock_list %}
       <a
@@ -28,6 +38,7 @@
         <div class="stock-code">{{ s['ticker'] }}</div>
       </a>
       {% endfor %}
+      <!-- 검색 결과가 없을 때 보여줄 메시지 -->
       <div id="stockEmptyMessage" class="stock-empty">검색 결과가 없습니다.</div>
     </div>
   </div>
