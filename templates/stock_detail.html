@@ -1,3 +1,9 @@
+<!-- [파일 역할] 종목 상세 페이지(stock detail) 메인 템플릿
+- 공통 navbar 레이아웃을 상속받아 종목 상세 화면을 구성
+- 좌측에는 종목 선택 드롭다운, 전략 선택, 차트 영역을 배치
+- 우측에는 AI 종목 분석 카드, 모의투자 폼, 종목 채팅 영역을 배치
+- Flask 변수 일부를 JS 전역 설정 객체로 넘겨 stock_detail.js에서 사용 -->
+
 {% extends "navbar.html" %}
 {% from "components/chart_toggle_macro.html" import chart_toggle %}
 {% block content %}

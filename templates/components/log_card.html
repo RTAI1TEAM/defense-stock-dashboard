@@ -1,7 +1,14 @@
+<!-- [파일 역할] 어제의 거래 내역과 요약 정보를 보여주는 거래 로그 카드 컴포넌트
+- 상단에 어제 거래 건수, 매수/매도 건수 등 핵심 요약 정보를 표시
+- 총 거래 건수를 별도 박스로 강조해서 보여줌
+- 하단에는 어제의 거래 기록을 시간순/목록형으로 출력
+- 비로그인 상태 또는 거래 내역이 없을 경우 안내 문구를 표시 -->
+
 <link rel="stylesheet" href="{{url_for('static', filename='css/log_card.css')}}">
 
 <div class="card border-0 trade-log-card" style="border-radius: 12px;">
     <div class="trade-summary-box mt-2 mb-1">
+        <!-- 핵심 요약 텍스트 영역 -->
         <div class="trade-summary-text">
             <div class="trade-summary-label">핵심 요약</div>
             <div class="trade-summary-content">
@@ -16,11 +23,13 @@
                 {% endif %}
             </div>
         </div>
+        <!-- 총 거래 건수 강조 박스 -->
         <div class="trade-log-box">
             <div class="trade-log-label">총 거래</div>
             <div class="trade-log-value">{{ total_count }}건</div>
         </div>
     </div>
+     <!-- 거래 내역 스크롤 -->
     <div class="trade-history-scroll">
         <ul class="trade-history-list">
             {% if yesterday_trades %}
@@ -29,19 +38,20 @@
                     <div class="trade-bullet"></div>
 
                     <div class="trade-item-content">
+                        <!-- 거래 상단: 매수/매도 구분 + 종목명 -->
                         <div class="trade-item-top">
                             <span class="trade-type {{ 'buy' if trade.trade_type == 'BUY' else 'sell' }}">
                                 {{ '매수' if trade.trade_type == 'BUY' else '매도' }}
                             </span>
                             <span class="trade-stock">{{ trade.stock_name }}</span>
                         </div>
-
+                        <!-- 거래 상세 수량 / 가격 / 총액 -->
                         <div class="trade-item-desc">
                             {{ "{:,}".format(trade.quantity) }}주 ·
                             {{ "{:,.0f}".format(trade.price) }}원 ·
                             총 {{ "{:,.0f}".format(trade.total_amount) }}원
                         </div>
-
+                        <!-- 거래 전략 및 거래 시간 -->
                         <div class="trade-item-meta">
                             {{ trade.strategy or '전략 없음' }} ·
                             {{ trade.traded_at.strftime('%H:%M') if trade.traded_at else '' }}
